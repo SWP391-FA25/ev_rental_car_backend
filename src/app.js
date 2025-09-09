@@ -5,6 +5,8 @@ import morgan from 'morgan';
 import routes from './routes/routes.js';
 import { notFoundHandler, errorHandler } from './middleware/errorHandler.js';
 import { getCorsOptions } from './config/cors.js';
+import swaggerUi from 'swagger-ui-express';
+import { openapiSpec } from './docs/openapi.js';
 
 const app = express();
 
@@ -16,7 +18,10 @@ app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
 
-app.use(routes);
+app.use('/docs', swaggerUi.serve, swaggerUi.setup(openapiSpec));
+app.get('/docs.json', (req, res) => res.json(openapiSpec));
+
+app.use('/api', routes);
 
 app.use(notFoundHandler);
 app.use(errorHandler);
