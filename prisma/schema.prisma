@@ -13,3 +13,203 @@ datasource db {
   provider = "mongodb"
   url      = env("DATABASE_URL")
 }
+
+// Enum definitions for better data integrity
+enum UserRole {
+  RENTER
+  STAFF
+  ADMIN
+}
+
+enum StationStatus {
+  ACTIVE
+  MAINTENANCE
+  INACTIVE
+}
+
+enum VehicleStatus {
+  AVAILABLE
+  RENTED
+  MAINTENANCE
+  RESERVED
+  OUT_OF_SERVICE
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+// Mới: trạng thái tài khoản chuẩn hóa
+enum AccountStatus {
+  active
+  suspended
+  banned
+}
+
+model User {
+  id            String        @id @default(auto()) @map("_id") @db.ObjectId
+  email         String        @unique
+  password      String
+  role          UserRole      @default(RENTER)
+  name          String?
+  phone         String?     // Added for contact information
+  license       String?     // CMND/CCCD or driver’s license
+  address       String?     // Added for user address
+  accountStatus AccountStatus @default(active)
+  softDeleted   Boolean       @default(false)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  bookings      Booking[]
+  payments      Payment[]
+  rentalHistory RentalHistory[]
+  stationStaff StationStaff[]
+
+  @@index([role])
+  @@index([softDeleted])
+}
+
+model Station {
+  id          String        @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  location    Json        // GeoJSON format for coordinates
+  address     String?     // Added for physical address
+  contact     String?     // Added for contact details
+  capacity    Int
+  status      StationStatus @default(ACTIVE)
+  softDeleted Boolean       @default(false)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  vehicles    Vehicle[]
+  bookings    Booking[]
+  stationStaff StationStaff[]
+
+
+  @@index([status])
+  @@index([softDeleted])
+}
+
+model Vehicle {
+  id           String        @id @default(auto()) @map("_id") @db.ObjectId
+  stationId    String        @db.ObjectId
+  type         String       // e.g., sedan, SUV
+  licensePlate String?      // Không đặt @unique vì là optional (xử lý unique ở DB index nếu cần)
+  model        String?
+  batteryLevel Float        @default(0.0) // 0..100 (enforce ở validator DB)
+  status       VehicleStatus @default(AVAILABLE)
+  softDeleted  Boolean       @default(false)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  station      Station      @relation(fields: [stationId], references: [id])
+  bookings     Booking[]
+
+  @@index([stationId, status])
+  @@index([status])
+  @@index([softDeleted])
+  @@index([licensePlate])
+}
+
+model Booking {
+  id             String        @id @default(auto()) @map("_id") @db.ObjectId
+  userId         String        @db.ObjectId
+  vehicleId      String        @db.ObjectId
+  stationId      String        @db.ObjectId
+  startTime      DateTime
+  endTime        DateTime?
+  estimatedCost  Float?      // tiền tệ
+  pickupLocation String?
+  dropoffLocation String?
+  status         BookingStatus @default(PENDING)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  user           User          @relation(fields: [userId], references: [id])
+  vehicle        Vehicle       @relation(fields: [vehicleId], references: [id])
+  station        Station       @relation(fields: [stationId], references: [id])
+  payments       Payment[]
+  rentalHistories RentalHistory[]
+  promotionBookings PromotionBooking[]
+
+  @@index([userId, status, startTime])
+  @@index([vehicleId, status, startTime])
+  @@index([stationId, status, startTime])
+}
+
+model Payment {
+  id            String        @id @default(auto()) @map("_id") @db.ObjectId
+  userId        String        @db.ObjectId
+  bookingId     String        @db.ObjectId
+  amount        Float       // tiền tệ
+  paymentMethod String?
+  transactionId String?
+  status        PaymentStatus @default(PENDING)
+  paymentDate   DateTime?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  user          User          @relation(fields: [userId], references: [id])
+  booking       Booking       @relation(fields: [bookingId], references: [id])
+
+  @@index([bookingId, status])
+  @@index([userId, status, paymentDate])
+}
+
+model RentalHistory {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  bookingId String   @db.ObjectId
+  distance  Float    @default(0.0)
+  cost      Float       // tiền tệ
+  rating    Int?
+  feedback  String?
+  duration  Float?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+  booking   Booking  @relation(fields: [bookingId], references: [id])
+
+  @@index([userId, createdAt])
+  @@index([bookingId])
+}
+
+model Promotion {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  code        String   @unique // Unique promotion code
+  description String?
+  discount    Float       // phần trăm hoặc số tiền (chọn 1 convention)
+  validFrom   DateTime
+  validUntil  DateTime
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  promotionBookings PromotionBooking[]
+}
+
+// Model trung gian cho quan hệ promotion-booking (many-to-many)
+model PromotionBooking {
+  id           String     @id @default(auto()) @map("_id") @db.ObjectId
+  promotionId  String     @db.ObjectId
+  bookingId    String     @db.ObjectId
+  promotion    Promotion  @relation(fields: [promotionId], references: [id])
+  booking      Booking    @relation(fields: [bookingId], references: [id])
+
+  @@index([promotionId])
+  @@index([bookingId])
+}
+
+// Model trung gian cho quan hệ staff-station (many-to-many)
+model StationStaff {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  stationId String   @db.ObjectId
+  userId    String   @db.ObjectId
+  station   Station  @relation(fields: [stationId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@index([stationId])
+  @@index([userId])
+}
