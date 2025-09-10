@@ -150,7 +150,7 @@ model Payment {
   bookingId     String        @db.ObjectId
   amount        Float       // tiền tệ
   paymentMethod String?
-  transactionId String?
+  transactionId String? @unique
   status        PaymentStatus @default(PENDING)
   paymentDate   DateTime?
   createdAt     DateTime      @default(now())
