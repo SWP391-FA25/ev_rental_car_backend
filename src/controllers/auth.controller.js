@@ -33,15 +33,6 @@ export async function register(req, res, next) {
         .json({ success: false, message: 'Email and password are required' });
     }
 
-    const existing = await prisma.user.findFirst({
-      where: { email: email.toLowerCase(), softDeleted: false },
-    });
-    if (existing) {
-      return res
-        .status(409)
-        .json({ success: false, message: 'Email already exists' });
-    }
-
     const hash = await bcrypt.hash(password, 10);
     const user = await prisma.user.create({
       data: {
@@ -61,8 +52,13 @@ export async function register(req, res, next) {
 
     const { password: _pw, ...safeUser } = user;
     return res.status(201).json({ success: true, data: { user: safeUser } });
-  } catch (err) {
-    return next(err);
+  } catch (e) {
+    if (e.code === 'P2002' && e.meta?.target?.includes('email')) {
+      return res
+        .status(409)
+        .json({ success: false, message: 'Email already exists' });
+    }
+    throw e;
   }
 }
 
