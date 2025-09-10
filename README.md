@@ -5,6 +5,7 @@ Backend Node.js (ESM) với Express, Prisma (MongoDB), Vite client proxy-friendl
 ## Yêu cầu
 
 - Node.js >= 20.19 (khuyến nghị 22.12+)
+- Vite >= 7
 - npm hoặc pnpm
 - (Tuỳ chọn) MongoDB cục bộ hoặc Mongo Atlas để dùng với Prisma
 
