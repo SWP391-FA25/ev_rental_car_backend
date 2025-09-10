@@ -51,7 +51,6 @@ export async function register(req, res, next) {
     res.cookie(env.cookieName, token, cookieOptions());
 
     const { password: _pw, ...safeUser } = user;
-    //pw just use to delete password from cookie
     return res.status(201).json({ success: true, data: { user: safeUser } });
   } catch (e) {
     if (e.code === 'P2002' && e.meta?.target?.includes('email')) {
