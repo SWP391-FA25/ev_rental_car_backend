@@ -24,6 +24,48 @@ function isBcryptHash(value) {
   );
 }
 
+export async function register(req, res, next) {
+  try {
+    const { email, password, name, phone, license, address } = req.body || {};
+    if (!email || !password) {
+      return res
+        .status(400)
+        .json({ success: false, message: 'Email and password are required' });
+    }
+
+    const existing = await prisma.user.findFirst({
+      where: { email: email.toLowerCase(), softDeleted: false },
+    });
+    if (existing) {
+      return res
+        .status(409)
+        .json({ success: false, message: 'Email already exists' });
+    }
+
+    const hash = await bcrypt.hash(password, 10);
+    const user = await prisma.user.create({
+      data: {
+        email: email.toLowerCase(),
+        password: hash,
+        name,
+        phone,
+        license,
+        address,
+        role: 'RENTER', // mặc định
+        accountStatus: 'active',
+      },
+    });
+
+    const token = signAccessToken(user);
+    res.cookie(env.cookieName, token, cookieOptions());
+
+    const { password: _pw, ...safeUser } = user;
+    return res.status(201).json({ success: true, data: { user: safeUser } });
+  } catch (err) {
+    return next(err);
+  }
+}
+
 export async function login(req, res, next) {
   try {
     const { email, password } = req.body || {};
