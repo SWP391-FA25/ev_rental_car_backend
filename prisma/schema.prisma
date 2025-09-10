@@ -6,6 +6,7 @@
 
 generator client {
   provider = "prisma-client-js"
+  //provider = "prisma-dbml-generator"
   // output   = "../src/generated/prisma" // Đã chuyển về mặc định, xóa dòng này
 }
 
