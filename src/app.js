@@ -18,6 +18,8 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 
+app.get('/health', (req, res) => res.json({ status: 'ok' }));
+
 app.use('/docs', swaggerUi.serve, swaggerUi.setup(openapiSpec));
 app.get('/docs.json', (req, res) => res.json(openapiSpec));
 
