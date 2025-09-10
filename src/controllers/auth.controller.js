@@ -58,7 +58,7 @@ export async function register(req, res, next) {
         .status(409)
         .json({ success: false, message: 'Email already exists' });
     }
-    throw e;
+    return next(e);
   }
 }
 
