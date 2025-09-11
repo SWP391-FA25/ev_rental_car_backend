@@ -26,6 +26,16 @@ enum StationStatus {
   INACTIVE
 }
 
+enum VehicleType {
+  SEDAN
+  SUV
+  HATCHBACK
+  COUPE
+  CONVERTIBLE
+  TRUCK
+  VAN
+}
+
 enum VehicleStatus {
   AVAILABLE
   RENTED
@@ -37,6 +47,7 @@ enum VehicleStatus {
 enum BookingStatus {
   PENDING
   CONFIRMED
+  IN_PROGRESS
   COMPLETED
   CANCELLED
 }
@@ -46,6 +57,7 @@ enum PaymentStatus {
   PAID
   FAILED
   REFUNDED
+  PARTIALLY_REFUNDED
 }
 
 // Mới: trạng thái tài khoản chuẩn hóa
@@ -55,43 +67,73 @@ enum AccountStatus {
   banned
 }
 
+// Document types enum  
+enum DocumentType {
+  DRIVERS_LICENSE
+  ID_CARD
+  PASSPORT
+}
+
+// Document verification status
+enum DocumentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum FuelType {
+  ELECTRIC
+  HYBRID
+  GASOLINE
+}
+
+enum PaymentMethod {
+  CREDIT_CARD
+  DEBIT_CARD
+  BANK_TRANSFER
+  DIGITAL_WALLET
+  CASH
+}
+
 model User {
-  id            String        @id @default(auto()) @map("_id") @db.ObjectId
-  email         String        @unique
+  id            String          @id @default(auto()) @map("_id") @db.ObjectId
+  email         String          @unique
   password      String
-  role          UserRole      @default(RENTER)
+  role          UserRole        @default(RENTER)
   name          String?
-  phone         String?     // Added for contact information
-  license       String?     // CMND/CCCD or driver’s license
-  address       String?     // Added for user address
-  accountStatus AccountStatus @default(active)
-  softDeleted   Boolean       @default(false)
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  phone         String? // Added for contact information
+  address       String? // Added for user address
+  dateOfBirth   DateTime? // Added for age verification
+  gender        String? // Added for reporting
+  accountStatus AccountStatus   @default(active)
+  softDeleted   Boolean         @default(false)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
   bookings      Booking[]
   payments      Payment[]
   rentalHistory RentalHistory[]
-  stationStaff StationStaff[]
+  stationStaff  StationStaff[]
+  documents     UserDocument[] // Add relation to documents
+  Notification  Notification[]
 
   @@index([role])
   @@index([softDeleted])
 }
 
 model Station {
-  id          String        @id @default(auto()) @map("_id") @db.ObjectId
-  name        String
-  location    Json        // GeoJSON format for coordinates
-  address     String?     // Added for physical address
-  contact     String?     // Added for contact details
-  capacity    Int
-  status      StationStatus @default(ACTIVE)
-  softDeleted Boolean       @default(false)
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-  vehicles    Vehicle[]
-  bookings    Booking[]
+  id           String         @id @default(auto()) @map("_id") @db.ObjectId
+  name         String
+  location     Json // GeoJSON format for coordinates
+  address      String? // Added for physical address
+  contact      String? // Added for contact details
+  capacity     Int
+  status       StationStatus  @default(ACTIVE)
+  softDeleted  Boolean        @default(false)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  vehicles     Vehicle[]
+  bookings     Booking[]
   stationStaff StationStaff[]
-
 
   @@index([status])
   @@index([softDeleted])
@@ -100,42 +142,55 @@ model Station {
 model Vehicle {
   id           String        @id @default(auto()) @map("_id") @db.ObjectId
   stationId    String        @db.ObjectId
-  type         String       // e.g., sedan, SUV
-  licensePlate String?      // Không đặt @unique vì là optional (xử lý unique ở DB index nếu cần)
-  model        String?
-  batteryLevel Float        @default(0.0) // 0..100 (enforce ở validator DB)
+  type         VehicleType // Changed to enum
+  brand        String // Added brand
+  model        String
+  year         Int // Added year
+  color        String // Added color
+  seats        Int // Added seats
+  licensePlate String? // Không đặt @unique vì là optional (xử lý unique ở DB index nếu cần)
+  batteryLevel Float         @default(0.0) // 0..100 (enforce ở validator DB)
+  fuelType     FuelType      @default(ELECTRIC) // Added fuel type
   status       VehicleStatus @default(AVAILABLE)
   softDeleted  Boolean       @default(false)
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
-  station      Station      @relation(fields: [stationId], references: [id])
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  station      Station       @relation(fields: [stationId], references: [id])
   bookings     Booking[]
 
   @@index([stationId, status])
   @@index([status])
   @@index([softDeleted])
   @@index([licensePlate])
+  @@index([type])
+  @@index([brand])
 }
 
 model Booking {
-  id             String        @id @default(auto()) @map("_id") @db.ObjectId
-  userId         String        @db.ObjectId
-  vehicleId      String        @db.ObjectId
-  stationId      String        @db.ObjectId
-  startTime      DateTime
-  endTime        DateTime?
-  estimatedCost  Float?      // tiền tệ
-  pickupLocation String?
-  dropoffLocation String?
-  status         BookingStatus @default(PENDING)
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
-  user           User          @relation(fields: [userId], references: [id])
-  vehicle        Vehicle       @relation(fields: [vehicleId], references: [id])
-  station        Station       @relation(fields: [stationId], references: [id])
-  payments       Payment[]
-  rentalHistories RentalHistory[]
-  promotionBookings PromotionBooking[]
+  id                   String             @id @default(auto()) @map("_id") @db.ObjectId
+  userId               String             @db.ObjectId
+  vehicleId            String             @db.ObjectId
+  stationId            String             @db.ObjectId
+  startTime            DateTime
+  endTime              DateTime?
+  actualStartTime      DateTime? // Added actual start time
+  actualEndTime        DateTime? // Added actual end time
+  pickupLocation       String?
+  dropoffLocation      String?
+  actualPickupLocation String? // Added actual pickup location
+  actualReturnLocation String? // Added actual return location
+  pickupOdometer       Float? // Added pickup odometer
+  returnOdometer       Float? // Added return odometer
+  notes                String? // Added notes
+  status               BookingStatus      @default(PENDING)
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+  user                 User               @relation(fields: [userId], references: [id])
+  vehicle              Vehicle            @relation(fields: [vehicleId], references: [id])
+  station              Station            @relation(fields: [stationId], references: [id])
+  payments             Payment[]
+  rentalHistories      RentalHistory[]
+  promotionBookings    PromotionBooking[]
 
   @@index([userId, status, startTime])
   @@index([vehicleId, status, startTime])
@@ -143,18 +198,22 @@ model Booking {
 }
 
 model Payment {
-  id            String        @id @default(auto()) @map("_id") @db.ObjectId
-  userId        String        @db.ObjectId
-  bookingId     String        @db.ObjectId
-  amount        Float       // tiền tệ
-  paymentMethod String?
-  transactionId String? @unique
-  status        PaymentStatus @default(PENDING)
-  paymentDate   DateTime?
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
-  user          User          @relation(fields: [userId], references: [id])
-  booking       Booking       @relation(fields: [bookingId], references: [id])
+  id              String        @id @default(auto()) @map("_id") @db.ObjectId
+  userId          String        @db.ObjectId
+  bookingId       String        @db.ObjectId
+  amount          Float // tiền tệ
+  currency        String        @default("VND") // Added currency
+  paymentMethod   PaymentMethod // Changed to enum
+  paymentProvider String? // Added payment provider
+  transactionId   String?       @unique
+  status          PaymentStatus @default(PENDING)
+  paymentDate     DateTime?
+  refundAmount    Float? // Added refund amount
+  refundDate      DateTime? // Added refund date
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  user            User          @relation(fields: [userId], references: [id])
+  booking         Booking       @relation(fields: [bookingId], references: [id])
 
   @@index([bookingId, status])
   @@index([userId, status, paymentDate])
@@ -165,10 +224,8 @@ model RentalHistory {
   userId    String   @db.ObjectId
   bookingId String   @db.ObjectId
   distance  Float    @default(0.0)
-  cost      Float       // tiền tệ
   rating    Int?
   feedback  String?
-  duration  Float?
   createdAt DateTime @default(now())
   user      User     @relation(fields: [userId], references: [id])
   booking   Booking  @relation(fields: [bookingId], references: [id])
@@ -178,24 +235,26 @@ model RentalHistory {
 }
 
 model Promotion {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  code        String   @unique // Unique promotion code
-  description String?
-  discount    Float       // phần trăm hoặc số tiền (chọn 1 convention)
-  validFrom   DateTime
-  validUntil  DateTime
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id                String             @id @default(auto()) @map("_id") @db.ObjectId
+  code              String             @unique // Unique promotion code
+  description       String?
+  discount          Float // phần trăm hoặc số tiền (chọn 1 convention)
+  validFrom         DateTime
+  validUntil        DateTime
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
   promotionBookings PromotionBooking[]
+
+  @@index([validFrom, validUntil])
 }
 
 // Model trung gian cho quan hệ promotion-booking (many-to-many)
 model PromotionBooking {
-  id           String     @id @default(auto()) @map("_id") @db.ObjectId
-  promotionId  String     @db.ObjectId
-  bookingId    String     @db.ObjectId
-  promotion    Promotion  @relation(fields: [promotionId], references: [id])
-  booking      Booking    @relation(fields: [bookingId], references: [id])
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  promotionId String    @db.ObjectId
+  bookingId   String    @db.ObjectId
+  promotion   Promotion @relation(fields: [promotionId], references: [id])
+  booking     Booking   @relation(fields: [bookingId], references: [id])
 
   @@index([promotionId])
   @@index([bookingId])
@@ -203,12 +262,81 @@ model PromotionBooking {
 
 // Model trung gian cho quan hệ staff-station (many-to-many)
 model StationStaff {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  stationId String   @db.ObjectId
-  userId    String   @db.ObjectId
-  station   Station  @relation(fields: [stationId], references: [id])
-  user      User     @relation(fields: [userId], references: [id])
+  id        String  @id @default(auto()) @map("_id") @db.ObjectId
+  stationId String  @db.ObjectId
+  userId    String  @db.ObjectId
+  station   Station @relation(fields: [stationId], references: [id])
+  user      User    @relation(fields: [userId], references: [id])
 
   @@index([stationId])
   @@index([userId])
+}
+
+// New model for user documents
+model UserDocument {
+  id              String         @id @default(auto()) @map("_id") @db.ObjectId
+  userId          String         @db.ObjectId
+  documentType    DocumentType
+  fileName        String // Original file name
+  fileUrl         String // Firebase Storage URL
+  filePath        String // Firebase Storage path
+  fileSize        Int // File size in bytes
+  mimeType        String // File MIME type
+  status          DocumentStatus @default(PENDING)
+  uploadedAt      DateTime       @default(now())
+  verifiedAt      DateTime? // When document was verified
+  verifiedBy      String? // Staff/Admin who verified
+  rejectionReason String? // Reason for rejection if status is REJECTED
+  expiryDate      DateTime? // For documents with expiry date
+  documentNumber  String? // ID/License number
+  user            User           @relation(fields: [userId], references: [id])
+
+  @@index([userId, documentType])
+  @@index([status])
+  @@index([uploadedAt])
+}
+
+// New models for better data management
+model Pricing {
+  id          String      @id @default(auto()) @map("_id") @db.ObjectId
+  vehicleType VehicleType
+  hourlyRate  Float
+  dailyRate   Float
+  weeklyRate  Float
+  monthlyRate Float
+  currency    String      @default("VND")
+  validFrom   DateTime
+  validUntil  DateTime?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@index([vehicleType, validFrom])
+}
+
+model Notification {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  title     String
+  message   String
+  type      String // INFO, WARNING, ERROR, SUCCESS
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@index([userId, read])
+  @@index([createdAt])
+}
+
+model AuditLog {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String?  @db.ObjectId
+  action    String // CREATE, UPDATE, DELETE
+  tableName String
+  recordId  String
+  oldData   Json?
+  newData   Json?
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([tableName, recordId])
 }

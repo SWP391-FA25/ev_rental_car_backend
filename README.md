@@ -8,6 +8,7 @@ Backend Node.js (ESM) với Express, Prisma (MongoDB), Vite client proxy-friendl
 - Vite >= 7
 - npm hoặc pnpm
 - (Tuỳ chọn) MongoDB cục bộ hoặc Mongo Atlas để dùng với Prisma
+- Firebase project để lưu trữ documents
 
 ## Cài đặt
 
@@ -29,6 +30,20 @@ ALLOWED_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
 
 # Kết nối MongoDB (Prisma, có thể để trống nếu chưa dùng DB)
 DATABASE_URL="mongodb://localhost:27017/ev_rental?directConnection=true"
+
+# JWT
+JWT_SECRET="your-super-secret-jwt-key"
+JWT_EXPIRES_IN="15m"
+COOKIE_NAME="access_token"
+COOKIE_SECURE="false"
+
+# Firebase
+FIREBASE_API_KEY="your-firebase-api-key"
+FIREBASE_AUTH_DOMAIN="your-project.firebaseapp.com"
+FIREBASE_PROJECT_ID="your-project-id"
+FIREBASE_STORAGE_BUCKET="your-project.appspot.com"
+FIREBASE_MESSAGING_SENDER_ID="123456789"
+FIREBASE_APP_ID="1:123456789:web:abcdef123456"
 ```
 
 ## Chạy phát triển
@@ -42,6 +57,58 @@ Kiểm tra nhanh:
 
 - `GET /health` → `{ "status": "ok" }`
 - `GET /api/health` → `{ success, data: { status: 'ok' }, message, timestamp }`
+
+## API Endpoints
+
+### Document Upload API
+
+#### Upload Document
+
+```
+POST /api/documents/upload
+Content-Type: multipart/form-data
+Authorization: Bearer <token>
+
+Body:
+- document: File (JPEG, PNG, JPG, PDF, max 10MB)
+- documentType: "DRIVERS_LICENSE" | "ID_CARD" | "PASSPORT"
+- documentNumber: string (optional)
+- expiryDate: string (optional, ISO date format)
+```
+
+#### Get User Documents
+
+```
+GET /api/documents/my-documents
+Authorization: Bearer <token>
+```
+
+#### Delete Document
+
+```
+DELETE /api/documents/:documentId
+Authorization: Bearer <token>
+```
+
+#### Admin: Get All Documents
+
+```
+GET /api/documents/all?status=PENDING&documentType=ID_CARD&page=1&limit=20
+Authorization: Bearer <token>
+```
+
+#### Admin: Verify Document
+
+```
+PATCH /api/documents/:documentId/verify
+Authorization: Bearer <token>
+
+Body:
+{
+  "status": "APPROVED" | "REJECTED",
+  "rejectionReason": "string" (required if status is REJECTED)
+}
+```
 
 ## Build & Chạy sản phẩm
 
@@ -68,14 +135,22 @@ Server/
 │  ├─ index.js                 # Entry ESM khởi động HTTP server
 │  ├─ config/
 │  │  ├─ env.js               # Biến môi trường (port, databaseUrl,...)
-│  │  └─ cors.js              # Cấu hình CORS allow list
+│  │  ├─ cors.js              # Cấu hình CORS allow list
+│  │  └─ firebase.js          # Firebase Storage config
 │  ├─ controllers/
-│  │  └─ health.controller.js # Trả response chuẩn hoá
+│  │  ├─ health.controller.js # Trả response chuẩn hoá
+│  │  └─ document.controller.js # Document upload/management
 │  ├─ middleware/
-│  │  └─ errorHandler.js      # 404 & error handler
+│  │  ├─ errorHandler.js      # 404 & error handler
+│  │  └─ authenticate.js      # JWT authentication
 │  ├─ routes/
 │  │  ├─ index.js             # Router gốc
-│  │  └─ modules/health.route.js
+│  │  └─ modules/
+│  │     ├─ health.route.js
+│  │     ├─ auth.route.js
+│  │     ├─ booking.route.js
+│  │     ├─ payment.route.js
+│  │     └─ document.route.js # Document API routes
 │  └─ lib/
 │     └─ prisma.js            # PrismaClient singleton (ESM)
 ├─ prisma/
@@ -91,6 +166,7 @@ Server/
 - Chuẩn hoá response: các API nên tuân theo định dạng `{ success, data, message, timestamp }`.
 - Prisma (MongoDB): schema tối thiểu đã sẵn sàng; thêm model khi bắt đầu nghiệp vụ, sau đó `npx prisma generate`.
 - Client (repo riêng): nên dùng Vite proxy để gọi `/api/...` bằng relative URL khi dev.
+- Firebase Storage: Cấu hình trong `src/config/firebase.js`, cần thiết lập Firebase project và Storage bucket.
 
 ## Liên quan
 
@@ -99,3 +175,33 @@ Server/
 ---
 
 Nếu bạn cần cấu hình thêm (auth, logger, rate-limit, validation), chúng ta có thể bổ sung nhanh theo cùng phong cách cấu trúc ở trên.
+
+## Tóm tắt
+
+Tôi đã tạo hoàn chỉnh API cho phép upload CMND và giấy phép lái xe với các tính năng:
+
+### ✅ **Đã hoàn thành:**
+
+1. **Firebase Storage Integration** - Lưu trữ file an toàn
+2. **Document Controller** - Xử lý upload, get, delete, verify documents
+3. **Document Routes** - API endpoints cho user và admin
+4. **File Validation** - Kiểm tra loại file, kích thước
+5. **Database Integration** - Lưu thông tin documents vào MongoDB
+6. **Authentication** - Bảo mật API với JWT
+7. **Admin Features** - Verify/reject documents
+
+### **API Endpoints:**
+
+- `POST /api/documents/upload` - Upload CMND/License
+- `GET /api/documents/my-documents` - Xem documents của user
+- `DELETE /api/documents/:id` - Xóa document
+- `GET /api/documents/all` - Admin xem tất cả documents
+- `PATCH /api/documents/:id/verify` - Admin verify/reject
+
+### **Cần thiết lập:**
+
+1. **Firebase Project** - Tạo project và Storage bucket
+2. **Environment Variables** - Cấu hình Firebase keys
+3. **Database Migration** - Chạy `npx prisma db push`
+
+Bạn có muốn tôi hướng dẫn thiết lập Firebase hoặc test API không?
