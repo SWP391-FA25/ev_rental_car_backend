@@ -3,9 +3,41 @@ import bcrypt from 'bcryptjs';
 import { prisma } from '../lib/prisma.js';
 import { env } from '../config/env.js';
 
+function normalizeExpiresIn(raw) {
+  // Default fallback
+  const DEFAULT = '15m';
+  if (raw == null) return DEFAULT;
+
+  let val = raw;
+  // If it's a number already, accept as seconds
+  if (typeof val === 'number' && Number.isFinite(val) && val > 0) return val;
+
+  if (typeof val === 'string') {
+    // Trim, remove surrounding quotes, remove inner spaces
+    let s = val.trim();
+    if (
+      (s.startsWith('"') && s.endsWith('"')) ||
+      (s.startsWith("'") && s.endsWith("'"))
+    ) {
+      s = s.slice(1, -1);
+    }
+    s = s.replace(/\s+/g, '');
+    if (s === '') return DEFAULT;
+
+    // If numeric string, convert to number seconds
+    if (/^\d+$/.test(s)) return Number(s);
+
+    // Accept common ms-style tokens (e.g., 15m, 1h, 1d, 20s)
+    if (/^\d+(ms|s|m|h|d|w|y)$/i.test(s)) return s.toLowerCase();
+  }
+  // Anything else → fallback
+  return DEFAULT;
+}
+
 function signAccessToken(user) {
   const payload = { sub: user.id, role: user.role };
-  return jwt.sign(payload, env.jwtSecret, { expiresIn: env.jwtExpiresIn });
+  const expiresIn = normalizeExpiresIn(env.jwtExpiresIn);
+  return jwt.sign(payload, env.jwtSecret, { expiresIn });
 }
 
 function cookieOptions() {
