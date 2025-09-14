@@ -50,9 +50,9 @@ enum PaymentStatus {
 
 // Mới: trạng thái tài khoản chuẩn hóa
 enum AccountStatus {
-  active
-  suspended
-  banned
+  ACTIVE
+  SUSPENDED
+  BANNED
 }
 
 model User {
