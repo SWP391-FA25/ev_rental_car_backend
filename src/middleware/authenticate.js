@@ -1,9 +1,8 @@
 import jwt from 'jsonwebtoken';
-import { env } from '../config/env.js';
 
 export function authenticate(req, res, next) {
   try {
-    const tokenFromCookie = req.cookies?.[env.cookieName];
+    const tokenFromCookie = req.cookies?.[process.env.COOKIE_NAME];
     const authHeader = req.headers.authorization || '';
     const tokenFromHeader = authHeader.startsWith('Bearer ')
       ? authHeader.slice(7)
@@ -14,7 +13,7 @@ export function authenticate(req, res, next) {
       return res.status(401).json({ success: false, message: 'Unauthorized' });
     }
 
-    const payload = jwt.verify(token, env.jwtSecret);
+    const payload = jwt.verify(token, process.env.JWT_SECRET);
     req.user = { id: payload.sub, role: payload.role };
     return next();
   } catch (err) {

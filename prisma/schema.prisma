@@ -64,7 +64,7 @@ model User {
   phone         String?     // Added for contact information
   license       String?     // CMND/CCCD or driver’s license
   address       String?     // Added for user address
-  accountStatus AccountStatus @default(active)
+  accountStatus AccountStatus @default(ACTIVE)
   softDeleted   Boolean       @default(false)
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
