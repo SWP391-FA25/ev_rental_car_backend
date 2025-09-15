@@ -1,7 +1,6 @@
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { prisma } from '../lib/prisma.js';
-import { env } from '../config/env.js';
 
 function normalizeExpiresIn(raw) {
   // Default fallback
@@ -36,15 +35,16 @@ function normalizeExpiresIn(raw) {
 
 function signAccessToken(user) {
   const payload = { sub: user.id, role: user.role };
-  const expiresIn = normalizeExpiresIn(env.jwtExpiresIn);
-  return jwt.sign(payload, env.jwtSecret, { expiresIn });
+  return jwt.sign(payload, process.env.JWT_SECRET, {
+    expiresIn: process.env.JWT_EXPIRES_IN,
+  });
 }
 
 function cookieOptions() {
   return {
     httpOnly: true,
     sameSite: 'lax',
-    secure: env.cookieSecure,
+    secure: process.env.COOKIE_SECURE === 'true',
     path: '/',
   };
 }
@@ -75,15 +75,14 @@ export async function register(req, res, next) {
         license,
         address,
         role: 'RENTER', // mặc định
-        accountStatus: 'active',
+        accountStatus: 'ACTIVE',
       },
     });
 
     const token = signAccessToken(user);
-    res.cookie(env.cookieName, token, cookieOptions());
+    res.cookie(process.env.COOKIE_NAME, token, cookieOptions());
 
     const { password: _pw, ...safeUser } = user;
-    //pw just use to delete password from cookie
     return res.status(201).json({ success: true, data: { user: safeUser } });
   } catch (e) {
     if (e.code === 'P2002' && e.meta?.target?.includes('email')) {
@@ -114,7 +113,7 @@ export async function login(req, res, next) {
         .json({ success: false, message: 'Invalid credentials' });
     }
 
-    if (user.accountStatus !== 'active') {
+    if (user.accountStatus !== 'ACTIVE') {
       return res
         .status(403)
         .json({ success: false, message: 'Account is not active' });
@@ -143,7 +142,7 @@ export async function login(req, res, next) {
     }
 
     const token = signAccessToken(user);
-    res.cookie(env.cookieName, token, cookieOptions());
+    res.cookie(process.env.COOKIE_NAME, token, cookieOptions());
 
     const { password: _pw, ...safeUser } = user;
     return res.json({ success: true, data: { user: safeUser } });
@@ -154,7 +153,7 @@ export async function login(req, res, next) {
 
 export async function logout(req, res, next) {
   try {
-    res.clearCookie(env.cookieName, { ...cookieOptions(), maxAge: 0 });
+    res.clearCookie(process.env.COOKIE_NAME, { ...cookieOptions(), maxAge: 0 });
     return res.json({ success: true, message: 'Logged out' });
   } catch (err) {
     return next(err);

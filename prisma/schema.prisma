@@ -62,12 +62,12 @@ enum PaymentStatus {
 
 // Mới: trạng thái tài khoản chuẩn hóa
 enum AccountStatus {
-  active
-  suspended
-  banned
+  ACTIVE
+  SUSPENDED
+  BANNED
 }
 
-// Document types enum  
+// Document types enum
 enum DocumentType {
   DRIVERS_LICENSE
   ID_CARD
@@ -95,6 +95,15 @@ enum PaymentMethod {
   CASH
 }
 
+// Document types enum
+enum DocumentType {
+  DRIVERS_LICENSE
+  ID_CARD
+  PASSPORT
+}
+
+
+
 model User {
   id            String          @id @default(auto()) @map("_id") @db.ObjectId
   email         String          @unique
@@ -105,7 +114,7 @@ model User {
   address       String? // Added for user address
   dateOfBirth   DateTime? // Added for age verification
   gender        String? // Added for reporting
-  accountStatus AccountStatus   @default(active)
+  accountStatus AccountStatus   @default(ACTIVE)
   softDeleted   Boolean         @default(false)
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
