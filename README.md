@@ -8,7 +8,6 @@ Backend Node.js (ESM) với Express, Prisma (MongoDB), Vite client proxy-friendl
 - Vite >= 7
 - npm hoặc pnpm
 - (Tuỳ chọn) MongoDB cục bộ hoặc Mongo Atlas để dùng với Prisma
-- Firebase project để lưu trữ documents
 
 ## Cài đặt
 
@@ -36,14 +35,6 @@ JWT_SECRET="your-super-secret-jwt-key"
 JWT_EXPIRES_IN="15m"
 COOKIE_NAME="access_token"
 COOKIE_SECURE="false"
-
-# Firebase
-FIREBASE_API_KEY="your-firebase-api-key"
-FIREBASE_AUTH_DOMAIN="your-project.firebaseapp.com"
-FIREBASE_PROJECT_ID="your-project-id"
-FIREBASE_STORAGE_BUCKET="your-project.appspot.com"
-FIREBASE_MESSAGING_SENDER_ID="123456789"
-FIREBASE_APP_ID="1:123456789:web:abcdef123456"
 ```
 
 ## Chạy phát triển
@@ -135,8 +126,7 @@ Server/
 │  ├─ index.js                 # Entry ESM khởi động HTTP server
 │  ├─ config/
 │  │  ├─ env.js               # Biến môi trường (port, databaseUrl,...)
-│  │  ├─ cors.js              # Cấu hình CORS allow list
-│  │  └─ firebase.js          # Firebase Storage config
+│  │  └─ cors.js              # Cấu hình CORS allow list
 │  ├─ controllers/
 │  │  ├─ health.controller.js # Trả response chuẩn hoá
 │  │  └─ document.controller.js # Document upload/management
@@ -166,7 +156,7 @@ Server/
 - Chuẩn hoá response: các API nên tuân theo định dạng `{ success, data, message, timestamp }`.
 - Prisma (MongoDB): schema tối thiểu đã sẵn sàng; thêm model khi bắt đầu nghiệp vụ, sau đó `npx prisma generate`.
 - Client (repo riêng): nên dùng Vite proxy để gọi `/api/...` bằng relative URL khi dev.
-- Firebase Storage: Cấu hình trong `src/config/firebase.js`, cần thiết lập Firebase project và Storage bucket.
+- File Storage: Documents được lưu trữ trong thư mục `uploads/` trên local filesystem.
 
 ## Liên quan
 
@@ -182,7 +172,9 @@ Tôi đã tạo hoàn chỉnh API cho phép upload CMND và giấy phép lái xe
 
 ### ✅ **Đã hoàn thành:**
 
-1. **Firebase Storage Integration** - Lưu trữ file an toàn
+### ✅ **Đã hoàn thành:**
+
+1. **Local File Storage** - Lưu trữ file an toàn trong hệ thống local
 2. **Document Controller** - Xử lý upload, get, delete, verify documents
 3. **Document Routes** - API endpoints cho user và admin
 4. **File Validation** - Kiểm tra loại file, kích thước
@@ -200,8 +192,8 @@ Tôi đã tạo hoàn chỉnh API cho phép upload CMND và giấy phép lái xe
 
 ### **Cần thiết lập:**
 
-1. **Firebase Project** - Tạo project và Storage bucket
-2. **Environment Variables** - Cấu hình Firebase keys
-3. **Database Migration** - Chạy `npx prisma db push`
+1. **Database Migration** - Chạy `npx prisma db push`
+2. **Environment Variables** - Cấu hình JWT và database keys
+3. **Uploads Directory** - Thư mục `uploads/documents/` sẽ được tạo tự động
 
-Bạn có muốn tôi hướng dẫn thiết lập Firebase hoặc test API không?
+Bạn có muốn tôi hướng dẫn thiết lập database hoặc test API không?

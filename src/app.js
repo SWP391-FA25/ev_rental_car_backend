@@ -2,12 +2,17 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import routes from './routes/routes.js';
 import { notFoundHandler, errorHandler } from './middleware/errorHandler.js';
 import { getCorsOptions } from './config/cors.js';
 import swaggerUi from 'swagger-ui-express';
 import { openapiSpec } from './docs/openapi.js';
 import cookieParser from 'cookie-parser';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 
@@ -20,6 +25,9 @@ app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 
 app.use('/docs', swaggerUi.serve, swaggerUi.setup(openapiSpec));
 app.get('/docs.json', (req, res) => res.json(openapiSpec));
+
+// Serve uploaded files
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 app.use('/api', routes);
 

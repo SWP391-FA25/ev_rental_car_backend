@@ -1,12 +1,11 @@
 import { PrismaClient } from '@prisma/client';
-import { storage } from '../config/firebase.js';
-import {
-  ref,
-  uploadBytes,
-  getDownloadURL,
-  deleteObject,
-} from 'firebase/storage';
+import { promises as fs } from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { z } from 'zod';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const prisma = new PrismaClient();
 
@@ -80,23 +79,27 @@ class DocumentController {
       const timestamp = Date.now();
       const fileExtension = file.originalname.split('.').pop();
       const fileName = `${userId}_${validatedData.documentType}_${timestamp}.${fileExtension}`;
-      const filePath = `documents/${userId}/${fileName}`;
+      const uploadsDir = path.join(
+        __dirname,
+        '../../uploads/documents',
+        userId
+      );
+      const filePath = path.join(uploadsDir, fileName);
 
-      // Upload to Firebase Storage
-      const storageRef = ref(storage, filePath);
-      const snapshot = await uploadBytes(storageRef, file.buffer, {
-        contentType: file.mimetype,
-      });
+      // Ensure uploads directory exists
+      await fs.mkdir(uploadsDir, { recursive: true });
 
-      // Get download URL
-      const downloadURL = await getDownloadURL(snapshot.ref);
+      // Save file to local filesystem
+      await fs.writeFile(filePath, file.buffer);
+
+      // Create file URL for serving
+      const fileUrl = `/uploads/documents/${userId}/${fileName}`;
 
       // Delete existing pending/rejected document if exists
       if (existingDocument) {
         try {
-          // Delete old file from Firebase
-          const oldFileRef = ref(storage, existingDocument.filePath);
-          await deleteObject(oldFileRef);
+          // Delete old file from filesystem
+          await fs.unlink(existingDocument.filePath);
         } catch (error) {
           console.warn('Failed to delete old file:', error.message);
         }
@@ -113,7 +116,7 @@ class DocumentController {
           userId,
           documentType: validatedData.documentType,
           fileName: file.originalname,
-          fileUrl: downloadURL,
+          fileUrl: fileUrl,
           filePath,
           fileSize: file.size,
           mimeType: file.mimetype,
@@ -215,10 +218,9 @@ class DocumentController {
         });
       }
 
-      // Delete from Firebase Storage
+      // Delete from local filesystem
       try {
-        const fileRef = ref(storage, document.filePath);
-        await deleteObject(fileRef);
+        await fs.unlink(document.filePath);
       } catch (error) {
         console.warn('Failed to delete file from storage:', error.message);
       }
