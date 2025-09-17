@@ -95,13 +95,6 @@ enum PaymentMethod {
   CASH
 }
 
-// Document types enum
-enum DocumentType {
-  DRIVERS_LICENSE
-  ID_CARD
-  PASSPORT
-}
-
 
 
 model User {
