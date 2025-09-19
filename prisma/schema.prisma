@@ -280,8 +280,10 @@ model UserDocument {
   userId          String         @db.ObjectId
   documentType    DocumentType
   fileName        String // Original file name
-  fileUrl         String // Firebase Storage URL
-  filePath        String // Firebase Storage path
+  fileUrl         String // ImageKit URL
+  fileId          String? // ImageKit file ID for deletion
+  filePath        String // ImageKit file path
+  thumbnailUrl    String? // ImageKit thumbnail URL
   fileSize        Int // File size in bytes
   mimeType        String // File MIME type
   status          DocumentStatus @default(PENDING)
