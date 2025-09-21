@@ -7,7 +7,7 @@ import {
   updateStation,
   softDeleteStation,
   deleteStaion,
-} from '../controllers/station.controller.js';
+} from '../../controllers/station.controller.js';
 import { authenticate } from '../../middleware/authenticate.js';
 import { authorize } from '../../middleware/authorize.js';
 
