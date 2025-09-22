@@ -119,7 +119,7 @@ const softDeleteStation = async (req, res, next) => {
   }
 };
 
-const deleteStaion = async (req, res, next) => {
+const deleteStation = async (req, res, next) => {
   try {
     const { id } = req.params;
 
@@ -278,5 +278,5 @@ export {
   softDeleteStation,
   updateStation,
   createStation,
-  deleteStaion,
+  deleteStation,
 };
