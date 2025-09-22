@@ -1,7 +1,8 @@
 import { prisma } from '../lib/prisma.js';
 import { z } from 'zod';
 
-const VALID_ACCOUNT_STATUS = ['ACTIVE', 'INACTIVE', 'SUSPENDED'];
+const VALID_ACCOUNT_STATUS = ['ACTIVE', 'BANNED', 'SUSPENDED'];
+const VALID_ROLES = ['STAFF', 'ADMIN'];
 
 const validateStaffInput = (
   { email, password, name, phone, accountStatus },
@@ -41,14 +42,19 @@ const validateStaffInput = (
 const getStaff = async (req, res, next) => {
   try {
     const staff = await prisma.user.findMany({
-      where: { role: 'STAFF', softDeleted: false },
+      where: {
+        role: { in: VALID_ROLES },
+        softDeleted: false,
+      },
       orderBy: { createdAt: 'desc' },
     });
+
     if (staff.length === 0) {
       return res
         .status(404)
-        .json({ success: false, message: 'No staff found' });
+        .json({ success: false, message: 'No staff or admin found' });
     }
+
     return res.json({ success: true, data: { staff } });
   } catch (err) {
     return next(err);
@@ -59,11 +65,13 @@ const getStaffById = async (req, res, next) => {
   try {
     const { id } = req.params;
     const staff = await prisma.user.findUnique({ where: { id } });
-    if (!staff || staff.role !== 'STAFF' || staff.softDeleted) {
+
+    if (!staff || !VALID_ROLES.includes(staff.role) || staff.softDeleted) {
       return res
         .status(404)
-        .json({ success: false, message: 'Staff not found' });
+        .json({ success: false, message: 'Staff or admin not found' });
     }
+
     return res.json({ success: true, data: { staff } });
   } catch (err) {
     return next(err);
@@ -72,7 +80,8 @@ const getStaffById = async (req, res, next) => {
 
 const createStaff = async (req, res, next) => {
   try {
-    const { email, password, name, phone, address, accountStatus } = req.body;
+    const { email, password, name, phone, address, accountStatus, role } =
+      req.body;
 
     const errors = validateStaffInput(
       { email, password, name, phone, accountStatus },
@@ -81,6 +90,12 @@ const createStaff = async (req, res, next) => {
 
     if (errors.length > 0) {
       return res.status(400).json({ success: false, errors });
+    }
+
+    if (role && !VALID_ROLES.includes(role)) {
+      return res
+        .status(400)
+        .json({ success: false, message: 'Role must be STAFF or ADMIN' });
     }
 
     const existing = await prisma.user.findUnique({ where: { email } });
@@ -98,9 +113,10 @@ const createStaff = async (req, res, next) => {
         phone,
         address,
         accountStatus: accountStatus || 'ACTIVE',
-        role: 'STAFF',
+        role: role || 'STAFF',
       },
     });
+
     return res.status(201).json({ success: true, data: { staff } });
   } catch (err) {
     return next(err);
@@ -123,10 +139,10 @@ const updateStaff = async (req, res, next) => {
 
     const staff = await prisma.user.findUnique({ where: { id } });
 
-    if (!staff || staff.role !== 'STAFF' || staff.softDeleted) {
+    if (!staff || !VALID_ROLES.includes(staff.role) || staff.softDeleted) {
       return res
         .status(404)
-        .json({ success: false, message: 'Staff not found' });
+        .json({ success: false, message: 'Staff or admin not found' });
     }
 
     const updated = await prisma.user.update({
@@ -142,6 +158,7 @@ const updateStaff = async (req, res, next) => {
         updatedAt: true,
       },
     });
+
     return res.json({ success: true, data: { staff: updated } });
   } catch (err) {
     return next(err);
@@ -152,16 +169,19 @@ const softDeleteStaff = async (req, res, next) => {
   try {
     const { id } = req.params;
     const staff = await prisma.user.findUnique({ where: { id } });
-    if (!staff || staff.role !== 'STAFF' || staff.softDeleted) {
+
+    if (!staff || !VALID_ROLES.includes(staff.role) || staff.softDeleted) {
       return res
         .status(404)
-        .json({ success: false, message: 'Staff not found' });
+        .json({ success: false, message: 'Staff or admin not found' });
     }
+
     await prisma.user.update({
       where: { id },
       data: { softDeleted: true, accountStatus: 'INACTIVE' },
     });
-    return res.json({ success: true, message: 'Staff soft deleted' });
+
+    return res.json({ success: true, message: 'Staff/admin soft deleted' });
   } catch (err) {
     return next(err);
   }
@@ -176,18 +196,21 @@ const deleteStaff = async (req, res, next) => {
     if (!staff) {
       return res
         .status(404)
-        .json({ success: false, message: 'Staff not found' });
+        .json({ success: false, message: 'Staff or admin not found' });
     }
 
-    if (staff.role !== 'STAFF') {
+    if (!VALID_ROLES.includes(staff.role)) {
       return res.status(400).json({
         success: false,
-        message: 'This is not a staff account, please check again',
+        message: 'This is not a staff or admin account, please check again',
       });
     }
 
     await prisma.user.delete({ where: { id } });
-    return res.json({ success: true, message: 'Staff deleted successfully' });
+    return res.json({
+      success: true,
+      message: 'Staff/admin deleted successfully',
+    });
   } catch (error) {
     return next(error);
   }

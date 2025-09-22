@@ -6,6 +6,7 @@ import documentRouter from './modules/document.route.js';
 import testRouter from './modules/test.route.js';
 import staffRouter from './modules/staff.route.js';
 import stationRouter from './modules/station.route.js';
+import assignRouter from './modules/assign.route.js';
 
 const router = Router();
 
@@ -16,5 +17,6 @@ router.use('/documents', documentRouter);
 router.use('/test', testRouter);
 router.use('/staff', staffRouter);
 router.use('/station', stationRouter);
+router.use('/assignments', assignRouter);
 
 export default router;

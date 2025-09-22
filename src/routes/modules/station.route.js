@@ -6,7 +6,7 @@ import {
   createStation,
   updateStation,
   softDeleteStation,
-  deleteStaion,
+  deleteStation,
 } from '../../controllers/station.controller.js';
 import { authenticate } from '../../middleware/authenticate.js';
 import { authorize } from '../../middleware/authorize.js';
@@ -36,6 +36,6 @@ router.patch(
   softDeleteStation
 );
 // Xóa cứng station (xóa khỏi DB)
-router.delete('/:id', authenticate, authorize('ADMIN'), deleteStaion);
+router.delete('/:id', authenticate, authorize('ADMIN'), deleteStation);
 
 export default router;
