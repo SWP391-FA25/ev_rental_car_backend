@@ -68,7 +68,9 @@ const createAssignment = async (req, res, next) => {
 // Get all assignments
 const getAssignments = async (req, res, next) => {
   try {
-    const assignments = await prisma.stationStaff.findMany();
+    const assignments = await prisma.stationStaff.findMany({
+      orderBy: { createdAt: 'desc' },
+    });
 
     if (assignments.length === 0) {
       return res
