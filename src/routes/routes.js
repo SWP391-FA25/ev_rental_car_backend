@@ -1,3 +1,4 @@
+import renterRouter from './modules/renter.route.js';
 import { Router } from 'express';
 import authRouter from './modules/auth.route.js';
 import bookingRouter from './modules/booking.route.js';
@@ -18,5 +19,6 @@ router.use('/test', testRouter);
 router.use('/staff', staffRouter);
 router.use('/station', stationRouter);
 router.use('/assignments', assignRouter);
+router.use('/renters', renterRouter);
 
 export default router;
