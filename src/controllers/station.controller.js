@@ -103,16 +103,29 @@ const softDeleteStation = async (req, res, next) => {
       });
     }
 
-    const deletedStation = await prisma.station.update({
-      where: { id },
-      data: { softDeleted: true, status: 'INACTIVE' },
-      select: {
-        id: true,
-        name: true,
-        location: true,
-        address: true,
-      },
-    });
+    const oldStation = await prisma.station.findUnique({ where: { id } });
+    const [deletedStation] = await prisma.$transaction([
+      prisma.station.update({
+        where: { id },
+        data: { softDeleted: true, status: 'INACTIVE' },
+        select: {
+          id: true,
+          name: true,
+          location: true,
+          address: true,
+        },
+      }),
+      prisma.auditLog.create({
+        data: {
+          userId: req.user?.id || null,
+          action: 'DELETE',
+          tableName: 'Station',
+          recordId: id,
+          oldData: oldStation,
+          newData: { softDeleted: true, status: 'INACTIVE' },
+        },
+      }),
+    ]);
     return res.json({ success: true, data: { station: deletedStation } });
   } catch (error) {
     return next(error);
