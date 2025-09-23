@@ -105,18 +105,29 @@ const createStaff = async (req, res, next) => {
         .json({ success: false, message: 'Email already exists' });
     }
 
-    const staff = await prisma.user.create({
-      data: {
-        email,
-        password,
-        name,
-        phone,
-        address,
-        accountStatus: accountStatus || 'ACTIVE',
-        role: role || 'STAFF',
-      },
-    });
-
+    const [staff] = await prisma.$transaction([
+      prisma.user.create({
+        data: {
+          email,
+          password,
+          name,
+          phone,
+          address,
+          accountStatus: accountStatus || 'ACTIVE',
+          role: role || 'STAFF',
+        },
+      }),
+      prisma.auditLog.create({
+        data: {
+          userId: req.user?.id || null,
+          action: 'CREATE',
+          tableName: 'User',
+          recordId: email,
+          oldData: null,
+          newData: { email, name, phone, address, accountStatus, role },
+        },
+      }),
+    ]);
     return res.status(201).json({ success: true, data: { staff } });
   } catch (err) {
     return next(err);
@@ -149,22 +160,34 @@ const updateStaff = async (req, res, next) => {
         .json({ success: false, message: 'Staff or admin not found' });
     }
 
-    const updated = await prisma.user.update({
-      where: { id },
-      data: { name, phone, address, accountStatus, role },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        phone: true,
-        address: true,
-        role: true,
-        accountStatus: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-    });
-
+    const oldStaff = await prisma.user.findUnique({ where: { id } });
+    const [updated] = await prisma.$transaction([
+      prisma.user.update({
+        where: { id },
+        data: { name, phone, address, accountStatus, role },
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          phone: true,
+          address: true,
+          role: true,
+          accountStatus: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      }),
+      prisma.auditLog.create({
+        data: {
+          userId: req.user?.id || null,
+          action: 'UPDATE',
+          tableName: 'User',
+          recordId: id,
+          oldData: oldStaff,
+          newData: { name, phone, address, accountStatus, role },
+        },
+      }),
+    ]);
     return res.json({ success: true, data: { staff: updated } });
   } catch (err) {
     return next(err);
@@ -174,6 +197,19 @@ const updateStaff = async (req, res, next) => {
 const softDeleteStaff = async (req, res, next) => {
   try {
     const { id } = req.params;
+    const status = req.body.status;
+
+    const VALID_SOFT_DELETE_STATUS = ['SUSPENDED', 'BANNED'];
+
+    if (!VALID_SOFT_DELETE_STATUS.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: `Invalid status. Allowed: ${VALID_SOFT_DELETE_STATUS.join(
+          ', '
+        )}`,
+      });
+    }
+
     const staff = await prisma.user.findUnique({ where: { id } });
 
     if (!staff || !VALID_ROLES.includes(staff.role) || staff.softDeleted) {
@@ -182,11 +218,22 @@ const softDeleteStaff = async (req, res, next) => {
         .json({ success: false, message: 'Staff or admin not found' });
     }
 
-    await prisma.user.update({
-      where: { id },
-      data: { softDeleted: true, accountStatus: 'SUSPENDED' },
-    });
-
+    await prisma.$transaction([
+      prisma.user.update({
+        where: { id },
+        data: { softDeleted: true, accountStatus: status },
+      }),
+      prisma.auditLog.create({
+        data: {
+          userId: req.user?.id || null,
+          action: 'DELETE',
+          tableName: 'User',
+          recordId: id,
+          oldData: staff,
+          newData: { softDeleted: true, accountStatus: status },
+        },
+      }),
+    ]);
     return res.json({ success: true, message: 'Staff/admin soft deleted' });
   } catch (err) {
     return next(err);
@@ -212,7 +259,20 @@ const deleteStaff = async (req, res, next) => {
       });
     }
 
-    await prisma.user.delete({ where: { id } });
+    const oldStaff = await prisma.user.findUnique({ where: { id } });
+    await prisma.$transaction([
+      prisma.user.delete({ where: { id } }),
+      prisma.auditLog.create({
+        data: {
+          userId: req.user?.id || null,
+          action: 'DELETE',
+          tableName: 'User',
+          recordId: id,
+          oldData: oldStaff,
+          newData: null,
+        },
+      }),
+    ]);
     return res.json({
       success: true,
       message: 'Staff/admin deleted successfully',
