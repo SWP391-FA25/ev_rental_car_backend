@@ -1,11 +1,6 @@
 import { PrismaClient } from '@prisma/client';
-import { promises as fs } from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
 import { z } from 'zod';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+import ImageKitService from '../lib/imagekit.js';
 
 const prisma = new PrismaClient();
 
@@ -75,33 +70,38 @@ class DocumentController {
         });
       }
 
-      // Create unique file path
+      // Upload to ImageKit
       const timestamp = Date.now();
       const fileExtension = file.originalname.split('.').pop();
       const fileName = `${userId}_${validatedData.documentType}_${timestamp}.${fileExtension}`;
-      const uploadsDir = path.join(
-        __dirname,
-        '../../uploads/documents',
-        userId
+
+      const uploadResult = await ImageKitService.uploadDocument(
+        file.buffer,
+        fileName,
+        userId,
+        validatedData.documentType
       );
-      const filePath = path.join(uploadsDir, fileName);
 
-      // Ensure uploads directory exists
-      await fs.mkdir(uploadsDir, { recursive: true });
-
-      // Save file to local filesystem
-      await fs.writeFile(filePath, file.buffer);
-
-      // Create file URL for serving
-      const fileUrl = `/uploads/documents/${userId}/${fileName}`;
+      if (!uploadResult.success) {
+        return res.status(500).json({
+          success: false,
+          message: 'Failed to upload file to storage',
+          error: uploadResult.error,
+        });
+      }
 
       // Delete existing pending/rejected document if exists
       if (existingDocument) {
         try {
-          // Delete old file from filesystem
-          await fs.unlink(existingDocument.filePath);
+          // Delete old file from ImageKit
+          if (existingDocument.fileId) {
+            await ImageKitService.deleteFile(existingDocument.fileId);
+          }
         } catch (error) {
-          console.warn('Failed to delete old file:', error.message);
+          console.warn(
+            'Failed to delete old file from ImageKit:',
+            error.message
+          );
         }
 
         // Delete old document record
@@ -116,8 +116,10 @@ class DocumentController {
           userId,
           documentType: validatedData.documentType,
           fileName: file.originalname,
-          fileUrl: fileUrl,
-          filePath,
+          fileUrl: uploadResult.data.url,
+          fileId: uploadResult.data.fileId,
+          filePath: uploadResult.data.filePath,
+          thumbnailUrl: uploadResult.data.thumbnailUrl,
           fileSize: file.size,
           mimeType: file.mimetype,
           documentNumber: validatedData.documentNumber,
@@ -167,6 +169,8 @@ class DocumentController {
           documentType: true,
           fileName: true,
           fileUrl: true,
+          fileId: true,
+          thumbnailUrl: true,
           status: true,
           uploadedAt: true,
           verifiedAt: true,
@@ -218,11 +222,13 @@ class DocumentController {
         });
       }
 
-      // Delete from local filesystem
+      // Delete from ImageKit
       try {
-        await fs.unlink(document.filePath);
+        if (document.fileId) {
+          await ImageKitService.deleteFile(document.fileId);
+        }
       } catch (error) {
-        console.warn('Failed to delete file from storage:', error.message);
+        console.warn('Failed to delete file from ImageKit:', error.message);
       }
 
       // Delete from database
