@@ -1,5 +1,5 @@
 import { skip } from '@prisma/client/runtime/library';
-import { prisma } from '../lib/prisma';
+import { prisma } from '../lib/prisma.js';
 
 // Create a new assignment
 const createAssignment = async (req, res, next) => {
@@ -134,8 +134,8 @@ const deleteAssignment = async (req, res, next) => {
 
 export {
   createAssignment,
-  getAssignments,
-  getAssignmentById,
-  updateAssignment,
   deleteAssignment,
+  getAssignmentById,
+  getAssignments,
+  updateAssignment,
 };

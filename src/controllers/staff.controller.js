@@ -1,5 +1,5 @@
-import { prisma } from '../lib/prisma.js';
 import { z } from 'zod';
+import { prisma } from '../lib/prisma.js';
 
 const VALID_ACCOUNT_STATUS = ['ACTIVE', 'BANNED', 'SUSPENDED'];
 const VALID_ROLES = ['STAFF', 'ADMIN'];
@@ -126,7 +126,7 @@ const createStaff = async (req, res, next) => {
 const updateStaff = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { name, phone, address, accountStatus } = req.body;
+    const { name, phone, address, accountStatus, role } = req.body;
 
     const errors = validateStaffInput(
       { name, phone, accountStatus, phone },
@@ -135,6 +135,10 @@ const updateStaff = async (req, res, next) => {
 
     if (errors.length > 0) {
       return res.status(400).json({ success: false, errors });
+    }
+
+    if (role && !VALID_ROLES.includes(role)) {
+      return res.status(400).json({ success: false, message: 'Invalid role' });
     }
 
     const staff = await prisma.user.findUnique({ where: { id } });
@@ -147,14 +151,16 @@ const updateStaff = async (req, res, next) => {
 
     const updated = await prisma.user.update({
       where: { id },
-      data: { name, phone, address, accountStatus },
+      data: { name, phone, address, accountStatus, role },
       select: {
         id: true,
         email: true,
         name: true,
         phone: true,
         address: true,
+        role: true,
         accountStatus: true,
+        createdAt: true,
         updatedAt: true,
       },
     });
@@ -178,7 +184,7 @@ const softDeleteStaff = async (req, res, next) => {
 
     await prisma.user.update({
       where: { id },
-      data: { softDeleted: true, accountStatus: 'INACTIVE' },
+      data: { softDeleted: true, accountStatus: 'SUSPENDED' },
     });
 
     return res.json({ success: true, message: 'Staff/admin soft deleted' });
@@ -217,10 +223,10 @@ const deleteStaff = async (req, res, next) => {
 };
 
 export {
+  createStaff,
+  deleteStaff,
   getStaff,
   getStaffById,
-  createStaff,
-  updateStaff,
   softDeleteStaff,
-  deleteStaff,
+  updateStaff,
 };
