@@ -103,16 +103,28 @@ const softDeleteStation = async (req, res, next) => {
       });
     }
 
-    const deletedStation = await prisma.station.update({
-      where: { id },
-      data: { softDeleted: true, status: 'INACTIVE' },
-      select: {
-        id: true,
-        name: true,
-        location: true,
-        address: true,
-      },
-    });
+    const [deletedStation] = await prisma.$transaction([
+      prisma.station.update({
+        where: { id },
+        data: { softDeleted: true, status: 'INACTIVE' },
+        select: {
+          id: true,
+          name: true,
+          location: true,
+          address: true,
+        },
+      }),
+      prisma.auditLog.create({
+        data: {
+          userId: req.user?.id || null,
+          action: 'DELETE',
+          tableName: 'Station',
+          recordId: id,
+          oldData: station,
+          newData: { softDeleted: true, status: 'INACTIVE' },
+        },
+      }),
+    ]);
     return res.json({ success: true, data: { station: deletedStation } });
   } catch (error) {
     return next(error);
@@ -133,8 +145,19 @@ const deleteStation = async (req, res, next) => {
         .json({ success: false, message: 'Station not found' });
     }
 
-    await prisma.station.delete({ where: { id } });
-
+    await prisma.$transaction([
+      prisma.station.delete({ where: { id } }),
+      prisma.auditLog.create({
+        data: {
+          userId: req.user?.id || null,
+          action: 'DELETE',
+          tableName: 'Station',
+          recordId: id,
+          oldData: station,
+          newData: null,
+        },
+      }),
+    ]);
     return res.json({
       success: true,
       message: 'Station deleted successfully',
@@ -206,18 +229,30 @@ const updateStation = async (req, res, next) => {
       }
     }
 
-    const updatedStation = await prisma.station.update({
-      where: { id },
-      data: { name, location, address, status },
-      select: {
-        id: true,
-        name: true,
-        location: true,
-        address: true,
-        status: true,
-        updatedAt: true,
-      },
-    });
+    const [updatedStation] = await prisma.$transaction([
+      prisma.station.update({
+        where: { id },
+        data: { name, location, address, status },
+        select: {
+          id: true,
+          name: true,
+          location: true,
+          address: true,
+          status: true,
+          updatedAt: true,
+        },
+      }),
+      prisma.auditLog.create({
+        data: {
+          userId: req.user?.id || null,
+          action: 'UPDATE',
+          tableName: 'Station',
+          recordId: id,
+          oldData: station,
+          newData: { name, location, address, status },
+        },
+      }),
+    ]);
     return res.json({ success: true, data: { station: updatedStation } });
   } catch (error) {
     return next(error);
@@ -252,17 +287,29 @@ const createStation = async (req, res, next) => {
       });
     }
 
-    const newStation = await prisma.station.create({
-      data: { name, location, address, status },
-      select: {
-        id: true,
-        name: true,
-        location: true,
-        address: true,
-        status: true,
-        createdAt: true,
-      },
-    });
+    const [newStation] = await prisma.$transaction([
+      prisma.station.create({
+        data: { name, location, address, status },
+        select: {
+          id: true,
+          name: true,
+          location: true,
+          address: true,
+          status: true,
+          createdAt: true,
+        },
+      }),
+      prisma.auditLog.create({
+        data: {
+          userId: req.user?.id || null,
+          action: 'CREATE',
+          tableName: 'Station',
+          recordId: name,
+          oldData: null,
+          newData: { name, location, address, status },
+        },
+      }),
+    ]);
     return res
       .status(201)
       .json({ success: true, data: { station: newStation } });
