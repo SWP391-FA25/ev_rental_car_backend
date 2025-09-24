@@ -25,14 +25,14 @@ router.get(
   getUnavailableStations
 );
 // Tạo station mới
-router.post('/', authenticate, authorize('ADMIN', 'STAFF'), createStation);
+router.post('/', authenticate, authorize('ADMIN'), createStation);
 // Cập nhật station
-router.put('/:id', authenticate, authorize('ADMIN', 'STAFF'), updateStation);
+router.put('/:id', authenticate, authorize('ADMIN'), updateStation);
 // Xóa mềm station (chuyển softDeleted=true)
 router.patch(
   '/soft-delete/:id',
   authenticate,
-  authorize('ADMIN', 'STAFF'),
+  authorize('ADMIN'),
   softDeleteStation
 );
 // Xóa cứng station (xóa khỏi DB)
