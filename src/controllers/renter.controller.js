@@ -2,9 +2,9 @@ import { z } from 'zod';
 import { prisma } from '../lib/prisma.js';
 
 const VALID_ACCOUNT_STATUS = ['ACTIVE', 'BANNED', 'SUSPENDED'];
-const VALID_ROLES = ['STAFF', 'ADMIN'];
+const VALID_ROLES = ['RENTER'];
 
-const validateStaffInput = (
+const validateRenterInput = (
   { email, password, name, phone, accountStatus },
   isCreate = true
 ) => {
@@ -16,7 +16,6 @@ const validateStaffInput = (
     } else if (!z.string().email().safeParse(email).success) {
       errors.push('Email is invalid');
     }
-
     if (!password) {
       errors.push('Password is required');
     }
@@ -39,63 +38,59 @@ const validateStaffInput = (
   return errors;
 };
 
-const getStaff = async (req, res, next) => {
+const getRenters = async (req, res, next) => {
   try {
-    const staff = await prisma.user.findMany({
+    const renters = await prisma.user.findMany({
       where: {
         role: { in: VALID_ROLES },
         softDeleted: false,
       },
+      omit: { stationStaff: true },
       orderBy: { createdAt: 'desc' },
     });
 
-    if (staff.length === 0) {
+    if (renters.length === 0) {
       return res
         .status(404)
-        .json({ success: false, message: 'No staff or admin found' });
+        .json({ success: false, message: 'No renters found' });
     }
 
-    return res.json({ success: true, data: { staff } });
+    return res.json({ success: true, data: { renters } });
   } catch (err) {
     return next(err);
   }
 };
 
-const getStaffById = async (req, res, next) => {
+const getRenterById = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const staff = await prisma.user.findUnique({ where: { id } });
+    const renter = await prisma.user.findUnique({
+      where: { id },
+      omit: { stationStaff: true },
+    });
 
-    if (!staff || !VALID_ROLES.includes(staff.role) || staff.softDeleted) {
+    if (!renter || !VALID_ROLES.includes(renter.role) || renter.softDeleted) {
       return res
         .status(404)
-        .json({ success: false, message: 'Staff or admin not found' });
+        .json({ success: false, message: 'Renter not found' });
     }
 
-    return res.json({ success: true, data: { staff } });
+    return res.json({ success: true, data: { renter } });
   } catch (err) {
     return next(err);
   }
 };
 
-const createStaff = async (req, res, next) => {
+const createRenter = async (req, res, next) => {
   try {
-    const { email, password, name, phone, address, accountStatus, role } =
-      req.body;
+    const { email, password, name, phone, address, accountStatus } = req.body;
 
-    const errors = validateStaffInput(
+    const errors = validateRenterInput(
       { email, password, name, phone, accountStatus },
       true
     );
-
     if (errors.length > 0) {
       return res.status(400).json({ success: false, errors });
-    }
-
-    if (role && !VALID_ROLES.includes(role)) {
-      return res
-        .status(400)
-        .json({ success: false, message: 'Role must be STAFF or ADMIN' });
     }
 
     const existing = await prisma.user.findUnique({ where: { email } });
@@ -105,7 +100,7 @@ const createStaff = async (req, res, next) => {
         .json({ success: false, message: 'Email already exists' });
     }
 
-    const [staff] = await prisma.$transaction([
+    const [renter] = await prisma.$transaction([
       prisma.user.create({
         data: {
           email,
@@ -114,9 +109,10 @@ const createStaff = async (req, res, next) => {
           phone,
           address,
           accountStatus: accountStatus || 'ACTIVE',
-          role: role || 'STAFF',
+          role: 'RENTER',
         },
       }),
+
       prisma.auditLog.create({
         data: {
           userId: req.user?.id || null,
@@ -124,47 +120,45 @@ const createStaff = async (req, res, next) => {
           tableName: 'User',
           recordId: email,
           oldData: null,
-          newData: { email, name, phone, address, accountStatus, role },
+          newData: {
+            email,
+            name,
+            phone,
+            address,
+            accountStatus,
+            role: 'RENTER',
+          },
         },
       }),
     ]);
-    return res.status(201).json({ success: true, data: { staff } });
+
+    return res.status(201).json({ success: true, data: { renter } });
   } catch (err) {
     return next(err);
   }
 };
 
-const updateStaff = async (req, res, next) => {
+const updateRenter = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { name, phone, address, accountStatus, role } = req.body;
+    const { name, phone, address, accountStatus } = req.body;
 
-    const errors = validateStaffInput(
-      { name, phone, accountStatus, phone },
-      false
-    );
-
+    const errors = validateRenterInput({ name, phone, accountStatus }, false);
     if (errors.length > 0) {
       return res.status(400).json({ success: false, errors });
     }
 
-    if (role && !VALID_ROLES.includes(role)) {
-      return res.status(400).json({ success: false, message: 'Invalid role' });
-    }
-
-    const staff = await prisma.user.findUnique({ where: { id } });
-
-    if (!staff || !VALID_ROLES.includes(staff.role) || staff.softDeleted) {
+    const renter = await prisma.user.findUnique({ where: { id } });
+    if (!renter || renter.role !== 'RENTER' || renter.softDeleted) {
       return res
         .status(404)
-        .json({ success: false, message: 'Staff or admin not found' });
+        .json({ success: false, message: 'Renter not found' });
     }
 
-    const oldStaff = await prisma.user.findUnique({ where: { id } });
     const [updated] = await prisma.$transaction([
       prisma.user.update({
         where: { id },
-        data: { name, phone, address, accountStatus, role },
+        data: { name, phone, address, accountStatus },
         select: {
           id: true,
           email: true,
@@ -177,45 +171,43 @@ const updateStaff = async (req, res, next) => {
           updatedAt: true,
         },
       }),
+
       prisma.auditLog.create({
         data: {
           userId: req.user?.id || null,
           action: 'UPDATE',
           tableName: 'User',
           recordId: id,
-          oldData: oldStaff,
-          newData: { name, phone, address, accountStatus, role },
+          oldData: renter,
+          newData: { name, phone, address, accountStatus },
         },
       }),
     ]);
-    return res.json({ success: true, data: { staff: updated } });
+
+    return res.json({ success: true, data: { renter: updated } });
   } catch (err) {
     return next(err);
   }
 };
 
-const softDeleteStaff = async (req, res, next) => {
+const softDeleteRenter = async (req, res, next) => {
   try {
     const { id } = req.params;
     const status = req.body.status;
 
     const VALID_SOFT_DELETE_STATUS = ['SUSPENDED', 'BANNED'];
-
     if (!VALID_SOFT_DELETE_STATUS.includes(status)) {
       return res.status(400).json({
         success: false,
-        message: `Invalid status. Allowed: ${VALID_SOFT_DELETE_STATUS.join(
-          ', '
-        )}`,
+        message: `Invalid status. Allowed: ${VALID_SOFT_DELETE_STATUS.join(', ')}`,
       });
     }
 
-    const staff = await prisma.user.findUnique({ where: { id } });
-
-    if (!staff || !VALID_ROLES.includes(staff.role) || staff.softDeleted) {
+    const renter = await prisma.user.findUnique({ where: { id } });
+    if (!renter || renter.role !== 'RENTER' || renter.softDeleted) {
       return res
         .status(404)
-        .json({ success: false, message: 'Staff or admin not found' });
+        .json({ success: false, message: 'Renter not found' });
     }
 
     await prisma.$transaction([
@@ -223,43 +215,43 @@ const softDeleteStaff = async (req, res, next) => {
         where: { id },
         data: { softDeleted: true, accountStatus: status },
       }),
+
       prisma.auditLog.create({
         data: {
           userId: req.user?.id || null,
           action: 'DELETE',
           tableName: 'User',
           recordId: id,
-          oldData: staff,
+          oldData: renter,
           newData: { softDeleted: true, accountStatus: status },
         },
       }),
     ]);
-    return res.json({ success: true, message: 'Staff/admin soft deleted' });
+
+    return res.json({ success: true, message: 'Renter soft deleted' });
   } catch (err) {
     return next(err);
   }
 };
 
-const deleteStaff = async (req, res, next) => {
+const deleteRenter = async (req, res, next) => {
   try {
     const { id } = req.params;
+    const renter = await prisma.user.findUnique({ where: { id } });
 
-    const staff = await prisma.user.findUnique({ where: { id } });
-
-    if (!staff) {
+    if (!renter) {
       return res
         .status(404)
-        .json({ success: false, message: 'Staff or admin not found' });
+        .json({ success: false, message: 'Renter not found' });
     }
 
-    if (!VALID_ROLES.includes(staff.role)) {
+    if (renter.role !== 'RENTER') {
       return res.status(400).json({
         success: false,
-        message: 'This is not a staff or admin account, please check again',
+        message: 'This is not a renter account, please check again',
       });
     }
 
-    const oldStaff = await prisma.user.findUnique({ where: { id } });
     await prisma.$transaction([
       prisma.user.delete({ where: { id } }),
       prisma.auditLog.create({
@@ -268,14 +260,15 @@ const deleteStaff = async (req, res, next) => {
           action: 'DELETE',
           tableName: 'User',
           recordId: id,
-          oldData: oldStaff,
+          oldData: renter,
           newData: null,
         },
       }),
     ]);
+
     return res.json({
       success: true,
-      message: 'Staff/admin deleted successfully',
+      message: 'Renter deleted successfully',
     });
   } catch (error) {
     return next(error);
@@ -283,10 +276,10 @@ const deleteStaff = async (req, res, next) => {
 };
 
 export {
-  createStaff,
-  deleteStaff,
-  getStaff,
-  getStaffById,
-  softDeleteStaff,
-  updateStaff,
+  createRenter,
+  deleteRenter,
+  getRenters,
+  getRenterById,
+  softDeleteRenter,
+  updateRenter,
 };
