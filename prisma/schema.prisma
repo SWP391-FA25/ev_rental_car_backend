@@ -162,6 +162,7 @@ model Vehicle {
   updatedAt    DateTime      @updatedAt
   station      Station       @relation(fields: [stationId], references: [id])
   bookings     Booking[]
+  images       VehicleImage[]
 
   @@index([stationId, status])
   @@index([status])
@@ -424,4 +425,23 @@ model SignatureVerification {
   @@index([signatureId])
   @@index([verificationResult])
   @@index([verifiedAt])
+}
+
+// Vehicle Image model for storing vehicle photos in ImageKit
+model VehicleImage {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  vehicleId       String   @db.ObjectId
+  imageKitFileId  String   // ImageKit file ID for deletion
+  url             String   // Full ImageKit URL
+  thumbnailUrl    String?  // Thumbnail URL
+  fileName        String   // Original file name
+  size            Int      // File size in bytes
+  fileType        String   // MIME type
+  uploadedAt      DateTime @default(now())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  vehicle         Vehicle  @relation(fields: [vehicleId], references: [id])
+
+  @@index([vehicleId])
+  @@index([uploadedAt])
 }
