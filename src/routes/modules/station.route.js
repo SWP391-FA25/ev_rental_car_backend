@@ -7,6 +7,8 @@ import {
   updateStation,
   softDeleteStation,
   deleteStation,
+  getVehiclesAtStation,
+  getStaffAtStation,
 } from '../../controllers/station.controller.js';
 import { authenticate } from '../../middleware/authenticate.js';
 import { authorize } from '../../middleware/authorize.js';
@@ -37,5 +39,19 @@ router.patch(
 );
 // Xóa cứng station (xóa khỏi DB)
 router.delete('/:id', authenticate, authorize('ADMIN'), deleteStation);
+
+router.get(
+  '/station/getVehiclesAtStation/:stationId',
+  authenticate,
+  authorize('ADMIN', 'STAFF'),
+  getVehiclesAtStation
+);
+
+router.get(
+  '/station/getStaffAtStation/:stationId',
+  authenticate,
+  authorize('ADMIN', 'STAFF'),
+  getStaffAtStation
+);
 
 export default router;
