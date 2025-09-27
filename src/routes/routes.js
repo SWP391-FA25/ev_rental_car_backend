@@ -19,7 +19,7 @@ router.use('/payments', paymentRouter);
 router.use('/documents', documentRouter);
 router.use('/test', testRouter);
 router.use('/staff', staffRouter);
-router.use('/station', stationRouter);
+router.use('/stations', stationRouter);
 router.use('/assignments', assignRouter);
 router.use('/renters', renterRouter);
 router.use('/vehicles', vehicleRouter);

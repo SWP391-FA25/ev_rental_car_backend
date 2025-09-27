@@ -962,6 +962,2120 @@ export const openapiSpec = {
         },
       },
     },
+    // Assign endpoints
+    '/api/assign': {
+      post: {
+        summary: 'Create a new assignment',
+        tags: ['Assignments'],
+        security: [{ cookieAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['stationId', 'staffId'],
+                properties: {
+                  stationId: {
+                    type: 'string',
+                    description: 'ID of the station',
+                  },
+                  staffId: {
+                    type: 'string',
+                    description: 'ID of the staff member',
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          201: {
+            description: 'Assignment created successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    message: { type: 'string', example: 'Assignment created' },
+                    assignment: {
+                      type: 'object',
+                      properties: {
+                        id: { type: 'string' },
+                        station: {
+                          type: 'object',
+                          properties: {
+                            id: { type: 'string' },
+                            name: { type: 'string' },
+                          },
+                        },
+                        user: {
+                          type: 'object',
+                          properties: {
+                            id: { type: 'string' },
+                            name: { type: 'string' },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          400: { description: 'Bad request - missing required fields' },
+          404: { description: 'Station or Staff not found' },
+          409: { description: 'Assignment already exists' },
+        },
+      },
+      get: {
+        summary: 'Get all assignments',
+        tags: ['Assignments'],
+        security: [{ cookieAuth: [] }],
+        responses: {
+          200: {
+            description: 'List of assignments',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    assignments: {
+                      type: 'array',
+                      items: {
+                        type: 'object',
+                        properties: {
+                          id: { type: 'string' },
+                          stationId: { type: 'string' },
+                          userId: { type: 'string' },
+                          createdAt: { type: 'string', format: 'date-time' },
+                          updatedAt: { type: 'string', format: 'date-time' },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          404: { description: 'No assignments found' },
+        },
+      },
+    },
+    '/api/assign/{id}': {
+      get: {
+        summary: 'Get assignment by ID',
+        tags: ['Assignments'],
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Assignment ID',
+          },
+        ],
+        responses: {
+          200: {
+            description: 'Assignment details',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    assignment: {
+                      type: 'object',
+                      properties: {
+                        id: { type: 'string' },
+                        stationId: { type: 'string' },
+                        userId: { type: 'string' },
+                        createdAt: { type: 'string', format: 'date-time' },
+                        updatedAt: { type: 'string', format: 'date-time' },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          404: { description: 'Assignment not found' },
+        },
+      },
+      put: {
+        summary: 'Update assignment by ID',
+        tags: ['Assignments'],
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Assignment ID',
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  stationId: {
+                    type: 'string',
+                    description: 'ID of the station',
+                  },
+                  staffId: {
+                    type: 'string',
+                    description: 'ID of the staff member',
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          200: {
+            description: 'Assignment updated successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    message: { type: 'string', example: 'Assignment updated' },
+                    updated: {
+                      type: 'object',
+                      properties: {
+                        id: { type: 'string' },
+                        stationId: { type: 'string' },
+                        userId: { type: 'string' },
+                        createdAt: { type: 'string', format: 'date-time' },
+                        updatedAt: { type: 'string', format: 'date-time' },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          404: { description: 'Assignment not found' },
+        },
+      },
+      delete: {
+        summary: 'Delete assignment by ID',
+        tags: ['Assignments'],
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Assignment ID',
+          },
+        ],
+        responses: {
+          200: {
+            description: 'Assignment deleted successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    data: {
+                      type: 'object',
+                      properties: {
+                        id: { type: 'string' },
+                        stationId: { type: 'string' },
+                        userId: { type: 'string' },
+                        createdAt: { type: 'string', format: 'date-time' },
+                        updatedAt: { type: 'string', format: 'date-time' },
+                      },
+                    },
+                    message: { type: 'string', example: 'Assignment deleted' },
+                  },
+                },
+              },
+            },
+          },
+          404: { description: 'Assignment not found' },
+        },
+      },
+    },
+    // Booking endpoints
+    '/api/bookings': {
+      post: {
+        summary: 'Create a new booking',
+        tags: ['Bookings'],
+        security: [{ cookieAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['vehicleId', 'stationId', 'startTime', 'endTime'],
+                properties: {
+                  vehicleId: {
+                    type: 'string',
+                    description: 'ID of the vehicle to book',
+                  },
+                  stationId: {
+                    type: 'string',
+                    description: 'ID of the station',
+                  },
+                  startTime: {
+                    type: 'string',
+                    format: 'date-time',
+                    description: 'Booking start time',
+                  },
+                  endTime: {
+                    type: 'string',
+                    format: 'date-time',
+                    description: 'Booking end time',
+                  },
+                  pickupLocation: {
+                    type: 'string',
+                    description: 'Pickup location (optional)',
+                  },
+                  dropoffLocation: {
+                    type: 'string',
+                    description: 'Dropoff location (optional)',
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          201: {
+            description: 'Booking created successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        booking: {
+                          type: 'object',
+                          properties: {
+                            id: { type: 'string' },
+                            userId: { type: 'string' },
+                            vehicleId: { type: 'string' },
+                            stationId: { type: 'string' },
+                            startTime: { type: 'string', format: 'date-time' },
+                            endTime: { type: 'string', format: 'date-time' },
+                            pickupLocation: { type: 'string', nullable: true },
+                            dropoffLocation: { type: 'string', nullable: true },
+                            status: { type: 'string', example: 'PENDING' },
+                            createdAt: { type: 'string', format: 'date-time' },
+                            updatedAt: { type: 'string', format: 'date-time' },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          400: {
+            description:
+              'Bad request - missing required fields or invalid time range',
+          },
+          401: { description: 'Unauthorized' },
+          409: {
+            description: 'Vehicle not available or already booked in that slot',
+          },
+        },
+      },
+    },
+    '/api/bookings/{bookingId}/complete': {
+      post: {
+        summary: 'Complete a booking',
+        tags: ['Bookings'],
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          {
+            name: 'bookingId',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Booking ID',
+          },
+        ],
+        responses: {
+          200: {
+            description: 'Booking completed successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        booking: {
+                          type: 'object',
+                          properties: {
+                            id: { type: 'string' },
+                            userId: { type: 'string' },
+                            vehicleId: { type: 'string' },
+                            stationId: { type: 'string' },
+                            startTime: { type: 'string', format: 'date-time' },
+                            endTime: { type: 'string', format: 'date-time' },
+                            pickupLocation: { type: 'string', nullable: true },
+                            dropoffLocation: { type: 'string', nullable: true },
+                            status: { type: 'string', example: 'COMPLETED' },
+                            createdAt: { type: 'string', format: 'date-time' },
+                            updatedAt: { type: 'string', format: 'date-time' },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          400: { description: 'Bad request - missing bookingId' },
+          401: { description: 'Unauthorized' },
+          403: { description: 'Forbidden - not the booking owner' },
+          404: { description: 'Booking not found' },
+          409: { description: 'Booking not in progress' },
+        },
+      },
+    },
+    // Document endpoints
+    '/api/documents/upload': {
+      post: {
+        summary: 'Upload a document',
+        tags: ['Documents'],
+        security: [{ cookieAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'multipart/form-data': {
+              schema: {
+                type: 'object',
+                properties: {
+                  document: {
+                    type: 'string',
+                    format: 'binary',
+                    description: 'Document file to upload (JPG, PNG, PDF)',
+                  },
+                  documentType: {
+                    type: 'string',
+                    enum: ['DRIVERS_LICENSE', 'ID_CARD', 'PASSPORT'],
+                    description: 'Type of document being uploaded',
+                  },
+                  documentNumber: {
+                    type: 'string',
+                    description: 'Document number (optional)',
+                  },
+                  expiryDate: {
+                    type: 'string',
+                    format: 'date',
+                    description: 'Document expiry date (optional)',
+                  },
+                },
+                required: ['document', 'documentType'],
+              },
+            },
+          },
+        },
+        responses: {
+          201: {
+            description: 'Document uploaded successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    message: {
+                      type: 'string',
+                      example: 'Document uploaded successfully',
+                    },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        id: { type: 'string' },
+                        documentType: { type: 'string' },
+                        fileName: { type: 'string' },
+                        status: { type: 'string', example: 'PENDING' },
+                        uploadedAt: { type: 'string', format: 'date-time' },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          400: {
+            description:
+              'Bad request - no file uploaded or invalid file type/size',
+          },
+          401: { description: 'Unauthorized' },
+        },
+      },
+    },
+    '/api/documents/my-documents': {
+      get: {
+        summary: 'Get user documents',
+        tags: ['Documents'],
+        security: [{ cookieAuth: [] }],
+        responses: {
+          200: {
+            description: 'List of user documents',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    data: {
+                      type: 'array',
+                      items: {
+                        type: 'object',
+                        properties: {
+                          id: { type: 'string' },
+                          documentType: { type: 'string' },
+                          fileName: { type: 'string' },
+                          fileUrl: { type: 'string' },
+                          fileId: { type: 'string' },
+                          thumbnailUrl: { type: 'string', nullable: true },
+                          status: { type: 'string' },
+                          uploadedAt: { type: 'string', format: 'date-time' },
+                          verifiedAt: {
+                            type: 'string',
+                            format: 'date-time',
+                            nullable: true,
+                          },
+                          rejectionReason: { type: 'string', nullable: true },
+                          expiryDate: {
+                            type: 'string',
+                            format: 'date-time',
+                            nullable: true,
+                          },
+                          documentNumber: { type: 'string', nullable: true },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          401: { description: 'Unauthorized' },
+        },
+      },
+    },
+    '/api/documents/{documentId}': {
+      delete: {
+        summary: 'Delete a document',
+        tags: ['Documents'],
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          {
+            name: 'documentId',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Document ID',
+          },
+        ],
+        responses: {
+          200: {
+            description: 'Document deleted successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    message: {
+                      type: 'string',
+                      example: 'Document deleted successfully',
+                    },
+                  },
+                },
+              },
+            },
+          },
+          401: { description: 'Unauthorized' },
+          404: { description: 'Document not found' },
+        },
+      },
+    },
+    '/api/documents/all': {
+      get: {
+        summary: 'Get all documents (Admin only)',
+        tags: ['Documents'],
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          {
+            name: 'status',
+            in: 'query',
+            required: false,
+            schema: { type: 'string' },
+            description: 'Filter by document status',
+          },
+          {
+            name: 'documentType',
+            in: 'query',
+            required: false,
+            schema: { type: 'string' },
+            description: 'Filter by document type',
+          },
+          {
+            name: 'page',
+            in: 'query',
+            required: false,
+            schema: { type: 'integer', example: 1 },
+            description: 'Page number for pagination',
+          },
+          {
+            name: 'limit',
+            in: 'query',
+            required: false,
+            schema: { type: 'integer', example: 20 },
+            description: 'Number of items per page',
+          },
+        ],
+        responses: {
+          200: {
+            description: 'List of all documents',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        documents: {
+                          type: 'array',
+                          items: {
+                            type: 'object',
+                            properties: {
+                              id: { type: 'string' },
+                              userId: { type: 'string' },
+                              documentType: { type: 'string' },
+                              fileName: { type: 'string' },
+                              fileUrl: { type: 'string' },
+                              fileId: { type: 'string' },
+                              thumbnailUrl: { type: 'string', nullable: true },
+                              status: { type: 'string' },
+                              uploadedAt: {
+                                type: 'string',
+                                format: 'date-time',
+                              },
+                              verifiedAt: {
+                                type: 'string',
+                                format: 'date-time',
+                                nullable: true,
+                              },
+                              rejectionReason: {
+                                type: 'string',
+                                nullable: true,
+                              },
+                              expiryDate: {
+                                type: 'string',
+                                format: 'date-time',
+                                nullable: true,
+                              },
+                              documentNumber: {
+                                type: 'string',
+                                nullable: true,
+                              },
+                              user: {
+                                type: 'object',
+                                properties: {
+                                  id: { type: 'string' },
+                                  name: { type: 'string' },
+                                  email: { type: 'string' },
+                                  phone: { type: 'string' },
+                                },
+                              },
+                            },
+                          },
+                        },
+                        pagination: {
+                          type: 'object',
+                          properties: {
+                            page: { type: 'integer' },
+                            limit: { type: 'integer' },
+                            total: { type: 'integer' },
+                            totalPages: { type: 'integer' },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          401: { description: 'Unauthorized' },
+          403: { description: 'Forbidden - Admin access required' },
+        },
+      },
+    },
+    '/api/documents/{documentId}/verify': {
+      patch: {
+        summary: 'Verify a document (Admin only)',
+        tags: ['Documents'],
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          {
+            name: 'documentId',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Document ID',
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['status'],
+                properties: {
+                  status: {
+                    type: 'string',
+                    enum: ['APPROVED', 'REJECTED'],
+                    description: 'Verification status',
+                  },
+                  rejectionReason: {
+                    type: 'string',
+                    description:
+                      'Reason for rejection (required when status is REJECTED)',
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          200: {
+            description: 'Document verification status updated',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    message: {
+                      type: 'string',
+                      example: 'Document approved successfully',
+                    },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        id: { type: 'string' },
+                        userId: { type: 'string' },
+                        documentType: { type: 'string' },
+                        fileName: { type: 'string' },
+                        fileUrl: { type: 'string' },
+                        fileId: { type: 'string' },
+                        thumbnailUrl: { type: 'string', nullable: true },
+                        status: { type: 'string', example: 'APPROVED' },
+                        uploadedAt: { type: 'string', format: 'date-time' },
+                        verifiedAt: { type: 'string', format: 'date-time' },
+                        verifiedBy: { type: 'string' },
+                        rejectionReason: { type: 'string', nullable: true },
+                        expiryDate: {
+                          type: 'string',
+                          format: 'date-time',
+                          nullable: true,
+                        },
+                        documentNumber: { type: 'string', nullable: true },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          400: {
+            description:
+              'Bad request - invalid status or missing rejection reason',
+          },
+          401: { description: 'Unauthorized' },
+          403: { description: 'Forbidden - Admin access required' },
+          404: { description: 'Document not found' },
+        },
+      },
+    },
+    // Payment endpoints
+    '/api/payments': {
+      post: {
+        summary: 'Create a payment',
+        tags: ['Payments'],
+        security: [{ cookieAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['bookingId', 'amount', 'transactionId'],
+                properties: {
+                  bookingId: {
+                    type: 'string',
+                    description: 'ID of the booking',
+                  },
+                  amount: { type: 'number', description: 'Payment amount' },
+                  paymentMethod: {
+                    type: 'string',
+                    description: 'Payment method (optional)',
+                  },
+                  transactionId: {
+                    type: 'string',
+                    description: 'Unique transaction ID',
+                  },
+                  paymentDate: {
+                    type: 'string',
+                    format: 'date-time',
+                    description: 'Payment date (optional)',
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          201: {
+            description: 'Payment created successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        payment: {
+                          type: 'object',
+                          properties: {
+                            id: { type: 'string' },
+                            userId: { type: 'string' },
+                            bookingId: { type: 'string' },
+                            amount: { type: 'number' },
+                            paymentMethod: { type: 'string', nullable: true },
+                            transactionId: { type: 'string' },
+                            status: { type: 'string', example: 'PAID' },
+                            paymentDate: {
+                              type: 'string',
+                              format: 'date-time',
+                            },
+                            createdAt: { type: 'string', format: 'date-time' },
+                            updatedAt: { type: 'string', format: 'date-time' },
+                          },
+                        },
+                        bookingStatus: { type: 'string' },
+                        idempotent: { type: 'boolean' },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          200: { description: 'Payment already exists (idempotent response)' },
+          400: { description: 'Bad request - missing required fields' },
+          401: { description: 'Unauthorized' },
+          403: { description: 'Forbidden - not the booking owner' },
+          404: { description: 'Booking not found' },
+        },
+      },
+    },
+    // Renter endpoints
+    '/api/renters': {
+      post: {
+        summary: 'Create a new renter (Admin only)',
+        tags: ['Renters'],
+        security: [{ cookieAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['email', 'password', 'name'],
+                properties: {
+                  email: {
+                    type: 'string',
+                    format: 'email',
+                    description: 'Renter email',
+                  },
+                  password: {
+                    type: 'string',
+                    format: 'password',
+                    description: 'Renter password',
+                  },
+                  name: { type: 'string', description: 'Renter name' },
+                  phone: {
+                    type: 'string',
+                    description:
+                      'Renter phone (must start with 0 and have exactly 10 digits)',
+                  },
+                  address: {
+                    type: 'string',
+                    description: 'Renter address (optional)',
+                  },
+                  accountStatus: {
+                    type: 'string',
+                    enum: ['ACTIVE', 'BANNED', 'SUSPENDED'],
+                    description:
+                      'Account status (optional, defaults to ACTIVE)',
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          201: {
+            description: 'Renter created successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        renter: {
+                          type: 'object',
+                          properties: {
+                            id: { type: 'string' },
+                            email: { type: 'string' },
+                            name: { type: 'string' },
+                            phone: { type: 'string', nullable: true },
+                            address: { type: 'string', nullable: true },
+                            role: { type: 'string', example: 'RENTER' },
+                            accountStatus: { type: 'string' },
+                            createdAt: { type: 'string', format: 'date-time' },
+                            updatedAt: { type: 'string', format: 'date-time' },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          400: { description: 'Bad request - validation errors' },
+          401: { description: 'Unauthorized' },
+          403: { description: 'Forbidden - Admin access required' },
+          409: { description: 'Conflict - email already exists' },
+        },
+      },
+      get: {
+        summary: 'Get all renters (Admin/Staff only)',
+        tags: ['Renters'],
+        security: [{ cookieAuth: [] }],
+        responses: {
+          200: {
+            description: 'List of renters',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        renters: {
+                          type: 'array',
+                          items: {
+                            type: 'object',
+                            properties: {
+                              id: { type: 'string' },
+                              email: { type: 'string' },
+                              name: { type: 'string' },
+                              phone: { type: 'string', nullable: true },
+                              address: { type: 'string', nullable: true },
+                              role: { type: 'string', example: 'RENTER' },
+                              accountStatus: { type: 'string' },
+                              createdAt: {
+                                type: 'string',
+                                format: 'date-time',
+                              },
+                              updatedAt: {
+                                type: 'string',
+                                format: 'date-time',
+                              },
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          401: { description: 'Unauthorized' },
+          403: { description: 'Forbidden - Admin/Staff access required' },
+          404: { description: 'No renters found' },
+        },
+      },
+    },
+    '/api/renters/{id}': {
+      get: {
+        summary: 'Get renter by ID (Admin/Staff only)',
+        tags: ['Renters'],
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Renter ID',
+          },
+        ],
+        responses: {
+          200: {
+            description: 'Renter details',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        renter: {
+                          type: 'object',
+                          properties: {
+                            id: { type: 'string' },
+                            email: { type: 'string' },
+                            name: { type: 'string' },
+                            phone: { type: 'string', nullable: true },
+                            address: { type: 'string', nullable: true },
+                            role: { type: 'string', example: 'RENTER' },
+                            accountStatus: { type: 'string' },
+                            createdAt: { type: 'string', format: 'date-time' },
+                            updatedAt: { type: 'string', format: 'date-time' },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          401: { description: 'Unauthorized' },
+          403: { description: 'Forbidden - Admin/Staff access required' },
+          404: { description: 'Renter not found' },
+        },
+      },
+      put: {
+        summary: 'Update renter (Admin only)',
+        tags: ['Renters'],
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Renter ID',
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  name: { type: 'string', description: 'Renter name' },
+                  phone: {
+                    type: 'string',
+                    description:
+                      'Renter phone (must start with 0 and have exactly 10 digits)',
+                  },
+                  address: {
+                    type: 'string',
+                    description: 'Renter address (optional)',
+                  },
+                  accountStatus: {
+                    type: 'string',
+                    enum: ['ACTIVE', 'BANNED', 'SUSPENDED'],
+                    description: 'Account status (optional)',
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          200: {
+            description: 'Renter updated successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        renter: {
+                          type: 'object',
+                          properties: {
+                            id: { type: 'string' },
+                            email: { type: 'string' },
+                            name: { type: 'string' },
+                            phone: { type: 'string', nullable: true },
+                            address: { type: 'string', nullable: true },
+                            role: { type: 'string', example: 'RENTER' },
+                            accountStatus: { type: 'string' },
+                            createdAt: { type: 'string', format: 'date-time' },
+                            updatedAt: { type: 'string', format: 'date-time' },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          400: { description: 'Bad request - validation errors' },
+          401: { description: 'Unauthorized' },
+          403: { description: 'Forbidden - Admin access required' },
+          404: { description: 'Renter not found' },
+        },
+      },
+      delete: {
+        summary: 'Delete renter (Admin only)',
+        tags: ['Renters'],
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Renter ID',
+          },
+        ],
+        responses: {
+          200: {
+            description: 'Renter deleted successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    message: {
+                      type: 'string',
+                      example: 'Renter deleted successfully',
+                    },
+                  },
+                },
+              },
+            },
+          },
+          401: { description: 'Unauthorized' },
+          403: { description: 'Forbidden - Admin access required' },
+          404: { description: 'Renter not found' },
+        },
+      },
+    },
+    '/api/renters/{id}/soft-delete': {
+      patch: {
+        summary: 'Soft delete renter (Admin only)',
+        tags: ['Renters'],
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Renter ID',
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['status'],
+                properties: {
+                  status: {
+                    type: 'string',
+                    enum: ['SUSPENDED', 'BANNED'],
+                    description: 'Account status after soft deletion',
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          200: {
+            description: 'Renter soft deleted successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    message: { type: 'string', example: 'Renter soft deleted' },
+                  },
+                },
+              },
+            },
+          },
+          400: { description: 'Bad request - invalid status' },
+          401: { description: 'Unauthorized' },
+          403: { description: 'Forbidden - Admin access required' },
+          404: { description: 'Renter not found' },
+        },
+      },
+    },
+    // Staff endpoints
+    '/api/staff': {
+      post: {
+        summary: 'Create a new staff member (Admin only)',
+        tags: ['Staff'],
+        security: [{ cookieAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['email', 'password', 'name'],
+                properties: {
+                  email: {
+                    type: 'string',
+                    format: 'email',
+                    description: 'Staff email',
+                  },
+                  password: {
+                    type: 'string',
+                    format: 'password',
+                    description: 'Staff password',
+                  },
+                  name: { type: 'string', description: 'Staff name' },
+                  phone: {
+                    type: 'string',
+                    description:
+                      'Staff phone (must start with 0 and have exactly 10 digits)',
+                  },
+                  address: {
+                    type: 'string',
+                    description: 'Staff address (optional)',
+                  },
+                  accountStatus: {
+                    type: 'string',
+                    enum: ['ACTIVE', 'BANNED', 'SUSPENDED'],
+                    description:
+                      'Account status (optional, defaults to ACTIVE)',
+                  },
+                  role: {
+                    type: 'string',
+                    enum: ['STAFF', 'ADMIN'],
+                    description: 'Staff role (optional, defaults to STAFF)',
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          201: {
+            description: 'Staff member created successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        staff: {
+                          type: 'object',
+                          properties: {
+                            id: { type: 'string' },
+                            email: { type: 'string' },
+                            name: { type: 'string' },
+                            phone: { type: 'string', nullable: true },
+                            address: { type: 'string', nullable: true },
+                            role: { type: 'string', example: 'STAFF' },
+                            accountStatus: { type: 'string' },
+                            createdAt: { type: 'string', format: 'date-time' },
+                            updatedAt: { type: 'string', format: 'date-time' },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          400: {
+            description: 'Bad request - validation errors or invalid role',
+          },
+          401: { description: 'Unauthorized' },
+          403: { description: 'Forbidden - Admin access required' },
+          409: { description: 'Conflict - email already exists' },
+        },
+      },
+      get: {
+        summary: 'Get all staff members (Admin only)',
+        tags: ['Staff'],
+        security: [{ cookieAuth: [] }],
+        responses: {
+          200: {
+            description: 'List of staff members',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        staff: {
+                          type: 'array',
+                          items: {
+                            type: 'object',
+                            properties: {
+                              id: { type: 'string' },
+                              email: { type: 'string' },
+                              name: { type: 'string' },
+                              phone: { type: 'string', nullable: true },
+                              address: { type: 'string', nullable: true },
+                              role: { type: 'string' },
+                              accountStatus: { type: 'string' },
+                              createdAt: {
+                                type: 'string',
+                                format: 'date-time',
+                              },
+                              updatedAt: {
+                                type: 'string',
+                                format: 'date-time',
+                              },
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          401: { description: 'Unauthorized' },
+          403: { description: 'Forbidden - Admin access required' },
+          404: { description: 'No staff or admin found' },
+        },
+      },
+    },
+    '/api/staff/{id}': {
+      get: {
+        summary: 'Get staff member by ID (Admin only)',
+        tags: ['Staff'],
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Staff ID',
+          },
+        ],
+        responses: {
+          200: {
+            description: 'Staff member details',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        staff: {
+                          type: 'object',
+                          properties: {
+                            id: { type: 'string' },
+                            email: { type: 'string' },
+                            name: { type: 'string' },
+                            phone: { type: 'string', nullable: true },
+                            address: { type: 'string', nullable: true },
+                            role: { type: 'string' },
+                            accountStatus: { type: 'string' },
+                            createdAt: { type: 'string', format: 'date-time' },
+                            updatedAt: { type: 'string', format: 'date-time' },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          401: { description: 'Unauthorized' },
+          403: { description: 'Forbidden - Admin access required' },
+          404: { description: 'Staff or admin not found' },
+        },
+      },
+      put: {
+        summary: 'Update staff member (Admin only)',
+        tags: ['Staff'],
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Staff ID',
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  name: { type: 'string', description: 'Staff name' },
+                  phone: {
+                    type: 'string',
+                    description:
+                      'Staff phone (must start with 0 and have exactly 10 digits)',
+                  },
+                  address: {
+                    type: 'string',
+                    description: 'Staff address (optional)',
+                  },
+                  accountStatus: {
+                    type: 'string',
+                    enum: ['ACTIVE', 'BANNED', 'SUSPENDED'],
+                    description: 'Account status (optional)',
+                  },
+                  role: {
+                    type: 'string',
+                    enum: ['STAFF', 'ADMIN'],
+                    description: 'Staff role (optional)',
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          200: {
+            description: 'Staff member updated successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        staff: {
+                          type: 'object',
+                          properties: {
+                            id: { type: 'string' },
+                            email: { type: 'string' },
+                            name: { type: 'string' },
+                            phone: { type: 'string', nullable: true },
+                            address: { type: 'string', nullable: true },
+                            role: { type: 'string' },
+                            accountStatus: { type: 'string' },
+                            createdAt: { type: 'string', format: 'date-time' },
+                            updatedAt: { type: 'string', format: 'date-time' },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          400: {
+            description: 'Bad request - validation errors or invalid role',
+          },
+          401: { description: 'Unauthorized' },
+          403: { description: 'Forbidden - Admin access required' },
+          404: { description: 'Staff or admin not found' },
+        },
+      },
+      delete: {
+        summary: 'Delete staff member (Admin only)',
+        tags: ['Staff'],
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Staff ID',
+          },
+        ],
+        responses: {
+          200: {
+            description: 'Staff member deleted successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    message: {
+                      type: 'string',
+                      example: 'Staff/admin deleted successfully',
+                    },
+                  },
+                },
+              },
+            },
+          },
+          401: { description: 'Unauthorized' },
+          403: { description: 'Forbidden - Admin access required' },
+          404: { description: 'Staff or admin not found' },
+        },
+      },
+    },
+    '/api/staff/soft-delete/{id}': {
+      patch: {
+        summary: 'Soft delete staff member (Admin only)',
+        tags: ['Staff'],
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Staff ID',
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['status'],
+                properties: {
+                  status: {
+                    type: 'string',
+                    enum: ['SUSPENDED', 'BANNED'],
+                    description: 'Account status after soft deletion',
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          200: {
+            description: 'Staff member soft deleted successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    message: {
+                      type: 'string',
+                      example: 'Staff/admin soft deleted',
+                    },
+                  },
+                },
+              },
+            },
+          },
+          400: { description: 'Bad request - invalid status' },
+          401: { description: 'Unauthorized' },
+          403: { description: 'Forbidden - Admin access required' },
+          404: { description: 'Staff or admin not found' },
+        },
+      },
+    },
+    // Station endpoints
+    '/api/stations': {
+      post: {
+        summary: 'Create a new station (Admin only)',
+        tags: ['Stations'],
+        security: [{ cookieAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['name', 'location', 'address', 'status', 'capacity'],
+                properties: {
+                  name: { type: 'string', description: 'Station name' },
+                  location: {
+                    type: 'object',
+                    description: 'Station location (coordinates)',
+                  },
+                  address: { type: 'string', description: 'Station address' },
+                  status: {
+                    type: 'string',
+                    enum: ['ACTIVE', 'INACTIVE', 'MAINTENANCE'],
+                    description: 'Station status',
+                  },
+                  capacity: {
+                    type: 'integer',
+                    description: 'Station capacity',
+                  },
+                  contact: {
+                    type: 'string',
+                    description: 'Station contact information (optional)',
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          201: {
+            description: 'Station created successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        station: {
+                          type: 'object',
+                          properties: {
+                            id: { type: 'string' },
+                            name: { type: 'string' },
+                            location: { type: 'object' },
+                            address: { type: 'string' },
+                            status: { type: 'string' },
+                            capacity: { type: 'integer' },
+                            contact: { type: 'string', nullable: true },
+                            createdAt: { type: 'string', format: 'date-time' },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          400: {
+            description:
+              'Bad request - missing required fields or invalid status',
+          },
+          401: { description: 'Unauthorized' },
+          403: { description: 'Forbidden - Admin access required' },
+          409: { description: 'Conflict - station name already exists' },
+        },
+      },
+      get: {
+        summary: 'Get all stations (Admin/Staff only)',
+        tags: ['Stations'],
+        security: [{ cookieAuth: [] }],
+        responses: {
+          200: {
+            description: 'List of stations',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        stations: {
+                          type: 'array',
+                          items: {
+                            type: 'object',
+                            properties: {
+                              id: { type: 'string' },
+                              name: { type: 'string' },
+                              location: { type: 'object' },
+                              address: { type: 'string', nullable: true },
+                              status: { type: 'string' },
+                              capacity: { type: 'integer' },
+                              contact: { type: 'string', nullable: true },
+                              softDeleted: { type: 'boolean' },
+                              createdAt: {
+                                type: 'string',
+                                format: 'date-time',
+                              },
+                              updatedAt: {
+                                type: 'string',
+                                format: 'date-time',
+                              },
+                              vehicles: {
+                                type: 'array',
+                                items: { type: 'object' },
+                              },
+                              stationStaff: {
+                                type: 'array',
+                                items: { type: 'object' },
+                              },
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          401: { description: 'Unauthorized' },
+          403: { description: 'Forbidden - Admin/Staff access required' },
+          404: { description: 'Station not found' },
+        },
+      },
+    },
+    '/api/stations/unavailable/all': {
+      get: {
+        summary: 'Get unavailable stations (Admin/Staff only)',
+        tags: ['Stations'],
+        security: [{ cookieAuth: [] }],
+        responses: {
+          200: {
+            description: 'List of unavailable stations',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        deletedStations: {
+                          type: 'array',
+                          items: {
+                            type: 'object',
+                            properties: {
+                              id: { type: 'string' },
+                              name: { type: 'string' },
+                              location: { type: 'object' },
+                              address: { type: 'string', nullable: true },
+                              status: { type: 'string' },
+                              capacity: { type: 'integer' },
+                              contact: { type: 'string', nullable: true },
+                              softDeleted: { type: 'boolean' },
+                              createdAt: {
+                                type: 'string',
+                                format: 'date-time',
+                              },
+                              updatedAt: {
+                                type: 'string',
+                                format: 'date-time',
+                              },
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          401: { description: 'Unauthorized' },
+          403: { description: 'Forbidden - Admin/Staff access required' },
+          404: { description: 'No unavailable stations found' },
+        },
+      },
+    },
+    '/api/stations/{id}': {
+      get: {
+        summary: 'Get station by ID (Admin/Staff only)',
+        tags: ['Stations'],
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Station ID',
+          },
+        ],
+        responses: {
+          200: {
+            description: 'Station details',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        station: {
+                          type: 'object',
+                          properties: {
+                            id: { type: 'string' },
+                            name: { type: 'string' },
+                            location: { type: 'object' },
+                            address: { type: 'string', nullable: true },
+                            status: { type: 'string' },
+                            capacity: { type: 'integer' },
+                            contact: { type: 'string', nullable: true },
+                            softDeleted: { type: 'boolean' },
+                            createdAt: { type: 'string', format: 'date-time' },
+                            updatedAt: { type: 'string', format: 'date-time' },
+                            vehicles: {
+                              type: 'array',
+                              items: { type: 'object' },
+                            },
+                            stationStaff: {
+                              type: 'array',
+                              items: { type: 'object' },
+                            },
+                            bookings: {
+                              type: 'array',
+                              items: { type: 'object' },
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          401: { description: 'Unauthorized' },
+          403: { description: 'Forbidden - Admin/Staff access required' },
+          404: { description: 'Station not found' },
+        },
+      },
+      put: {
+        summary: 'Update station (Admin only)',
+        tags: ['Stations'],
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Station ID',
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['name', 'location', 'address', 'status', 'capacity'],
+                properties: {
+                  name: { type: 'string', description: 'Station name' },
+                  location: {
+                    type: 'object',
+                    description: 'Station location (coordinates)',
+                  },
+                  address: { type: 'string', description: 'Station address' },
+                  status: {
+                    type: 'string',
+                    enum: ['ACTIVE', 'INACTIVE', 'MAINTENANCE'],
+                    description: 'Station status',
+                  },
+                  capacity: {
+                    type: 'integer',
+                    description: 'Station capacity',
+                  },
+                  contact: {
+                    type: 'string',
+                    description: 'Station contact information (optional)',
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          200: {
+            description: 'Station updated successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        station: {
+                          type: 'object',
+                          properties: {
+                            id: { type: 'string' },
+                            name: { type: 'string' },
+                            location: { type: 'object' },
+                            address: { type: 'string' },
+                            status: { type: 'string' },
+                            capacity: { type: 'integer' },
+                            contact: { type: 'string', nullable: true },
+                            updatedAt: { type: 'string', format: 'date-time' },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          400: {
+            description:
+              'Bad request - missing required fields, invalid status, or station has active vehicles/bookings',
+          },
+          401: { description: 'Unauthorized' },
+          403: { description: 'Forbidden - Admin access required' },
+          404: { description: 'Station not found' },
+          409: { description: 'Conflict - station name already exists' },
+        },
+      },
+      delete: {
+        summary: 'Delete station (Admin only)',
+        tags: ['Stations'],
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Station ID',
+          },
+        ],
+        responses: {
+          200: {
+            description: 'Station deleted successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    message: {
+                      type: 'string',
+                      example: 'Station deleted successfully',
+                    },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        station: {
+                          type: 'object',
+                          properties: {
+                            id: { type: 'string' },
+                            name: { type: 'string' },
+                            location: { type: 'object' },
+                            address: { type: 'string', nullable: true },
+                            status: { type: 'string' },
+                            capacity: { type: 'integer' },
+                            contact: { type: 'string', nullable: true },
+                            softDeleted: { type: 'boolean' },
+                            createdAt: { type: 'string', format: 'date-time' },
+                            updatedAt: { type: 'string', format: 'date-time' },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          401: { description: 'Unauthorized' },
+          403: { description: 'Forbidden - Admin access required' },
+          404: { description: 'Station not found' },
+        },
+      },
+    },
+    '/api/stations/soft-delete/{id}': {
+      patch: {
+        summary: 'Soft delete station (Admin only)',
+        tags: ['Stations'],
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Station ID',
+          },
+        ],
+        responses: {
+          200: {
+            description: 'Station soft deleted successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        station: {
+                          type: 'object',
+                          properties: {
+                            id: { type: 'string' },
+                            name: { type: 'string' },
+                            location: { type: 'object' },
+                            address: { type: 'string', nullable: true },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          400: {
+            description:
+              'Bad request - station has active vehicles or bookings',
+          },
+          401: { description: 'Unauthorized' },
+          403: { description: 'Forbidden - Admin access required' },
+          404: { description: 'Station not found' },
+        },
+      },
+    },
+    // Test endpoints
+    '/api/test/imagekit/connection': {
+      get: {
+        summary: 'Test ImageKit connection',
+        tags: ['Test'],
+        responses: {
+          200: {
+            description: 'ImageKit connection test result',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    message: {
+                      type: 'string',
+                      example: 'ImageKit connection successful',
+                    },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        canUpload: { type: 'boolean' },
+                        canDelete: { type: 'boolean' },
+                        endpoint: { type: 'string' },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          500: { description: 'Internal server error - ImageKit test failed' },
+        },
+      },
+    },
+    '/api/test/imagekit/transformations': {
+      get: {
+        summary: 'Test image transformations',
+        tags: ['Test'],
+        parameters: [
+          {
+            name: 'url',
+            in: 'query',
+            required: true,
+            schema: { type: 'string' },
+            description: 'ImageKit URL to transform',
+          },
+        ],
+        responses: {
+          200: {
+            description: 'Image transformations result',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    message: {
+                      type: 'string',
+                      example: 'Image transformations generated',
+                    },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        original: { type: 'string' },
+                        transformations: {
+                          type: 'object',
+                          properties: {
+                            thumbnail: { type: 'string' },
+                            medium: { type: 'string' },
+                            highQuality: { type: 'string' },
+                            lowQuality: { type: 'string' },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          400: { description: 'Bad request - missing URL parameter' },
+          500: {
+            description: 'Internal server error - transformation test failed',
+          },
+        },
+      },
+    },
     '/api/stations': {
       get: {
         summary: 'Get all active stations',
