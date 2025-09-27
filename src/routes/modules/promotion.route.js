@@ -64,3 +64,5 @@ router.delete(
   authorize('ADMIN'),
   deletePromotion
 );
+
+export default router;
