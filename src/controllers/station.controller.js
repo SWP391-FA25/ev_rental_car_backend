@@ -333,6 +333,54 @@ const createStation = async (req, res, next) => {
   }
 };
 
+const getVehiclesAtStation = async (req, res, next) => {
+  try {
+    const { stationId } = req.params;
+
+    const vehicles = await prisma.station.findUnique({
+      where: { id: stationId },
+      include: {
+        vehicles: true,
+      },
+    });
+
+    if (!vehicles) {
+      return res.status(404).json({
+        success: false,
+        message: 'There are no vehicles at this station',
+      });
+    }
+
+    return res.json({ success: true, data: { vehicles } });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+const getStaffAtStation = async (req, res, next) => {
+  try {
+    const { stationId } = req.params;
+
+    const staff = await prisma.station.findUnique({
+      where: { id: stationId },
+      include: {
+        stationStaff: true,
+      },
+    });
+
+    if (!staff) {
+      return res.status(404).json({
+        success: false,
+        message: 'There are no staff at this station',
+      });
+    }
+
+    return res.json({ success: true, data: { staff } });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export {
   getStations,
   getStationByID,
@@ -341,4 +389,6 @@ export {
   updateStation,
   createStation,
   deleteStation,
+  getVehiclesAtStation,
+  getStaffAtStation,
 };

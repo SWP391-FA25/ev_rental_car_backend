@@ -9,6 +9,8 @@ import staffRouter from './modules/staff.route.js';
 import stationRouter from './modules/station.route.js';
 import assignRouter from './modules/assign.route.js';
 import vehicleRouter from './modules/vehicle.route.js';
+import promotionRouter from './modules/promotion.route.js';
+import rentalHistoryRouter from './modules/rental.history.route.js';
 
 const router = Router();
 
@@ -22,5 +24,7 @@ router.use('/stations', stationRouter);
 router.use('/assignments', assignRouter);
 router.use('/renters', renterRouter);
 router.use('/vehicles', vehicleRouter);
+router.use('/promotions', promotionRouter);
+router.use('/rental-history', rentalHistoryRouter);
 
 export default router;

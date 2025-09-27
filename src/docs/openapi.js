@@ -1814,15 +1814,31 @@ export const openapiSpec = {
                 type: 'object',
                 required: ['email', 'password', 'name'],
                 properties: {
-                  email: { type: 'string', format: 'email', description: 'Renter email' },
-                  password: { type: 'string', format: 'password', description: 'Renter password' },
+                  email: {
+                    type: 'string',
+                    format: 'email',
+                    description: 'Renter email',
+                  },
+                  password: {
+                    type: 'string',
+                    format: 'password',
+                    description: 'Renter password',
+                  },
                   name: { type: 'string', description: 'Renter name' },
-                  phone: { type: 'string', description: 'Renter phone (must start with 0 and have exactly 10 digits)' },
-                  address: { type: 'string', description: 'Renter address (optional)' },
+                  phone: {
+                    type: 'string',
+                    description:
+                      'Renter phone (must start with 0 and have exactly 10 digits)',
+                  },
+                  address: {
+                    type: 'string',
+                    description: 'Renter address (optional)',
+                  },
                   accountStatus: {
                     type: 'string',
                     enum: ['ACTIVE', 'BANNED', 'SUSPENDED'],
-                    description: 'Account status (optional, defaults to ACTIVE)',
+                    description:
+                      'Account status (optional, defaults to ACTIVE)',
                   },
                 },
               },
@@ -1896,8 +1912,14 @@ export const openapiSpec = {
                               address: { type: 'string', nullable: true },
                               role: { type: 'string', example: 'RENTER' },
                               accountStatus: { type: 'string' },
-                              createdAt: { type: 'string', format: 'date-time' },
-                              updatedAt: { type: 'string', format: 'date-time' },
+                              createdAt: {
+                                type: 'string',
+                                format: 'date-time',
+                              },
+                              updatedAt: {
+                                type: 'string',
+                                format: 'date-time',
+                              },
                             },
                           },
                         },
@@ -1987,8 +2009,15 @@ export const openapiSpec = {
                 type: 'object',
                 properties: {
                   name: { type: 'string', description: 'Renter name' },
-                  phone: { type: 'string', description: 'Renter phone (must start with 0 and have exactly 10 digits)' },
-                  address: { type: 'string', description: 'Renter address (optional)' },
+                  phone: {
+                    type: 'string',
+                    description:
+                      'Renter phone (must start with 0 and have exactly 10 digits)',
+                  },
+                  address: {
+                    type: 'string',
+                    description: 'Renter address (optional)',
+                  },
                   accountStatus: {
                     type: 'string',
                     enum: ['ACTIVE', 'BANNED', 'SUSPENDED'],
@@ -2060,7 +2089,10 @@ export const openapiSpec = {
                   type: 'object',
                   properties: {
                     success: { type: 'boolean', example: true },
-                    message: { type: 'string', example: 'Renter deleted successfully' },
+                    message: {
+                      type: 'string',
+                      example: 'Renter deleted successfully',
+                    },
                   },
                 },
               },
@@ -2140,15 +2172,31 @@ export const openapiSpec = {
                 type: 'object',
                 required: ['email', 'password', 'name'],
                 properties: {
-                  email: { type: 'string', format: 'email', description: 'Staff email' },
-                  password: { type: 'string', format: 'password', description: 'Staff password' },
+                  email: {
+                    type: 'string',
+                    format: 'email',
+                    description: 'Staff email',
+                  },
+                  password: {
+                    type: 'string',
+                    format: 'password',
+                    description: 'Staff password',
+                  },
                   name: { type: 'string', description: 'Staff name' },
-                  phone: { type: 'string', description: 'Staff phone (must start with 0 and have exactly 10 digits)' },
-                  address: { type: 'string', description: 'Staff address (optional)' },
+                  phone: {
+                    type: 'string',
+                    description:
+                      'Staff phone (must start with 0 and have exactly 10 digits)',
+                  },
+                  address: {
+                    type: 'string',
+                    description: 'Staff address (optional)',
+                  },
                   accountStatus: {
                     type: 'string',
                     enum: ['ACTIVE', 'BANNED', 'SUSPENDED'],
-                    description: 'Account status (optional, defaults to ACTIVE)',
+                    description:
+                      'Account status (optional, defaults to ACTIVE)',
                   },
                   role: {
                     type: 'string',
@@ -2193,7 +2241,9 @@ export const openapiSpec = {
               },
             },
           },
-          400: { description: 'Bad request - validation errors or invalid role' },
+          400: {
+            description: 'Bad request - validation errors or invalid role',
+          },
           401: { description: 'Unauthorized' },
           403: { description: 'Forbidden - Admin access required' },
           409: { description: 'Conflict - email already exists' },
@@ -2227,8 +2277,14 @@ export const openapiSpec = {
                               address: { type: 'string', nullable: true },
                               role: { type: 'string' },
                               accountStatus: { type: 'string' },
-                              createdAt: { type: 'string', format: 'date-time' },
-                              updatedAt: { type: 'string', format: 'date-time' },
+                              createdAt: {
+                                type: 'string',
+                                format: 'date-time',
+                              },
+                              updatedAt: {
+                                type: 'string',
+                                format: 'date-time',
+                              },
                             },
                           },
                         },
@@ -2318,8 +2374,15 @@ export const openapiSpec = {
                 type: 'object',
                 properties: {
                   name: { type: 'string', description: 'Staff name' },
-                  phone: { type: 'string', description: 'Staff phone (must start with 0 and have exactly 10 digits)' },
-                  address: { type: 'string', description: 'Staff address (optional)' },
+                  phone: {
+                    type: 'string',
+                    description:
+                      'Staff phone (must start with 0 and have exactly 10 digits)',
+                  },
+                  address: {
+                    type: 'string',
+                    description: 'Staff address (optional)',
+                  },
                   accountStatus: {
                     type: 'string',
                     enum: ['ACTIVE', 'BANNED', 'SUSPENDED'],
@@ -2368,7 +2431,9 @@ export const openapiSpec = {
               },
             },
           },
-          400: { description: 'Bad request - validation errors or invalid role' },
+          400: {
+            description: 'Bad request - validation errors or invalid role',
+          },
           401: { description: 'Unauthorized' },
           403: { description: 'Forbidden - Admin access required' },
           404: { description: 'Staff or admin not found' },
@@ -2396,7 +2461,10 @@ export const openapiSpec = {
                   type: 'object',
                   properties: {
                     success: { type: 'boolean', example: true },
-                    message: { type: 'string', example: 'Staff/admin deleted successfully' },
+                    message: {
+                      type: 'string',
+                      example: 'Staff/admin deleted successfully',
+                    },
                   },
                 },
               },
@@ -2449,7 +2517,10 @@ export const openapiSpec = {
                   type: 'object',
                   properties: {
                     success: { type: 'boolean', example: true },
-                    message: { type: 'string', example: 'Staff/admin soft deleted' },
+                    message: {
+                      type: 'string',
+                      example: 'Staff/admin soft deleted',
+                    },
                   },
                 },
               },
@@ -2477,15 +2548,24 @@ export const openapiSpec = {
                 required: ['name', 'location', 'address', 'status', 'capacity'],
                 properties: {
                   name: { type: 'string', description: 'Station name' },
-                  location: { type: 'object', description: 'Station location (coordinates)' },
+                  location: {
+                    type: 'object',
+                    description: 'Station location (coordinates)',
+                  },
                   address: { type: 'string', description: 'Station address' },
                   status: {
                     type: 'string',
                     enum: ['ACTIVE', 'INACTIVE', 'MAINTENANCE'],
                     description: 'Station status',
                   },
-                  capacity: { type: 'integer', description: 'Station capacity' },
-                  contact: { type: 'string', description: 'Station contact information (optional)' },
+                  capacity: {
+                    type: 'integer',
+                    description: 'Station capacity',
+                  },
+                  contact: {
+                    type: 'string',
+                    description: 'Station contact information (optional)',
+                  },
                 },
               },
             },
@@ -2523,7 +2603,10 @@ export const openapiSpec = {
               },
             },
           },
-          400: { description: 'Bad request - missing required fields or invalid status' },
+          400: {
+            description:
+              'Bad request - missing required fields or invalid status',
+          },
           401: { description: 'Unauthorized' },
           403: { description: 'Forbidden - Admin access required' },
           409: { description: 'Conflict - station name already exists' },
@@ -2558,8 +2641,14 @@ export const openapiSpec = {
                               capacity: { type: 'integer' },
                               contact: { type: 'string', nullable: true },
                               softDeleted: { type: 'boolean' },
-                              createdAt: { type: 'string', format: 'date-time' },
-                              updatedAt: { type: 'string', format: 'date-time' },
+                              createdAt: {
+                                type: 'string',
+                                format: 'date-time',
+                              },
+                              updatedAt: {
+                                type: 'string',
+                                format: 'date-time',
+                              },
                               vehicles: {
                                 type: 'array',
                                 items: { type: 'object' },
@@ -2614,8 +2703,14 @@ export const openapiSpec = {
                               capacity: { type: 'integer' },
                               contact: { type: 'string', nullable: true },
                               softDeleted: { type: 'boolean' },
-                              createdAt: { type: 'string', format: 'date-time' },
-                              updatedAt: { type: 'string', format: 'date-time' },
+                              createdAt: {
+                                type: 'string',
+                                format: 'date-time',
+                              },
+                              updatedAt: {
+                                type: 'string',
+                                format: 'date-time',
+                              },
                             },
                           },
                         },
@@ -2719,15 +2814,24 @@ export const openapiSpec = {
                 required: ['name', 'location', 'address', 'status', 'capacity'],
                 properties: {
                   name: { type: 'string', description: 'Station name' },
-                  location: { type: 'object', description: 'Station location (coordinates)' },
+                  location: {
+                    type: 'object',
+                    description: 'Station location (coordinates)',
+                  },
                   address: { type: 'string', description: 'Station address' },
                   status: {
                     type: 'string',
                     enum: ['ACTIVE', 'INACTIVE', 'MAINTENANCE'],
                     description: 'Station status',
                   },
-                  capacity: { type: 'integer', description: 'Station capacity' },
-                  contact: { type: 'string', description: 'Station contact information (optional)' },
+                  capacity: {
+                    type: 'integer',
+                    description: 'Station capacity',
+                  },
+                  contact: {
+                    type: 'string',
+                    description: 'Station contact information (optional)',
+                  },
                 },
               },
             },
@@ -2765,7 +2869,10 @@ export const openapiSpec = {
               },
             },
           },
-          400: { description: 'Bad request - missing required fields, invalid status, or station has active vehicles/bookings' },
+          400: {
+            description:
+              'Bad request - missing required fields, invalid status, or station has active vehicles/bookings',
+          },
           401: { description: 'Unauthorized' },
           403: { description: 'Forbidden - Admin access required' },
           404: { description: 'Station not found' },
@@ -2794,7 +2901,10 @@ export const openapiSpec = {
                   type: 'object',
                   properties: {
                     success: { type: 'boolean', example: true },
-                    message: { type: 'string', example: 'Station deleted successfully' },
+                    message: {
+                      type: 'string',
+                      example: 'Station deleted successfully',
+                    },
                     data: {
                       type: 'object',
                       properties: {
@@ -2868,7 +2978,10 @@ export const openapiSpec = {
               },
             },
           },
-          400: { description: 'Bad request - station has active vehicles or bookings' },
+          400: {
+            description:
+              'Bad request - station has active vehicles or bookings',
+          },
           401: { description: 'Unauthorized' },
           403: { description: 'Forbidden - Admin access required' },
           404: { description: 'Station not found' },
@@ -2889,7 +3002,10 @@ export const openapiSpec = {
                   type: 'object',
                   properties: {
                     success: { type: 'boolean', example: true },
-                    message: { type: 'string', example: 'ImageKit connection successful' },
+                    message: {
+                      type: 'string',
+                      example: 'ImageKit connection successful',
+                    },
                     data: {
                       type: 'object',
                       properties: {
@@ -2929,7 +3045,10 @@ export const openapiSpec = {
                   type: 'object',
                   properties: {
                     success: { type: 'boolean', example: true },
-                    message: { type: 'string', example: 'Image transformations generated' },
+                    message: {
+                      type: 'string',
+                      example: 'Image transformations generated',
+                    },
                     data: {
                       type: 'object',
                       properties: {
@@ -2951,7 +3070,2083 @@ export const openapiSpec = {
             },
           },
           400: { description: 'Bad request - missing URL parameter' },
-          500: { description: 'Internal server error - transformation test failed' },
+          500: {
+            description: 'Internal server error - transformation test failed',
+          },
+        },
+      },
+    },
+    '/api/stations': {
+      get: {
+        summary: 'Get all active stations',
+        tags: ['Stations'],
+        security: [{ cookieAuth: [] }],
+        responses: {
+          200: {
+            description: 'List of stations',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        stations: {
+                          type: 'array',
+                          items: {
+                            type: 'object',
+                            properties: {
+                              id: { type: 'string' },
+                              name: { type: 'string' },
+                              location: { type: 'object' },
+                              address: { type: 'string', nullable: true },
+                              contact: { type: 'string', nullable: true },
+                              capacity: { type: 'integer' },
+                              status: { type: 'string' },
+                              softDeleted: { type: 'boolean' },
+                              createdAt: {
+                                type: 'string',
+                                format: 'date-time',
+                              },
+                              updatedAt: {
+                                type: 'string',
+                                format: 'date-time',
+                              },
+                              vehicles: {
+                                type: 'array',
+                                items: { type: 'object' },
+                              },
+                              stationStaff: {
+                                type: 'array',
+                                items: { type: 'object' },
+                              },
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          404: { description: 'No stations found' },
+          401: { description: 'Unauthorized' },
+        },
+      },
+      post: {
+        summary: 'Create a new station',
+        tags: ['Stations'],
+        security: [{ cookieAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['name', 'location', 'address', 'status', 'capacity'],
+                properties: {
+                  name: { type: 'string' },
+                  location: { type: 'object' },
+                  address: { type: 'string' },
+                  status: {
+                    type: 'string',
+                    enum: ['ACTIVE', 'INACTIVE', 'MAINTENANCE'],
+                  },
+                  capacity: { type: 'integer' },
+                  contact: { type: 'string' },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          201: {
+            description: 'Station created successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        station: {
+                          type: 'object',
+                          properties: {
+                            id: { type: 'string' },
+                            name: { type: 'string' },
+                            location: { type: 'object' },
+                            address: { type: 'string' },
+                            status: { type: 'string' },
+                            capacity: { type: 'integer' },
+                            contact: { type: 'string' },
+                            createdAt: { type: 'string', format: 'date-time' },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          400: { description: 'Bad request - missing required fields' },
+          409: { description: 'Station name already exists' },
+          401: { description: 'Unauthorized' },
+        },
+      },
+    },
+    '/api/stations/unavailable': {
+      get: {
+        summary: 'Get unavailable stations (soft deleted or inactive)',
+        tags: ['Stations'],
+        security: [{ cookieAuth: [] }],
+        responses: {
+          200: {
+            description: 'List of unavailable stations',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        deletedStations: {
+                          type: 'array',
+                          items: {
+                            type: 'object',
+                            properties: {
+                              id: { type: 'string' },
+                              name: { type: 'string' },
+                              location: { type: 'object' },
+                              address: { type: 'string', nullable: true },
+                              status: { type: 'string' },
+                              softDeleted: { type: 'boolean' },
+                              createdAt: {
+                                type: 'string',
+                                format: 'date-time',
+                              },
+                              updatedAt: {
+                                type: 'string',
+                                format: 'date-time',
+                              },
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          404: { description: 'No unavailable stations found' },
+          401: { description: 'Unauthorized' },
+        },
+      },
+    },
+    '/api/stations/{id}': {
+      get: {
+        summary: 'Get station by ID',
+        tags: ['Stations'],
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Station ID',
+          },
+        ],
+        responses: {
+          200: {
+            description: 'Station details',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        station: {
+                          type: 'object',
+                          properties: {
+                            id: { type: 'string' },
+                            name: { type: 'string' },
+                            location: { type: 'object' },
+                            address: { type: 'string', nullable: true },
+                            contact: { type: 'string', nullable: true },
+                            capacity: { type: 'integer' },
+                            status: { type: 'string' },
+                            softDeleted: { type: 'boolean' },
+                            createdAt: { type: 'string', format: 'date-time' },
+                            updatedAt: { type: 'string', format: 'date-time' },
+                            vehicles: {
+                              type: 'array',
+                              items: { type: 'object' },
+                            },
+                            stationStaff: {
+                              type: 'array',
+                              items: { type: 'object' },
+                            },
+                            bookings: {
+                              type: 'array',
+                              items: { type: 'object' },
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          404: { description: 'Station not found' },
+          401: { description: 'Unauthorized' },
+        },
+      },
+      put: {
+        summary: 'Update station',
+        tags: ['Stations'],
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Station ID',
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['name', 'location', 'address', 'status', 'capacity'],
+                properties: {
+                  name: { type: 'string' },
+                  location: { type: 'object' },
+                  address: { type: 'string' },
+                  status: {
+                    type: 'string',
+                    enum: ['ACTIVE', 'INACTIVE', 'MAINTENANCE'],
+                  },
+                  capacity: { type: 'integer' },
+                  contact: { type: 'string' },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          200: {
+            description: 'Station updated successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        station: {
+                          type: 'object',
+                          properties: {
+                            id: { type: 'string' },
+                            name: { type: 'string' },
+                            location: { type: 'object' },
+                            address: { type: 'string' },
+                            status: { type: 'string' },
+                            capacity: { type: 'integer' },
+                            contact: { type: 'string' },
+                            updatedAt: { type: 'string', format: 'date-time' },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          400: { description: 'Bad request' },
+          404: { description: 'Station not found' },
+          409: { description: 'Station name already exists' },
+          401: { description: 'Unauthorized' },
+        },
+      },
+      delete: {
+        summary: 'Hard delete station',
+        tags: ['Stations'],
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Station ID',
+          },
+        ],
+        responses: {
+          200: {
+            description: 'Station deleted successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    message: {
+                      type: 'string',
+                      example: 'Station deleted successfully',
+                    },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        station: { type: 'object' },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          404: { description: 'Station not found' },
+          401: { description: 'Unauthorized' },
+        },
+      },
+    },
+    '/api/stations/soft-delete/{id}': {
+      patch: {
+        summary: 'Soft delete station',
+        tags: ['Stations'],
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Station ID',
+          },
+        ],
+        responses: {
+          200: {
+            description: 'Station soft deleted successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        station: {
+                          type: 'object',
+                          properties: {
+                            id: { type: 'string' },
+                            name: { type: 'string' },
+                            location: { type: 'object' },
+                            address: { type: 'string' },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          400: {
+            description:
+              'Cannot delete: Station has active vehicles or bookings',
+          },
+          404: { description: 'Station not found' },
+          401: { description: 'Unauthorized' },
+        },
+      },
+    },
+    '/api/staff': {
+      get: {
+        summary: 'Get all staff and admin users',
+        tags: ['Staff'],
+        security: [{ cookieAuth: [] }],
+        responses: {
+          200: {
+            description: 'List of staff and admin users',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        staff: {
+                          type: 'array',
+                          items: {
+                            type: 'object',
+                            properties: {
+                              id: { type: 'string' },
+                              email: { type: 'string' },
+                              name: { type: 'string', nullable: true },
+                              phone: { type: 'string', nullable: true },
+                              address: { type: 'string', nullable: true },
+                              role: { type: 'string' },
+                              accountStatus: { type: 'string' },
+                              softDeleted: { type: 'boolean' },
+                              createdAt: {
+                                type: 'string',
+                                format: 'date-time',
+                              },
+                              updatedAt: {
+                                type: 'string',
+                                format: 'date-time',
+                              },
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          404: { description: 'No staff or admin found' },
+          401: { description: 'Unauthorized' },
+        },
+      },
+      post: {
+        summary: 'Create a new staff or admin user',
+        tags: ['Staff'],
+        security: [{ cookieAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['email', 'password', 'name'],
+                properties: {
+                  email: { type: 'string', format: 'email' },
+                  password: { type: 'string' },
+                  name: { type: 'string' },
+                  phone: { type: 'string' },
+                  address: { type: 'string' },
+                  accountStatus: {
+                    type: 'string',
+                    enum: ['ACTIVE', 'BANNED', 'SUSPENDED'],
+                    default: 'ACTIVE',
+                  },
+                  role: {
+                    type: 'string',
+                    enum: ['STAFF', 'ADMIN'],
+                    default: 'STAFF',
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          201: {
+            description: 'Staff created successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        staff: {
+                          type: 'object',
+                          properties: {
+                            id: { type: 'string' },
+                            email: { type: 'string' },
+                            name: { type: 'string' },
+                            phone: { type: 'string', nullable: true },
+                            address: { type: 'string', nullable: true },
+                            role: { type: 'string' },
+                            accountStatus: { type: 'string' },
+                            createdAt: { type: 'string', format: 'date-time' },
+                            updatedAt: { type: 'string', format: 'date-time' },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          400: { description: 'Bad request - validation errors' },
+          409: { description: 'Email already exists' },
+          401: { description: 'Unauthorized' },
+        },
+      },
+    },
+    '/api/staff/{id}': {
+      get: {
+        summary: 'Get staff or admin by ID',
+        tags: ['Staff'],
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Staff ID',
+          },
+        ],
+        responses: {
+          200: {
+            description: 'Staff details',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        staff: {
+                          type: 'object',
+                          properties: {
+                            id: { type: 'string' },
+                            email: { type: 'string' },
+                            name: { type: 'string', nullable: true },
+                            phone: { type: 'string', nullable: true },
+                            address: { type: 'string', nullable: true },
+                            role: { type: 'string' },
+                            accountStatus: { type: 'string' },
+                            softDeleted: { type: 'boolean' },
+                            createdAt: { type: 'string', format: 'date-time' },
+                            updatedAt: { type: 'string', format: 'date-time' },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          404: { description: 'Staff or admin not found' },
+          401: { description: 'Unauthorized' },
+        },
+      },
+      put: {
+        summary: 'Update staff or admin',
+        tags: ['Staff'],
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Staff ID',
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  name: { type: 'string' },
+                  phone: { type: 'string' },
+                  address: { type: 'string' },
+                  accountStatus: {
+                    type: 'string',
+                    enum: ['ACTIVE', 'BANNED', 'SUSPENDED'],
+                  },
+                  role: {
+                    type: 'string',
+                    enum: ['STAFF', 'ADMIN'],
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          200: {
+            description: 'Staff updated successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        staff: {
+                          type: 'object',
+                          properties: {
+                            id: { type: 'string' },
+                            email: { type: 'string' },
+                            name: { type: 'string' },
+                            phone: { type: 'string', nullable: true },
+                            address: { type: 'string', nullable: true },
+                            role: { type: 'string' },
+                            accountStatus: { type: 'string' },
+                            createdAt: { type: 'string', format: 'date-time' },
+                            updatedAt: { type: 'string', format: 'date-time' },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          400: { description: 'Bad request - validation errors' },
+          404: { description: 'Staff or admin not found' },
+          401: { description: 'Unauthorized' },
+        },
+      },
+      delete: {
+        summary: 'Hard delete staff or admin',
+        tags: ['Staff'],
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Staff ID',
+          },
+        ],
+        responses: {
+          200: {
+            description: 'Staff/admin deleted successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    message: {
+                      type: 'string',
+                      example: 'Staff/admin deleted successfully',
+                    },
+                  },
+                },
+              },
+            },
+          },
+          400: { description: 'This is not a staff or admin account' },
+          404: { description: 'Staff or admin not found' },
+          401: { description: 'Unauthorized' },
+        },
+      },
+    },
+    '/api/staff/soft-delete/{id}': {
+      patch: {
+        summary: 'Soft delete staff or admin',
+        tags: ['Staff'],
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Staff ID',
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['status'],
+                properties: {
+                  status: {
+                    type: 'string',
+                    enum: ['SUSPENDED', 'BANNED'],
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          200: {
+            description: 'Staff/admin soft deleted successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    message: {
+                      type: 'string',
+                      example: 'Staff/admin soft deleted',
+                    },
+                  },
+                },
+              },
+            },
+          },
+          400: { description: 'Invalid status' },
+          404: { description: 'Staff or admin not found' },
+          401: { description: 'Unauthorized' },
+        },
+      },
+    },
+    '/api/renters': {
+      get: {
+        summary: 'Get all renters',
+        tags: ['Renters'],
+        security: [{ cookieAuth: [] }],
+        responses: {
+          200: {
+            description: 'List of renters',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        renters: {
+                          type: 'array',
+                          items: {
+                            type: 'object',
+                            properties: {
+                              id: { type: 'string' },
+                              email: { type: 'string' },
+                              name: { type: 'string', nullable: true },
+                              phone: { type: 'string', nullable: true },
+                              address: { type: 'string', nullable: true },
+                              role: { type: 'string' },
+                              accountStatus: { type: 'string' },
+                              softDeleted: { type: 'boolean' },
+                              createdAt: {
+                                type: 'string',
+                                format: 'date-time',
+                              },
+                              updatedAt: {
+                                type: 'string',
+                                format: 'date-time',
+                              },
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          404: { description: 'No renters found' },
+          401: { description: 'Unauthorized' },
+        },
+      },
+      post: {
+        summary: 'Create a new renter',
+        tags: ['Renters'],
+        security: [{ cookieAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['email', 'password', 'name'],
+                properties: {
+                  email: { type: 'string', format: 'email' },
+                  password: { type: 'string' },
+                  name: { type: 'string' },
+                  phone: { type: 'string' },
+                  address: { type: 'string' },
+                  accountStatus: {
+                    type: 'string',
+                    enum: ['ACTIVE', 'BANNED', 'SUSPENDED'],
+                    default: 'ACTIVE',
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          201: {
+            description: 'Renter created successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        renter: {
+                          type: 'object',
+                          properties: {
+                            id: { type: 'string' },
+                            email: { type: 'string' },
+                            name: { type: 'string' },
+                            phone: { type: 'string', nullable: true },
+                            address: { type: 'string', nullable: true },
+                            role: { type: 'string' },
+                            accountStatus: { type: 'string' },
+                            createdAt: { type: 'string', format: 'date-time' },
+                            updatedAt: { type: 'string', format: 'date-time' },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          400: { description: 'Bad request - validation errors' },
+          409: { description: 'Email already exists' },
+          401: { description: 'Unauthorized' },
+        },
+      },
+    },
+    '/api/renters/{id}': {
+      get: {
+        summary: 'Get renter by ID',
+        tags: ['Renters'],
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Renter ID',
+          },
+        ],
+        responses: {
+          200: {
+            description: 'Renter details',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        renter: {
+                          type: 'object',
+                          properties: {
+                            id: { type: 'string' },
+                            email: { type: 'string' },
+                            name: { type: 'string', nullable: true },
+                            phone: { type: 'string', nullable: true },
+                            address: { type: 'string', nullable: true },
+                            role: { type: 'string' },
+                            accountStatus: { type: 'string' },
+                            softDeleted: { type: 'boolean' },
+                            createdAt: { type: 'string', format: 'date-time' },
+                            updatedAt: { type: 'string', format: 'date-time' },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          404: { description: 'Renter not found' },
+          401: { description: 'Unauthorized' },
+        },
+      },
+      put: {
+        summary: 'Update renter',
+        tags: ['Renters'],
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Renter ID',
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  name: { type: 'string' },
+                  phone: { type: 'string' },
+                  address: { type: 'string' },
+                  accountStatus: {
+                    type: 'string',
+                    enum: ['ACTIVE', 'BANNED', 'SUSPENDED'],
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          200: {
+            description: 'Renter updated successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        renter: {
+                          type: 'object',
+                          properties: {
+                            id: { type: 'string' },
+                            email: { type: 'string' },
+                            name: { type: 'string' },
+                            phone: { type: 'string', nullable: true },
+                            address: { type: 'string', nullable: true },
+                            role: { type: 'string' },
+                            accountStatus: { type: 'string' },
+                            createdAt: { type: 'string', format: 'date-time' },
+                            updatedAt: { type: 'string', format: 'date-time' },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          400: { description: 'Bad request - validation errors' },
+          404: { description: 'Renter not found' },
+          401: { description: 'Unauthorized' },
+        },
+      },
+      delete: {
+        summary: 'Hard delete renter',
+        tags: ['Renters'],
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Renter ID',
+          },
+        ],
+        responses: {
+          200: {
+            description: 'Renter deleted successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    message: {
+                      type: 'string',
+                      example: 'Renter deleted successfully',
+                    },
+                  },
+                },
+              },
+            },
+          },
+          400: { description: 'This is not a renter account' },
+          404: { description: 'Renter not found' },
+          401: { description: 'Unauthorized' },
+        },
+      },
+    },
+    '/api/renters/soft-delete/{id}': {
+      patch: {
+        summary: 'Soft delete renter',
+        tags: ['Renters'],
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Renter ID',
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['status'],
+                properties: {
+                  status: {
+                    type: 'string',
+                    enum: ['SUSPENDED', 'BANNED'],
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          200: {
+            description: 'Renter soft deleted successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    message: { type: 'string', example: 'Renter soft deleted' },
+                  },
+                },
+              },
+            },
+          },
+          400: { description: 'Invalid status' },
+          404: { description: 'Renter not found' },
+          401: { description: 'Unauthorized' },
+        },
+      },
+    },
+    '/api/promotions': {
+      get: {
+        summary: 'Get all promotions',
+        tags: ['Promotions'],
+        security: [{ cookieAuth: [] }],
+        responses: {
+          200: {
+            description: 'List of promotions',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        promotions: {
+                          type: 'array',
+                          items: {
+                            type: 'object',
+                            properties: {
+                              id: { type: 'string' },
+                              code: { type: 'string' },
+                              description: { type: 'string', nullable: true },
+                              discount: { type: 'number' },
+                              validFrom: {
+                                type: 'string',
+                                format: 'date-time',
+                              },
+                              validUntil: {
+                                type: 'string',
+                                format: 'date-time',
+                              },
+                              createdAt: {
+                                type: 'string',
+                                format: 'date-time',
+                              },
+                              updatedAt: {
+                                type: 'string',
+                                format: 'date-time',
+                              },
+                              promotionBookings: {
+                                type: 'array',
+                                items: { type: 'object' },
+                              },
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          404: { description: 'No promotions found' },
+          401: { description: 'Unauthorized' },
+        },
+      },
+      post: {
+        summary: 'Create a new promotion',
+        tags: ['Promotions'],
+        security: [{ cookieAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['code', 'discount', 'validFrom', 'validUntil'],
+                properties: {
+                  code: {
+                    type: 'string',
+                    description: 'Unique promotion code',
+                  },
+                  description: {
+                    type: 'string',
+                    description: 'Promotion description',
+                  },
+                  discount: {
+                    type: 'number',
+                    description: 'Discount amount (positive number)',
+                  },
+                  validFrom: {
+                    type: 'string',
+                    format: 'date-time',
+                    description: 'Start date',
+                  },
+                  validUntil: {
+                    type: 'string',
+                    format: 'date-time',
+                    description: 'End date',
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          201: {
+            description: 'Promotion created successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    message: {
+                      type: 'string',
+                      example: 'Promotion created successfully',
+                    },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        promotion: {
+                          type: 'object',
+                          properties: {
+                            id: { type: 'string' },
+                            code: { type: 'string' },
+                            description: { type: 'string', nullable: true },
+                            discount: { type: 'number' },
+                            validFrom: { type: 'string', format: 'date-time' },
+                            validUntil: { type: 'string', format: 'date-time' },
+                            createdAt: { type: 'string', format: 'date-time' },
+                            updatedAt: { type: 'string', format: 'date-time' },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          400: { description: 'Bad request - validation errors' },
+          409: { description: 'Promotion code already exists' },
+          401: { description: 'Unauthorized' },
+        },
+      },
+    },
+    '/api/promotions/active': {
+      get: {
+        summary: 'Get active promotions',
+        tags: ['Promotions'],
+        security: [{ cookieAuth: [] }],
+        responses: {
+          200: {
+            description: 'List of currently active promotions',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        promotions: {
+                          type: 'array',
+                          items: {
+                            type: 'object',
+                            properties: {
+                              id: { type: 'string' },
+                              code: { type: 'string' },
+                              description: { type: 'string', nullable: true },
+                              discount: { type: 'number' },
+                              validFrom: {
+                                type: 'string',
+                                format: 'date-time',
+                              },
+                              validUntil: {
+                                type: 'string',
+                                format: 'date-time',
+                              },
+                              promotionBookings: {
+                                type: 'array',
+                                items: { type: 'object' },
+                              },
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          404: { description: 'No active promotions found' },
+          401: { description: 'Unauthorized' },
+        },
+      },
+    },
+    '/api/promotions/code/{code}': {
+      get: {
+        summary: 'Get promotion by code',
+        tags: ['Promotions'],
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          {
+            name: 'code',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Promotion code',
+          },
+        ],
+        responses: {
+          200: {
+            description: 'Promotion details',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        promotion: {
+                          type: 'object',
+                          properties: {
+                            id: { type: 'string' },
+                            code: { type: 'string' },
+                            description: { type: 'string', nullable: true },
+                            discount: { type: 'number' },
+                            validFrom: { type: 'string', format: 'date-time' },
+                            validUntil: { type: 'string', format: 'date-time' },
+                            isCurrentlyValid: { type: 'boolean' },
+                            promotionBookings: {
+                              type: 'array',
+                              items: { type: 'object' },
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          404: { description: 'Promotion not found' },
+          401: { description: 'Unauthorized' },
+        },
+      },
+    },
+    '/api/promotions/{id}': {
+      get: {
+        summary: 'Get promotion by ID',
+        tags: ['Promotions'],
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Promotion ID',
+          },
+        ],
+        responses: {
+          200: {
+            description: 'Promotion details',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        promotion: {
+                          type: 'object',
+                          properties: {
+                            id: { type: 'string' },
+                            code: { type: 'string' },
+                            description: { type: 'string', nullable: true },
+                            discount: { type: 'number' },
+                            validFrom: { type: 'string', format: 'date-time' },
+                            validUntil: { type: 'string', format: 'date-time' },
+                            promotionBookings: {
+                              type: 'array',
+                              items: { type: 'object' },
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          404: { description: 'Promotion not found' },
+          401: { description: 'Unauthorized' },
+        },
+      },
+      put: {
+        summary: 'Update promotion',
+        tags: ['Promotions'],
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Promotion ID',
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  code: {
+                    type: 'string',
+                    description: 'Unique promotion code',
+                  },
+                  description: {
+                    type: 'string',
+                    description: 'Promotion description',
+                  },
+                  discount: {
+                    type: 'number',
+                    description: 'Discount amount (positive number)',
+                  },
+                  validFrom: {
+                    type: 'string',
+                    format: 'date-time',
+                    description: 'Start date',
+                  },
+                  validUntil: {
+                    type: 'string',
+                    format: 'date-time',
+                    description: 'End date',
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          200: {
+            description: 'Promotion updated successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    message: {
+                      type: 'string',
+                      example: 'Promotion updated successfully',
+                    },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        promotion: {
+                          type: 'object',
+                          properties: {
+                            id: { type: 'string' },
+                            code: { type: 'string' },
+                            description: { type: 'string', nullable: true },
+                            discount: { type: 'number' },
+                            validFrom: { type: 'string', format: 'date-time' },
+                            validUntil: { type: 'string', format: 'date-time' },
+                            updatedAt: { type: 'string', format: 'date-time' },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          400: { description: 'Bad request - validation errors' },
+          404: { description: 'Promotion not found' },
+          409: { description: 'Promotion code already exists' },
+          401: { description: 'Unauthorized' },
+        },
+      },
+      delete: {
+        summary: 'Delete promotion',
+        tags: ['Promotions'],
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Promotion ID',
+          },
+        ],
+        responses: {
+          200: {
+            description: 'Promotion deleted successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    message: {
+                      type: 'string',
+                      example: 'Promotion deleted successfully',
+                    },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        deletedPromotion: {
+                          type: 'object',
+                          properties: {
+                            id: { type: 'string' },
+                            code: { type: 'string' },
+                            description: { type: 'string', nullable: true },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          400: { description: 'Cannot delete promotion with active bookings' },
+          404: { description: 'Promotion not found' },
+          401: { description: 'Unauthorized' },
+        },
+      },
+    },
+    '/api/rental-history': {
+      get: {
+        summary: 'Get all rental histories',
+        tags: ['Rental History'],
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          {
+            name: 'page',
+            in: 'query',
+            schema: { type: 'integer', default: 1 },
+            description: 'Page number for pagination',
+          },
+          {
+            name: 'limit',
+            in: 'query',
+            schema: { type: 'integer', default: 10 },
+            description: 'Number of items per page',
+          },
+          {
+            name: 'userId',
+            in: 'query',
+            schema: { type: 'string' },
+            description: 'Filter by user ID',
+          },
+          {
+            name: 'rating',
+            in: 'query',
+            schema: { type: 'integer', minimum: 1, maximum: 5 },
+            description: 'Filter by rating',
+          },
+        ],
+        responses: {
+          200: {
+            description: 'List of rental histories with pagination',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        rentalHistories: {
+                          type: 'array',
+                          items: {
+                            type: 'object',
+                            properties: {
+                              id: { type: 'string' },
+                              userId: { type: 'string' },
+                              bookingId: { type: 'string' },
+                              distance: { type: 'number' },
+                              rating: { type: 'integer', nullable: true },
+                              feedback: { type: 'string', nullable: true },
+                              createdAt: {
+                                type: 'string',
+                                format: 'date-time',
+                              },
+                              user: {
+                                type: 'object',
+                                properties: {
+                                  id: { type: 'string' },
+                                  name: { type: 'string', nullable: true },
+                                  email: { type: 'string' },
+                                },
+                              },
+                              booking: {
+                                type: 'object',
+                                properties: {
+                                  id: { type: 'string' },
+                                  startTime: {
+                                    type: 'string',
+                                    format: 'date-time',
+                                  },
+                                  endTime: {
+                                    type: 'string',
+                                    format: 'date-time',
+                                  },
+                                  status: { type: 'string' },
+                                  vehicle: { type: 'object' },
+                                },
+                              },
+                            },
+                          },
+                        },
+                        pagination: {
+                          type: 'object',
+                          properties: {
+                            currentPage: { type: 'integer' },
+                            totalPages: { type: 'integer' },
+                            totalItems: { type: 'integer' },
+                            itemsPerPage: { type: 'integer' },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          404: { description: 'No rental histories found' },
+          401: { description: 'Unauthorized' },
+          403: { description: 'Forbidden - Insufficient permissions' },
+        },
+      },
+      post: {
+        summary: 'Create rental history',
+        tags: ['Rental History'],
+        security: [{ cookieAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['userId', 'bookingId'],
+                properties: {
+                  userId: { type: 'string', description: 'User ID' },
+                  bookingId: { type: 'string', description: 'Booking ID' },
+                  distance: {
+                    type: 'number',
+                    description: 'Distance traveled (non-negative)',
+                  },
+                  rating: {
+                    type: 'integer',
+                    minimum: 1,
+                    maximum: 5,
+                    description: 'Rating (1-5 stars)',
+                  },
+                  feedback: { type: 'string', description: 'User feedback' },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          201: {
+            description: 'Rental history created successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    message: {
+                      type: 'string',
+                      example: 'Rental history created successfully',
+                    },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        rentalHistory: {
+                          type: 'object',
+                          properties: {
+                            id: { type: 'string' },
+                            userId: { type: 'string' },
+                            bookingId: { type: 'string' },
+                            distance: { type: 'number' },
+                            rating: { type: 'integer', nullable: true },
+                            feedback: { type: 'string', nullable: true },
+                            createdAt: { type: 'string', format: 'date-time' },
+                            user: { type: 'object' },
+                            booking: { type: 'object' },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          400: { description: 'Bad request - validation errors' },
+          404: { description: 'User or booking not found' },
+          409: {
+            description: 'Rental history already exists for this booking',
+          },
+          401: { description: 'Unauthorized' },
+          403: { description: 'Forbidden - Insufficient permissions' },
+        },
+      },
+    },
+    '/api/rental-history/statistics': {
+      get: {
+        summary: 'Get rental statistics',
+        tags: ['Rental History'],
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          {
+            name: 'userId',
+            in: 'query',
+            schema: { type: 'string' },
+            description: 'Filter statistics by user ID',
+          },
+        ],
+        responses: {
+          200: {
+            description: 'Rental statistics',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        statistics: {
+                          type: 'object',
+                          properties: {
+                            totalRentals: { type: 'integer' },
+                            averageRating: { type: 'number' },
+                            totalDistance: { type: 'number' },
+                            ratingDistribution: {
+                              type: 'array',
+                              items: {
+                                type: 'object',
+                                properties: {
+                                  rating: { type: 'integer' },
+                                  count: { type: 'integer' },
+                                },
+                              },
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          401: { description: 'Unauthorized' },
+          403: { description: 'Forbidden - Insufficient permissions' },
+        },
+      },
+    },
+    '/api/rental-history/user/{userId}': {
+      get: {
+        summary: 'Get rental histories by user ID',
+        tags: ['Rental History'],
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          {
+            name: 'userId',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+            description: 'User ID',
+          },
+          {
+            name: 'page',
+            in: 'query',
+            schema: { type: 'integer', default: 1 },
+            description: 'Page number for pagination',
+          },
+          {
+            name: 'limit',
+            in: 'query',
+            schema: { type: 'integer', default: 10 },
+            description: 'Number of items per page',
+          },
+        ],
+        responses: {
+          200: {
+            description: 'User rental histories with pagination',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        rentalHistories: {
+                          type: 'array',
+                          items: {
+                            type: 'object',
+                            properties: {
+                              id: { type: 'string' },
+                              distance: { type: 'number' },
+                              rating: { type: 'integer', nullable: true },
+                              feedback: { type: 'string', nullable: true },
+                              createdAt: {
+                                type: 'string',
+                                format: 'date-time',
+                              },
+                              booking: {
+                                type: 'object',
+                                properties: {
+                                  vehicle: { type: 'object' },
+                                  station: { type: 'object' },
+                                },
+                              },
+                            },
+                          },
+                        },
+                        pagination: { type: 'object' },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          404: { description: 'User not found or no rental histories found' },
+          401: { description: 'Unauthorized' },
+          403: { description: 'Forbidden - Insufficient permissions' },
+        },
+      },
+    },
+    '/api/rental-history/booking/{bookingId}': {
+      get: {
+        summary: 'Get rental history by booking ID',
+        tags: ['Rental History'],
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          {
+            name: 'bookingId',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Booking ID',
+          },
+        ],
+        responses: {
+          200: {
+            description: 'Rental history for the booking',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        rentalHistory: {
+                          type: 'object',
+                          properties: {
+                            id: { type: 'string' },
+                            userId: { type: 'string' },
+                            bookingId: { type: 'string' },
+                            distance: { type: 'number' },
+                            rating: { type: 'integer', nullable: true },
+                            feedback: { type: 'string', nullable: true },
+                            createdAt: { type: 'string', format: 'date-time' },
+                            user: { type: 'object' },
+                            booking: { type: 'object' },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          404: { description: 'Rental history not found for this booking' },
+          401: { description: 'Unauthorized' },
+          403: { description: 'Forbidden - Insufficient permissions' },
+        },
+      },
+    },
+    '/api/rental-history/{id}': {
+      get: {
+        summary: 'Get rental history by ID',
+        tags: ['Rental History'],
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Rental history ID',
+          },
+        ],
+        responses: {
+          200: {
+            description: 'Rental history details',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        rentalHistory: {
+                          type: 'object',
+                          properties: {
+                            id: { type: 'string' },
+                            userId: { type: 'string' },
+                            bookingId: { type: 'string' },
+                            distance: { type: 'number' },
+                            rating: { type: 'integer', nullable: true },
+                            feedback: { type: 'string', nullable: true },
+                            createdAt: { type: 'string', format: 'date-time' },
+                            user: {
+                              type: 'object',
+                              properties: {
+                                id: { type: 'string' },
+                                name: { type: 'string', nullable: true },
+                                email: { type: 'string' },
+                                phone: { type: 'string', nullable: true },
+                              },
+                            },
+                            booking: {
+                              type: 'object',
+                              properties: {
+                                vehicle: { type: 'object' },
+                                station: { type: 'object' },
+                              },
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          404: { description: 'Rental history not found' },
+          401: { description: 'Unauthorized' },
+          403: { description: 'Forbidden - Insufficient permissions' },
+        },
+      },
+      put: {
+        summary: 'Update rental history',
+        tags: ['Rental History'],
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Rental history ID',
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  distance: {
+                    type: 'number',
+                    description: 'Distance traveled (non-negative)',
+                  },
+                  rating: {
+                    type: 'integer',
+                    minimum: 1,
+                    maximum: 5,
+                    description: 'Rating (1-5 stars)',
+                  },
+                  feedback: { type: 'string', description: 'User feedback' },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          200: {
+            description: 'Rental history updated successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    message: {
+                      type: 'string',
+                      example: 'Rental history updated successfully',
+                    },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        rentalHistory: {
+                          type: 'object',
+                          properties: {
+                            id: { type: 'string' },
+                            distance: { type: 'number' },
+                            rating: { type: 'integer', nullable: true },
+                            feedback: { type: 'string', nullable: true },
+                            user: { type: 'object' },
+                            booking: { type: 'object' },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          400: {
+            description:
+              'Bad request - validation errors or no valid fields provided',
+          },
+          404: { description: 'Rental history not found' },
+          401: { description: 'Unauthorized' },
+          403: { description: 'Forbidden - Insufficient permissions' },
+        },
+      },
+      delete: {
+        summary: 'Delete rental history',
+        tags: ['Rental History'],
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Rental history ID',
+          },
+        ],
+        responses: {
+          200: {
+            description: 'Rental history deleted successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    message: {
+                      type: 'string',
+                      example: 'Rental history deleted successfully',
+                    },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        deletedHistory: {
+                          type: 'object',
+                          properties: {
+                            id: { type: 'string' },
+                            userName: { type: 'string' },
+                            bookingId: { type: 'string' },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          404: { description: 'Rental history not found' },
+          401: { description: 'Unauthorized' },
+          403: { description: 'Forbidden - Admin only' },
         },
       },
     },
