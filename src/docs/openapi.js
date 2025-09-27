@@ -4177,11 +4177,26 @@ export const openapiSpec = {
                               code: { type: 'string' },
                               description: { type: 'string', nullable: true },
                               discount: { type: 'number' },
-                              validFrom: { type: 'string', format: 'date-time' },
-                              validUntil: { type: 'string', format: 'date-time' },
-                              createdAt: { type: 'string', format: 'date-time' },
-                              updatedAt: { type: 'string', format: 'date-time' },
-                              promotionBookings: { type: 'array', items: { type: 'object' } },
+                              validFrom: {
+                                type: 'string',
+                                format: 'date-time',
+                              },
+                              validUntil: {
+                                type: 'string',
+                                format: 'date-time',
+                              },
+                              createdAt: {
+                                type: 'string',
+                                format: 'date-time',
+                              },
+                              updatedAt: {
+                                type: 'string',
+                                format: 'date-time',
+                              },
+                              promotionBookings: {
+                                type: 'array',
+                                items: { type: 'object' },
+                              },
                             },
                           },
                         },
@@ -4208,11 +4223,28 @@ export const openapiSpec = {
                 type: 'object',
                 required: ['code', 'discount', 'validFrom', 'validUntil'],
                 properties: {
-                  code: { type: 'string', description: 'Unique promotion code' },
-                  description: { type: 'string', description: 'Promotion description' },
-                  discount: { type: 'number', description: 'Discount amount (positive number)' },
-                  validFrom: { type: 'string', format: 'date-time', description: 'Start date' },
-                  validUntil: { type: 'string', format: 'date-time', description: 'End date' },
+                  code: {
+                    type: 'string',
+                    description: 'Unique promotion code',
+                  },
+                  description: {
+                    type: 'string',
+                    description: 'Promotion description',
+                  },
+                  discount: {
+                    type: 'number',
+                    description: 'Discount amount (positive number)',
+                  },
+                  validFrom: {
+                    type: 'string',
+                    format: 'date-time',
+                    description: 'Start date',
+                  },
+                  validUntil: {
+                    type: 'string',
+                    format: 'date-time',
+                    description: 'End date',
+                  },
                 },
               },
             },
@@ -4227,7 +4259,10 @@ export const openapiSpec = {
                   type: 'object',
                   properties: {
                     success: { type: 'boolean', example: true },
-                    message: { type: 'string', example: 'Promotion created successfully' },
+                    message: {
+                      type: 'string',
+                      example: 'Promotion created successfully',
+                    },
                     data: {
                       type: 'object',
                       properties: {
@@ -4283,9 +4318,18 @@ export const openapiSpec = {
                               code: { type: 'string' },
                               description: { type: 'string', nullable: true },
                               discount: { type: 'number' },
-                              validFrom: { type: 'string', format: 'date-time' },
-                              validUntil: { type: 'string', format: 'date-time' },
-                              promotionBookings: { type: 'array', items: { type: 'object' } },
+                              validFrom: {
+                                type: 'string',
+                                format: 'date-time',
+                              },
+                              validUntil: {
+                                type: 'string',
+                                format: 'date-time',
+                              },
+                              promotionBookings: {
+                                type: 'array',
+                                items: { type: 'object' },
+                              },
                             },
                           },
                         },
@@ -4337,7 +4381,10 @@ export const openapiSpec = {
                             validFrom: { type: 'string', format: 'date-time' },
                             validUntil: { type: 'string', format: 'date-time' },
                             isCurrentlyValid: { type: 'boolean' },
-                            promotionBookings: { type: 'array', items: { type: 'object' } },
+                            promotionBookings: {
+                              type: 'array',
+                              items: { type: 'object' },
+                            },
                           },
                         },
                       },
@@ -4387,7 +4434,10 @@ export const openapiSpec = {
                             discount: { type: 'number' },
                             validFrom: { type: 'string', format: 'date-time' },
                             validUntil: { type: 'string', format: 'date-time' },
-                            promotionBookings: { type: 'array', items: { type: 'object' } },
+                            promotionBookings: {
+                              type: 'array',
+                              items: { type: 'object' },
+                            },
                           },
                         },
                       },
@@ -4421,11 +4471,28 @@ export const openapiSpec = {
               schema: {
                 type: 'object',
                 properties: {
-                  code: { type: 'string', description: 'Unique promotion code' },
-                  description: { type: 'string', description: 'Promotion description' },
-                  discount: { type: 'number', description: 'Discount amount (positive number)' },
-                  validFrom: { type: 'string', format: 'date-time', description: 'Start date' },
-                  validUntil: { type: 'string', format: 'date-time', description: 'End date' },
+                  code: {
+                    type: 'string',
+                    description: 'Unique promotion code',
+                  },
+                  description: {
+                    type: 'string',
+                    description: 'Promotion description',
+                  },
+                  discount: {
+                    type: 'number',
+                    description: 'Discount amount (positive number)',
+                  },
+                  validFrom: {
+                    type: 'string',
+                    format: 'date-time',
+                    description: 'Start date',
+                  },
+                  validUntil: {
+                    type: 'string',
+                    format: 'date-time',
+                    description: 'End date',
+                  },
                 },
               },
             },
@@ -4440,7 +4507,10 @@ export const openapiSpec = {
                   type: 'object',
                   properties: {
                     success: { type: 'boolean', example: true },
-                    message: { type: 'string', example: 'Promotion updated successfully' },
+                    message: {
+                      type: 'string',
+                      example: 'Promotion updated successfully',
+                    },
                     data: {
                       type: 'object',
                       properties: {
@@ -4491,7 +4561,10 @@ export const openapiSpec = {
                   type: 'object',
                   properties: {
                     success: { type: 'boolean', example: true },
-                    message: { type: 'string', example: 'Promotion deleted successfully' },
+                    message: {
+                      type: 'string',
+                      example: 'Promotion deleted successfully',
+                    },
                     data: {
                       type: 'object',
                       properties: {
@@ -4570,7 +4643,10 @@ export const openapiSpec = {
                               distance: { type: 'number' },
                               rating: { type: 'integer', nullable: true },
                               feedback: { type: 'string', nullable: true },
-                              createdAt: { type: 'string', format: 'date-time' },
+                              createdAt: {
+                                type: 'string',
+                                format: 'date-time',
+                              },
                               user: {
                                 type: 'object',
                                 properties: {
@@ -4583,8 +4659,14 @@ export const openapiSpec = {
                                 type: 'object',
                                 properties: {
                                   id: { type: 'string' },
-                                  startTime: { type: 'string', format: 'date-time' },
-                                  endTime: { type: 'string', format: 'date-time' },
+                                  startTime: {
+                                    type: 'string',
+                                    format: 'date-time',
+                                  },
+                                  endTime: {
+                                    type: 'string',
+                                    format: 'date-time',
+                                  },
                                   status: { type: 'string' },
                                   vehicle: { type: 'object' },
                                 },
@@ -4627,8 +4709,16 @@ export const openapiSpec = {
                 properties: {
                   userId: { type: 'string', description: 'User ID' },
                   bookingId: { type: 'string', description: 'Booking ID' },
-                  distance: { type: 'number', description: 'Distance traveled (non-negative)' },
-                  rating: { type: 'integer', minimum: 1, maximum: 5, description: 'Rating (1-5 stars)' },
+                  distance: {
+                    type: 'number',
+                    description: 'Distance traveled (non-negative)',
+                  },
+                  rating: {
+                    type: 'integer',
+                    minimum: 1,
+                    maximum: 5,
+                    description: 'Rating (1-5 stars)',
+                  },
                   feedback: { type: 'string', description: 'User feedback' },
                 },
               },
@@ -4644,7 +4734,10 @@ export const openapiSpec = {
                   type: 'object',
                   properties: {
                     success: { type: 'boolean', example: true },
-                    message: { type: 'string', example: 'Rental history created successfully' },
+                    message: {
+                      type: 'string',
+                      example: 'Rental history created successfully',
+                    },
                     data: {
                       type: 'object',
                       properties: {
@@ -4671,7 +4764,9 @@ export const openapiSpec = {
           },
           400: { description: 'Bad request - validation errors' },
           404: { description: 'User or booking not found' },
-          409: { description: 'Rental history already exists for this booking' },
+          409: {
+            description: 'Rental history already exists for this booking',
+          },
           401: { description: 'Unauthorized' },
           403: { description: 'Forbidden - Insufficient permissions' },
         },
@@ -4779,7 +4874,10 @@ export const openapiSpec = {
                               distance: { type: 'number' },
                               rating: { type: 'integer', nullable: true },
                               feedback: { type: 'string', nullable: true },
-                              createdAt: { type: 'string', format: 'date-time' },
+                              createdAt: {
+                                type: 'string',
+                                format: 'date-time',
+                              },
                               booking: {
                                 type: 'object',
                                 properties: {
@@ -4943,8 +5041,16 @@ export const openapiSpec = {
               schema: {
                 type: 'object',
                 properties: {
-                  distance: { type: 'number', description: 'Distance traveled (non-negative)' },
-                  rating: { type: 'integer', minimum: 1, maximum: 5, description: 'Rating (1-5 stars)' },
+                  distance: {
+                    type: 'number',
+                    description: 'Distance traveled (non-negative)',
+                  },
+                  rating: {
+                    type: 'integer',
+                    minimum: 1,
+                    maximum: 5,
+                    description: 'Rating (1-5 stars)',
+                  },
                   feedback: { type: 'string', description: 'User feedback' },
                 },
               },
@@ -4960,7 +5066,10 @@ export const openapiSpec = {
                   type: 'object',
                   properties: {
                     success: { type: 'boolean', example: true },
-                    message: { type: 'string', example: 'Rental history updated successfully' },
+                    message: {
+                      type: 'string',
+                      example: 'Rental history updated successfully',
+                    },
                     data: {
                       type: 'object',
                       properties: {
@@ -4982,7 +5091,10 @@ export const openapiSpec = {
               },
             },
           },
-          400: { description: 'Bad request - validation errors or no valid fields provided' },
+          400: {
+            description:
+              'Bad request - validation errors or no valid fields provided',
+          },
           404: { description: 'Rental history not found' },
           401: { description: 'Unauthorized' },
           403: { description: 'Forbidden - Insufficient permissions' },
@@ -5010,7 +5122,10 @@ export const openapiSpec = {
                   type: 'object',
                   properties: {
                     success: { type: 'boolean', example: true },
-                    message: { type: 'string', example: 'Rental history deleted successfully' },
+                    message: {
+                      type: 'string',
+                      example: 'Rental history deleted successfully',
+                    },
                     data: {
                       type: 'object',
                       properties: {
