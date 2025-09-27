@@ -4151,6 +4151,890 @@ export const openapiSpec = {
         },
       },
     },
+    '/api/promotions': {
+      get: {
+        summary: 'Get all promotions',
+        tags: ['Promotions'],
+        security: [{ cookieAuth: [] }],
+        responses: {
+          200: {
+            description: 'List of promotions',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        promotions: {
+                          type: 'array',
+                          items: {
+                            type: 'object',
+                            properties: {
+                              id: { type: 'string' },
+                              code: { type: 'string' },
+                              description: { type: 'string', nullable: true },
+                              discount: { type: 'number' },
+                              validFrom: { type: 'string', format: 'date-time' },
+                              validUntil: { type: 'string', format: 'date-time' },
+                              createdAt: { type: 'string', format: 'date-time' },
+                              updatedAt: { type: 'string', format: 'date-time' },
+                              promotionBookings: { type: 'array', items: { type: 'object' } },
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          404: { description: 'No promotions found' },
+          401: { description: 'Unauthorized' },
+        },
+      },
+      post: {
+        summary: 'Create a new promotion',
+        tags: ['Promotions'],
+        security: [{ cookieAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['code', 'discount', 'validFrom', 'validUntil'],
+                properties: {
+                  code: { type: 'string', description: 'Unique promotion code' },
+                  description: { type: 'string', description: 'Promotion description' },
+                  discount: { type: 'number', description: 'Discount amount (positive number)' },
+                  validFrom: { type: 'string', format: 'date-time', description: 'Start date' },
+                  validUntil: { type: 'string', format: 'date-time', description: 'End date' },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          201: {
+            description: 'Promotion created successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    message: { type: 'string', example: 'Promotion created successfully' },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        promotion: {
+                          type: 'object',
+                          properties: {
+                            id: { type: 'string' },
+                            code: { type: 'string' },
+                            description: { type: 'string', nullable: true },
+                            discount: { type: 'number' },
+                            validFrom: { type: 'string', format: 'date-time' },
+                            validUntil: { type: 'string', format: 'date-time' },
+                            createdAt: { type: 'string', format: 'date-time' },
+                            updatedAt: { type: 'string', format: 'date-time' },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          400: { description: 'Bad request - validation errors' },
+          409: { description: 'Promotion code already exists' },
+          401: { description: 'Unauthorized' },
+        },
+      },
+    },
+    '/api/promotions/active': {
+      get: {
+        summary: 'Get active promotions',
+        tags: ['Promotions'],
+        security: [{ cookieAuth: [] }],
+        responses: {
+          200: {
+            description: 'List of currently active promotions',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        promotions: {
+                          type: 'array',
+                          items: {
+                            type: 'object',
+                            properties: {
+                              id: { type: 'string' },
+                              code: { type: 'string' },
+                              description: { type: 'string', nullable: true },
+                              discount: { type: 'number' },
+                              validFrom: { type: 'string', format: 'date-time' },
+                              validUntil: { type: 'string', format: 'date-time' },
+                              promotionBookings: { type: 'array', items: { type: 'object' } },
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          404: { description: 'No active promotions found' },
+          401: { description: 'Unauthorized' },
+        },
+      },
+    },
+    '/api/promotions/code/{code}': {
+      get: {
+        summary: 'Get promotion by code',
+        tags: ['Promotions'],
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          {
+            name: 'code',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Promotion code',
+          },
+        ],
+        responses: {
+          200: {
+            description: 'Promotion details',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        promotion: {
+                          type: 'object',
+                          properties: {
+                            id: { type: 'string' },
+                            code: { type: 'string' },
+                            description: { type: 'string', nullable: true },
+                            discount: { type: 'number' },
+                            validFrom: { type: 'string', format: 'date-time' },
+                            validUntil: { type: 'string', format: 'date-time' },
+                            isCurrentlyValid: { type: 'boolean' },
+                            promotionBookings: { type: 'array', items: { type: 'object' } },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          404: { description: 'Promotion not found' },
+          401: { description: 'Unauthorized' },
+        },
+      },
+    },
+    '/api/promotions/{id}': {
+      get: {
+        summary: 'Get promotion by ID',
+        tags: ['Promotions'],
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Promotion ID',
+          },
+        ],
+        responses: {
+          200: {
+            description: 'Promotion details',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        promotion: {
+                          type: 'object',
+                          properties: {
+                            id: { type: 'string' },
+                            code: { type: 'string' },
+                            description: { type: 'string', nullable: true },
+                            discount: { type: 'number' },
+                            validFrom: { type: 'string', format: 'date-time' },
+                            validUntil: { type: 'string', format: 'date-time' },
+                            promotionBookings: { type: 'array', items: { type: 'object' } },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          404: { description: 'Promotion not found' },
+          401: { description: 'Unauthorized' },
+        },
+      },
+      put: {
+        summary: 'Update promotion',
+        tags: ['Promotions'],
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Promotion ID',
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  code: { type: 'string', description: 'Unique promotion code' },
+                  description: { type: 'string', description: 'Promotion description' },
+                  discount: { type: 'number', description: 'Discount amount (positive number)' },
+                  validFrom: { type: 'string', format: 'date-time', description: 'Start date' },
+                  validUntil: { type: 'string', format: 'date-time', description: 'End date' },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          200: {
+            description: 'Promotion updated successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    message: { type: 'string', example: 'Promotion updated successfully' },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        promotion: {
+                          type: 'object',
+                          properties: {
+                            id: { type: 'string' },
+                            code: { type: 'string' },
+                            description: { type: 'string', nullable: true },
+                            discount: { type: 'number' },
+                            validFrom: { type: 'string', format: 'date-time' },
+                            validUntil: { type: 'string', format: 'date-time' },
+                            updatedAt: { type: 'string', format: 'date-time' },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          400: { description: 'Bad request - validation errors' },
+          404: { description: 'Promotion not found' },
+          409: { description: 'Promotion code already exists' },
+          401: { description: 'Unauthorized' },
+        },
+      },
+      delete: {
+        summary: 'Delete promotion',
+        tags: ['Promotions'],
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Promotion ID',
+          },
+        ],
+        responses: {
+          200: {
+            description: 'Promotion deleted successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    message: { type: 'string', example: 'Promotion deleted successfully' },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        deletedPromotion: {
+                          type: 'object',
+                          properties: {
+                            id: { type: 'string' },
+                            code: { type: 'string' },
+                            description: { type: 'string', nullable: true },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          400: { description: 'Cannot delete promotion with active bookings' },
+          404: { description: 'Promotion not found' },
+          401: { description: 'Unauthorized' },
+        },
+      },
+    },
+    '/api/rental-history': {
+      get: {
+        summary: 'Get all rental histories',
+        tags: ['Rental History'],
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          {
+            name: 'page',
+            in: 'query',
+            schema: { type: 'integer', default: 1 },
+            description: 'Page number for pagination',
+          },
+          {
+            name: 'limit',
+            in: 'query',
+            schema: { type: 'integer', default: 10 },
+            description: 'Number of items per page',
+          },
+          {
+            name: 'userId',
+            in: 'query',
+            schema: { type: 'string' },
+            description: 'Filter by user ID',
+          },
+          {
+            name: 'rating',
+            in: 'query',
+            schema: { type: 'integer', minimum: 1, maximum: 5 },
+            description: 'Filter by rating',
+          },
+        ],
+        responses: {
+          200: {
+            description: 'List of rental histories with pagination',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        rentalHistories: {
+                          type: 'array',
+                          items: {
+                            type: 'object',
+                            properties: {
+                              id: { type: 'string' },
+                              userId: { type: 'string' },
+                              bookingId: { type: 'string' },
+                              distance: { type: 'number' },
+                              rating: { type: 'integer', nullable: true },
+                              feedback: { type: 'string', nullable: true },
+                              createdAt: { type: 'string', format: 'date-time' },
+                              user: {
+                                type: 'object',
+                                properties: {
+                                  id: { type: 'string' },
+                                  name: { type: 'string', nullable: true },
+                                  email: { type: 'string' },
+                                },
+                              },
+                              booking: {
+                                type: 'object',
+                                properties: {
+                                  id: { type: 'string' },
+                                  startTime: { type: 'string', format: 'date-time' },
+                                  endTime: { type: 'string', format: 'date-time' },
+                                  status: { type: 'string' },
+                                  vehicle: { type: 'object' },
+                                },
+                              },
+                            },
+                          },
+                        },
+                        pagination: {
+                          type: 'object',
+                          properties: {
+                            currentPage: { type: 'integer' },
+                            totalPages: { type: 'integer' },
+                            totalItems: { type: 'integer' },
+                            itemsPerPage: { type: 'integer' },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          404: { description: 'No rental histories found' },
+          401: { description: 'Unauthorized' },
+          403: { description: 'Forbidden - Insufficient permissions' },
+        },
+      },
+      post: {
+        summary: 'Create rental history',
+        tags: ['Rental History'],
+        security: [{ cookieAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['userId', 'bookingId'],
+                properties: {
+                  userId: { type: 'string', description: 'User ID' },
+                  bookingId: { type: 'string', description: 'Booking ID' },
+                  distance: { type: 'number', description: 'Distance traveled (non-negative)' },
+                  rating: { type: 'integer', minimum: 1, maximum: 5, description: 'Rating (1-5 stars)' },
+                  feedback: { type: 'string', description: 'User feedback' },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          201: {
+            description: 'Rental history created successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    message: { type: 'string', example: 'Rental history created successfully' },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        rentalHistory: {
+                          type: 'object',
+                          properties: {
+                            id: { type: 'string' },
+                            userId: { type: 'string' },
+                            bookingId: { type: 'string' },
+                            distance: { type: 'number' },
+                            rating: { type: 'integer', nullable: true },
+                            feedback: { type: 'string', nullable: true },
+                            createdAt: { type: 'string', format: 'date-time' },
+                            user: { type: 'object' },
+                            booking: { type: 'object' },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          400: { description: 'Bad request - validation errors' },
+          404: { description: 'User or booking not found' },
+          409: { description: 'Rental history already exists for this booking' },
+          401: { description: 'Unauthorized' },
+          403: { description: 'Forbidden - Insufficient permissions' },
+        },
+      },
+    },
+    '/api/rental-history/statistics': {
+      get: {
+        summary: 'Get rental statistics',
+        tags: ['Rental History'],
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          {
+            name: 'userId',
+            in: 'query',
+            schema: { type: 'string' },
+            description: 'Filter statistics by user ID',
+          },
+        ],
+        responses: {
+          200: {
+            description: 'Rental statistics',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        statistics: {
+                          type: 'object',
+                          properties: {
+                            totalRentals: { type: 'integer' },
+                            averageRating: { type: 'number' },
+                            totalDistance: { type: 'number' },
+                            ratingDistribution: {
+                              type: 'array',
+                              items: {
+                                type: 'object',
+                                properties: {
+                                  rating: { type: 'integer' },
+                                  count: { type: 'integer' },
+                                },
+                              },
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          401: { description: 'Unauthorized' },
+          403: { description: 'Forbidden - Insufficient permissions' },
+        },
+      },
+    },
+    '/api/rental-history/user/{userId}': {
+      get: {
+        summary: 'Get rental histories by user ID',
+        tags: ['Rental History'],
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          {
+            name: 'userId',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+            description: 'User ID',
+          },
+          {
+            name: 'page',
+            in: 'query',
+            schema: { type: 'integer', default: 1 },
+            description: 'Page number for pagination',
+          },
+          {
+            name: 'limit',
+            in: 'query',
+            schema: { type: 'integer', default: 10 },
+            description: 'Number of items per page',
+          },
+        ],
+        responses: {
+          200: {
+            description: 'User rental histories with pagination',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        rentalHistories: {
+                          type: 'array',
+                          items: {
+                            type: 'object',
+                            properties: {
+                              id: { type: 'string' },
+                              distance: { type: 'number' },
+                              rating: { type: 'integer', nullable: true },
+                              feedback: { type: 'string', nullable: true },
+                              createdAt: { type: 'string', format: 'date-time' },
+                              booking: {
+                                type: 'object',
+                                properties: {
+                                  vehicle: { type: 'object' },
+                                  station: { type: 'object' },
+                                },
+                              },
+                            },
+                          },
+                        },
+                        pagination: { type: 'object' },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          404: { description: 'User not found or no rental histories found' },
+          401: { description: 'Unauthorized' },
+          403: { description: 'Forbidden - Insufficient permissions' },
+        },
+      },
+    },
+    '/api/rental-history/booking/{bookingId}': {
+      get: {
+        summary: 'Get rental history by booking ID',
+        tags: ['Rental History'],
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          {
+            name: 'bookingId',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Booking ID',
+          },
+        ],
+        responses: {
+          200: {
+            description: 'Rental history for the booking',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        rentalHistory: {
+                          type: 'object',
+                          properties: {
+                            id: { type: 'string' },
+                            userId: { type: 'string' },
+                            bookingId: { type: 'string' },
+                            distance: { type: 'number' },
+                            rating: { type: 'integer', nullable: true },
+                            feedback: { type: 'string', nullable: true },
+                            createdAt: { type: 'string', format: 'date-time' },
+                            user: { type: 'object' },
+                            booking: { type: 'object' },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          404: { description: 'Rental history not found for this booking' },
+          401: { description: 'Unauthorized' },
+          403: { description: 'Forbidden - Insufficient permissions' },
+        },
+      },
+    },
+    '/api/rental-history/{id}': {
+      get: {
+        summary: 'Get rental history by ID',
+        tags: ['Rental History'],
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Rental history ID',
+          },
+        ],
+        responses: {
+          200: {
+            description: 'Rental history details',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        rentalHistory: {
+                          type: 'object',
+                          properties: {
+                            id: { type: 'string' },
+                            userId: { type: 'string' },
+                            bookingId: { type: 'string' },
+                            distance: { type: 'number' },
+                            rating: { type: 'integer', nullable: true },
+                            feedback: { type: 'string', nullable: true },
+                            createdAt: { type: 'string', format: 'date-time' },
+                            user: {
+                              type: 'object',
+                              properties: {
+                                id: { type: 'string' },
+                                name: { type: 'string', nullable: true },
+                                email: { type: 'string' },
+                                phone: { type: 'string', nullable: true },
+                              },
+                            },
+                            booking: {
+                              type: 'object',
+                              properties: {
+                                vehicle: { type: 'object' },
+                                station: { type: 'object' },
+                              },
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          404: { description: 'Rental history not found' },
+          401: { description: 'Unauthorized' },
+          403: { description: 'Forbidden - Insufficient permissions' },
+        },
+      },
+      put: {
+        summary: 'Update rental history',
+        tags: ['Rental History'],
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Rental history ID',
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  distance: { type: 'number', description: 'Distance traveled (non-negative)' },
+                  rating: { type: 'integer', minimum: 1, maximum: 5, description: 'Rating (1-5 stars)' },
+                  feedback: { type: 'string', description: 'User feedback' },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          200: {
+            description: 'Rental history updated successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    message: { type: 'string', example: 'Rental history updated successfully' },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        rentalHistory: {
+                          type: 'object',
+                          properties: {
+                            id: { type: 'string' },
+                            distance: { type: 'number' },
+                            rating: { type: 'integer', nullable: true },
+                            feedback: { type: 'string', nullable: true },
+                            user: { type: 'object' },
+                            booking: { type: 'object' },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          400: { description: 'Bad request - validation errors or no valid fields provided' },
+          404: { description: 'Rental history not found' },
+          401: { description: 'Unauthorized' },
+          403: { description: 'Forbidden - Insufficient permissions' },
+        },
+      },
+      delete: {
+        summary: 'Delete rental history',
+        tags: ['Rental History'],
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Rental history ID',
+          },
+        ],
+        responses: {
+          200: {
+            description: 'Rental history deleted successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    message: { type: 'string', example: 'Rental history deleted successfully' },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        deletedHistory: {
+                          type: 'object',
+                          properties: {
+                            id: { type: 'string' },
+                            userName: { type: 'string' },
+                            bookingId: { type: 'string' },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          404: { description: 'Rental history not found' },
+          401: { description: 'Unauthorized' },
+          403: { description: 'Forbidden - Admin only' },
+        },
+      },
+    },
   },
   components: {
     securitySchemes: {
