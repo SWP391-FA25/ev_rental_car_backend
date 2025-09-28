@@ -16,16 +16,16 @@ const router = Router();
 // Get all staff
 router.get('/', authenticate, authorize('ADMIN'), getStaff);
 // Get staff by id
-router.get('/:id', authenticate, authorize('ADMIN'), getStaffById);
+router.get('/:id', authenticate, authorize('ADMIN', 'STAFF'), getStaffById);
 // Create staff
 router.post('/', authenticate, authorize('ADMIN'), createStaff);
 // Update staff
-router.put('/:id', authenticate, authorize('ADMIN'), updateStaff);
+router.put('/:id', authenticate, authorize('ADMIN', 'STAFF'), updateStaff);
 // Update staff password
 router.patch(
   '/:id/password',
   authenticate,
-  authorize('ADMIN'),
+  authorize('ADMIN', 'STAFF'),
   updateStaffPassword
 );
 // Soft delete staff

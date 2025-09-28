@@ -41,9 +41,8 @@ export async function register(req, res, next) {
           'string.pattern.base':
             'Phone must start with 0 and have exactly 10 digits',
         }),
-      license: Joi.string().optional(),
       address: Joi.string().optional(),
-      role: Joi.string().valid('RENTER', 'ADMIN').optional(),
+      role: Joi.string().valid('RENTER').optional(),
     });
 
     const { error, value } = schema.validate(req.body);
