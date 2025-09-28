@@ -4,6 +4,7 @@ import {
   getStaffById,
   createStaff,
   updateStaff,
+  updateStaffPassword,
   softDeleteStaff,
   deleteStaff,
 } from '../../controllers/staff.controller.js';
@@ -20,6 +21,13 @@ router.get('/:id', authenticate, authorize('ADMIN'), getStaffById);
 router.post('/', authenticate, authorize('ADMIN'), createStaff);
 // Update staff
 router.put('/:id', authenticate, authorize('ADMIN'), updateStaff);
+// Update staff password
+router.patch(
+  '/:id/password',
+  authenticate,
+  authorize('ADMIN'),
+  updateStaffPassword
+);
 // Soft delete staff
 router.patch(
   '/soft-delete/:id',
