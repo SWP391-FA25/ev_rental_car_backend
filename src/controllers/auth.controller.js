@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken';
-import bcrypt from 'bcryptjs';
+import bcrypt from 'bcrypt';
+import Joi from 'joi';
 import { prisma } from '../lib/prisma.js';
 
 function signAccessToken(user) {
@@ -12,9 +13,10 @@ function signAccessToken(user) {
 function cookieOptions() {
   return {
     httpOnly: true,
-    secure: true,
-    sameSite: 'Lax',
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'Strict',
     path: '/',
+    maxAge: 24 * 60 * 60 * 1000, // 24 hours
   };
 }
 
@@ -27,14 +29,54 @@ function isBcryptHash(value) {
 
 export async function register(req, res, next) {
   try {
-    const { email, password, name, phone, license, address } = req.body || {};
-    if (!email || !password) {
+    // Validation schema
+    const schema = Joi.object({
+      email: Joi.string().email().required(),
+      password: Joi.string().min(8).required(),
+      name: Joi.string().optional(),
+      phone: Joi.string()
+        .pattern(/^0\d{9}$/)
+        .optional()
+        .messages({
+          'string.pattern.base':
+            'Phone must start with 0 and have exactly 10 digits',
+        }),
+      license: Joi.string().optional(),
+      address: Joi.string().optional(),
+      role: Joi.string().valid('RENTER', 'ADMIN').optional(),
+    });
+
+    const { error, value } = schema.validate(req.body);
+    if (error) {
       return res
         .status(400)
-        .json({ success: false, message: 'Email and password are required' });
+        .json({ success: false, message: error.details[0].message });
     }
 
+    const {
+      email,
+      password,
+      name,
+      phone,
+      license,
+      address,
+      role = 'RENTER',
+    } = value;
+
+    // Check for existing email (case-insensitive)
+    const existingUser = await prisma.user.findFirst({
+      where: { email: email.toLowerCase() },
+    });
+    if (existingUser) {
+      return res
+        .status(409)
+        .json({ success: false, message: 'Email already exists' });
+    }
+
+    // Hash password
     const hash = await bcrypt.hash(password, 10);
+
+    // Create user
     const user = await prisma.user.create({
       data: {
         email: email.toLowerCase(),
@@ -43,15 +85,20 @@ export async function register(req, res, next) {
         phone,
         license,
         address,
-        role: 'RENTER', // mặc định
+        role,
         accountStatus: 'ACTIVE',
       },
     });
 
+    // Generate and set token
     const token = signAccessToken(user);
+    if (!process.env.COOKIE_NAME) {
+      throw new Error('COOKIE_NAME environment variable is not set');
+    }
     res.cookie(process.env.COOKIE_NAME, token, cookieOptions());
 
-    const { password: _pw, ...safeUser } = user;
+    // Exclude password from response
+    const { password: _, ...safeUser } = user;
     return res.status(201).json({ success: true, data: { user: safeUser } });
   } catch (e) {
     if (e.code === 'P2002' && e.meta?.target?.includes('email')) {
@@ -65,12 +112,20 @@ export async function register(req, res, next) {
 
 export async function login(req, res, next) {
   try {
-    const { email, password } = req.body || {};
-    if (!email || !password) {
+    // Validation schema
+    const schema = Joi.object({
+      email: Joi.string().email().required(),
+      password: Joi.string().required(),
+    });
+
+    const { error, value } = schema.validate(req.body);
+    if (error) {
       return res
         .status(400)
-        .json({ success: false, message: 'Email and password are required' });
+        .json({ success: false, message: error.details[0].message });
     }
+
+    const { email, password } = value;
 
     const user = await prisma.user.findFirst({
       where: { email: email.toLowerCase(), softDeleted: false },
@@ -111,9 +166,13 @@ export async function login(req, res, next) {
     }
 
     const token = signAccessToken(user);
+
+    if (!process.env.COOKIE_NAME) {
+      throw new Error('COOKIE_NAME environment variable is not set');
+    }
     res.cookie(process.env.COOKIE_NAME, token, cookieOptions());
 
-    const { password: _pw, ...safeUser } = user;
+    const { password: _, ...safeUser } = user;
     return res.json({ success: true, data: { user: safeUser } });
   } catch (err) {
     return next(err);
@@ -122,6 +181,9 @@ export async function login(req, res, next) {
 
 export async function logout(req, res, next) {
   try {
+    if (!process.env.COOKIE_NAME) {
+      throw new Error('COOKIE_NAME environment variable is not set');
+    }
     res.clearCookie(process.env.COOKIE_NAME, { ...cookieOptions(), maxAge: 0 });
     return res.json({ success: true, message: 'Logged out' });
   } catch (err) {
@@ -140,7 +202,7 @@ export async function me(req, res, next) {
         .status(404)
         .json({ success: false, message: 'User not found' });
 
-    const { password: _pw, ...safeUser } = user;
+    const { password: _, ...safeUser } = user;
     return res.json({ success: true, data: { user: safeUser } });
   } catch (err) {
     return next(err);

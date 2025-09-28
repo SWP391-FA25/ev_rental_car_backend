@@ -106,11 +106,14 @@ const createStaff = async (req, res, next) => {
         .json({ success: false, message: 'Email already exists' });
     }
 
+    // Hash password before storing
+    const hashedPassword = await bcrypt.hash(password, 10);
+
     const [staff] = await prisma.$transaction([
       prisma.user.create({
         data: {
           email,
-          password,
+          password: hashedPassword,
           name,
           phone,
           address,
