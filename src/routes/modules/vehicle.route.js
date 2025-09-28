@@ -1,14 +1,14 @@
 import { Router } from 'express';
 import {
-  getVehicles,
-  getVehicleById,
   createVehicle,
-  updateVehicle,
-  softDeleteVehicle,
   deleteVehicle,
-  uploadVehicleImage,
-  getVehicleImages,
   deleteVehicleImage,
+  getVehicleById,
+  getVehicleImages,
+  getVehicles,
+  softDeleteVehicle,
+  updateVehicle,
+  uploadVehicleImage,
 } from '../../controllers/vehicle.controller.js';
 import { authenticate } from '../../middleware/authenticate.js';
 import { authorize } from '../../middleware/authorize.js';
