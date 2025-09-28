@@ -26,7 +26,7 @@ router.patch(
 router.patch(
   '/:id/soft-delete',
   authenticate,
-  authorize('ADMIN'),
+  authorize('ADMIN', 'RENTER'),
   softDeleteRenter
 );
 router.delete('/:id', authenticate, authorize('ADMIN'), deleteRenter);
