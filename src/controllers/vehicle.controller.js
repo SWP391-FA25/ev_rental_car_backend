@@ -1,6 +1,6 @@
-import { prisma } from '../lib/prisma.js';
-import ImageKitService from '../lib/imagekit.js';
 import multer from 'multer';
+import ImageKitService from '../lib/imagekit.js';
+import { prisma } from '../lib/prisma.js';
 
 // Configure multer for file uploads
 const storage = multer.memoryStorage();
@@ -510,13 +510,13 @@ const deleteVehicleImage = async (req, res, next) => {
 };
 
 export {
-  getVehicles,
-  getVehicleById,
   createVehicle,
-  updateVehicle,
-  softDeleteVehicle,
   deleteVehicle,
-  uploadVehicleImage,
-  getVehicleImages,
   deleteVehicleImage,
+  getVehicleById,
+  getVehicleImages,
+  getVehicles,
+  softDeleteVehicle,
+  updateVehicle,
+  uploadVehicleImage,
 };

@@ -26,7 +26,7 @@ class DocumentController {
   // Upload document
   async uploadDocument(req, res) {
     try {
-      const { userId } = req.user;
+      const userId = req.user?.id;
       const file = req.file;
 
       if (!file) {
@@ -160,7 +160,7 @@ class DocumentController {
   // Get user documents
   async getUserDocuments(req, res) {
     try {
-      const { userId } = req.user;
+      const userId = req.user?.id;
 
       const documents = await prisma.userDocument.findMany({
         where: { userId },
@@ -197,7 +197,7 @@ class DocumentController {
   // Delete document
   async deleteDocument(req, res) {
     try {
-      const { userId } = req.user;
+      const userId = req.user?.id;
       const { documentId } = req.params;
 
       // Find document
