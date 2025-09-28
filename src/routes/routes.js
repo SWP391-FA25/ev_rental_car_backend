@@ -19,12 +19,12 @@ router.use('/bookings', bookingRouter);
 router.use('/payments', paymentRouter);
 router.use('/documents', documentRouter);
 router.use('/test', testRouter);
-router.use('/staff', staffRouter);
+router.use('/staffs', staffRouter);
 router.use('/stations', stationRouter);
 router.use('/assignments', assignRouter);
 router.use('/renters', renterRouter);
 router.use('/vehicles', vehicleRouter);
 router.use('/promotions', promotionRouter);
-router.use('/rental-history', rentalHistoryRouter);
+router.use('/rental-histories', rentalHistoryRouter);
 
 export default router;
