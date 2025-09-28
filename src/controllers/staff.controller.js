@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import bcrypt from 'bcrypt';
 import { prisma } from '../lib/prisma.js';
 
 const VALID_ACCOUNT_STATUS = ['ACTIVE', 'BANNED', 'SUSPENDED'];
@@ -105,11 +106,14 @@ const createStaff = async (req, res, next) => {
         .json({ success: false, message: 'Email already exists' });
     }
 
+    // Hash password before storing
+    const hashedPassword = await bcrypt.hash(password, 10);
+
     const [staff] = await prisma.$transaction([
       prisma.user.create({
         data: {
           email,
-          password,
+          password: hashedPassword,
           name,
           phone,
           address,
@@ -282,6 +286,38 @@ const deleteStaff = async (req, res, next) => {
   }
 };
 
+const updateStaffPassword = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { password } = req.body;
+
+    if (!password || password.length < 8) {
+      return res.status(400).json({
+        success: false,
+        message: 'Password is required and must be at least 8 characters long',
+      });
+    }
+
+    const staff = await prisma.user.findUnique({ where: { id } });
+
+    if (!staff || !VALID_ROLES.includes(staff.role) || staff.softDeleted) {
+      return res
+        .status(404)
+        .json({ success: false, message: 'Staff or admin not found' });
+    }
+
+    const hash = await bcrypt.hash(password, 10);
+    await prisma.user.update({ where: { id }, data: { password: hash } });
+
+    return res.json({
+      success: true,
+      message: 'Password updated successfully',
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export {
   createStaff,
   deleteStaff,
@@ -289,4 +325,5 @@ export {
   getStaffById,
   softDeleteStaff,
   updateStaff,
+  updateStaffPassword,
 };
