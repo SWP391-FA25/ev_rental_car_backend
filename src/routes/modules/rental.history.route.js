@@ -11,6 +11,16 @@ import {
 } from '../../controllers/rental.history.controller.js';
 import { authenticate } from '../../middleware/authenticate.js';
 import { authorize } from '../../middleware/authorize.js';
+import {
+  createRentalHistoryValidation,
+  updateRentalHistoryValidation,
+  getRentalHistoriesValidation,
+  getRentalHistoryByIdValidation,
+  getRentalHistoriesByUserIdValidation,
+  getRentalHistoryByBookingIdValidation,
+  deleteRentalHistoryValidation,
+  getRentalStatisticsValidation
+} from '../../middleware/rental.history.middleware.js';
 
 const router = Router();
 
@@ -19,6 +29,7 @@ router.post(
   '/',
   authenticate,
   authorize(['ADMIN', 'STAFF']),
+  createRentalHistoryValidation,
   createRentalHistory
 );
 
@@ -27,6 +38,7 @@ router.get(
   '/',
   authenticate,
   authorize(['ADMIN', 'STAFF']),
+  getRentalHistoriesValidation,
   getRentalHistories
 );
 
@@ -35,6 +47,7 @@ router.get(
   '/statistics',
   authenticate,
   authorize(['ADMIN', 'STAFF']),
+  getRentalStatisticsValidation,
   getRentalStatistics
 );
 
@@ -43,6 +56,7 @@ router.get(
   '/user/:userId',
   authenticate,
   authorize(['RENTER', 'ADMIN', 'STAFF']),
+  getRentalHistoriesByUserIdValidation,
   getRentalHistoriesByUserId
 );
 
@@ -51,6 +65,7 @@ router.get(
   '/booking/:bookingId',
   authenticate,
   authorize(['RENTER', 'ADMIN', 'STAFF']),
+  getRentalHistoryByBookingIdValidation,
   getRentalHistoryByBookingId
 );
 
@@ -59,6 +74,7 @@ router.get(
   '/:id',
   authenticate,
   authorize(['RENTER', 'ADMIN', 'STAFF']),
+  getRentalHistoryByIdValidation,
   getRentalHistoryById
 );
 
@@ -67,10 +83,17 @@ router.put(
   '/:id',
   authenticate,
   authorize(['RENTER', 'ADMIN', 'STAFF']),
+  updateRentalHistoryValidation,
   updateRentalHistory
 );
 
 // DELETE - Delete rental history
-router.delete('/:id', authenticate, authorize(['ADMIN']), deleteRentalHistory);
+router.delete(
+  '/:id', 
+  authenticate, 
+  authorize(['ADMIN']), 
+  deleteRentalHistoryValidation,
+  deleteRentalHistory
+);
 
 export default router;

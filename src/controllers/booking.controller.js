@@ -1,41 +1,7 @@
 import { Prisma } from '@prisma/client';
 import { prisma } from '../lib/prisma.js';
-import { body, param, query, validationResult } from 'express-validator';
-
-// Validation middleware
-const handleValidationErrors = (req, res, next) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({
-      success: false,
-      message: 'Validation failed',
-      errors: errors.array(),
-    });
-  }
-  next();
-};
 
 // Get all bookings with filters
-export const getBookingsValidation = [
-  query('status')
-    .optional()
-    .isIn(['PENDING', 'CONFIRMED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'])
-    .withMessage('Invalid status value'),
-  query('userId').optional().isMongoId().withMessage('Invalid user ID'),
-  query('vehicleId').optional().isMongoId().withMessage('Invalid vehicle ID'),
-  query('stationId').optional().isMongoId().withMessage('Invalid station ID'),
-  query('startDate').optional().isISO8601().withMessage('Invalid start date'),
-  query('endDate').optional().isISO8601().withMessage('Invalid end date'),
-  query('page')
-    .optional()
-    .isInt({ min: 1 })
-    .withMessage('Page must be a positive integer'),
-  query('limit')
-    .optional()
-    .isInt({ min: 1, max: 100 })
-    .withMessage('Limit must be between 1 and 100'),
-  handleValidationErrors,
-];
 
 export const getBookings = async (req, res, next) => {
   try {
@@ -49,6 +15,14 @@ export const getBookings = async (req, res, next) => {
       page = 1,
       limit = 20,
     } = req.query;
+
+    // Additional validation for date range
+    if (startDate && endDate && new Date(startDate) > new Date(endDate)) {
+      return res.status(400).json({
+        success: false,
+        message: 'startDate must be before or equal to endDate',
+      });
+    }
 
     const where = {};
 
@@ -99,10 +73,6 @@ export const getBookings = async (req, res, next) => {
 };
 
 // Get booking by ID
-export const getBookingByIdValidation = [
-  param('id').isMongoId().withMessage('Invalid booking ID'),
-  handleValidationErrors,
-];
 
 export const getBookingById = async (req, res, next) => {
   try {
@@ -149,22 +119,6 @@ export const getBookingById = async (req, res, next) => {
 };
 
 // Get user's bookings
-export const getUserBookingsValidation = [
-  param('userId').isMongoId().withMessage('Invalid user ID'),
-  query('status')
-    .optional()
-    .isIn(['PENDING', 'CONFIRMED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'])
-    .withMessage('Invalid status value'),
-  query('page')
-    .optional()
-    .isInt({ min: 1 })
-    .withMessage('Page must be a positive integer'),
-  query('limit')
-    .optional()
-    .isInt({ min: 1, max: 100 })
-    .withMessage('Limit must be between 1 and 100'),
-  handleValidationErrors,
-];
 
 export const getUserBookings = async (req, res, next) => {
   try {
@@ -222,27 +176,6 @@ export const getUserBookings = async (req, res, next) => {
 };
 
 // Update booking
-export const updateBookingValidation = [
-  param('id').isMongoId().withMessage('Invalid booking ID'),
-  body('startTime').optional().isISO8601().withMessage('Invalid start time'),
-  body('endTime').optional().isISO8601().withMessage('Invalid end time'),
-  body('pickupLocation')
-    .optional()
-    .trim()
-    .isLength({ min: 3, max: 200 })
-    .withMessage('Pickup location must be 3-200 characters'),
-  body('dropoffLocation')
-    .optional()
-    .trim()
-    .isLength({ min: 3, max: 200 })
-    .withMessage('Dropoff location must be 3-200 characters'),
-  body('notes')
-    .optional()
-    .trim()
-    .isLength({ max: 500 })
-    .withMessage('Notes must not exceed 500 characters'),
-  handleValidationErrors,
-];
 
 export const updateBooking = async (req, res, next) => {
   try {
@@ -294,18 +227,6 @@ export const updateBooking = async (req, res, next) => {
 };
 
 // Update booking status
-export const updateBookingStatusValidation = [
-  param('id').isMongoId().withMessage('Invalid booking ID'),
-  body('status')
-    .isIn(['PENDING', 'CONFIRMED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'])
-    .withMessage('Invalid status value'),
-  body('notes')
-    .optional()
-    .trim()
-    .isLength({ max: 500 })
-    .withMessage('Notes must not exceed 500 characters'),
-  handleValidationErrors,
-];
 
 export const updateBookingStatus = async (req, res, next) => {
   try {
@@ -348,15 +269,6 @@ export const updateBookingStatus = async (req, res, next) => {
 };
 
 // Cancel booking
-export const cancelBookingValidation = [
-  param('id').isMongoId().withMessage('Invalid booking ID'),
-  body('reason')
-    .optional()
-    .trim()
-    .isLength({ min: 5, max: 500 })
-    .withMessage('Cancellation reason must be 5-500 characters'),
-  handleValidationErrors,
-];
 
 export const cancelBooking = async (req, res, next) => {
   try {
@@ -418,15 +330,18 @@ export const cancelBooking = async (req, res, next) => {
 };
 
 // Get booking analytics
-export const getBookingAnalyticsValidation = [
-  query('startDate').optional().isISO8601().withMessage('Invalid start date'),
-  query('endDate').optional().isISO8601().withMessage('Invalid end date'),
-  handleValidationErrors,
-];
 
 export const getBookingAnalytics = async (req, res, next) => {
   try {
     const { startDate, endDate } = req.query;
+
+    // Additional validation for date range
+    if (startDate && endDate && new Date(startDate) > new Date(endDate)) {
+      return res.status(400).json({
+        success: false,
+        message: 'startDate must be before or equal to endDate',
+      });
+    }
 
     const dateFilter = {};
     if (startDate) dateFilter.gte = new Date(startDate);
@@ -535,159 +450,6 @@ export const getBookingAnalytics = async (req, res, next) => {
  */
 
 // Create booking validation
-export const createBookingValidation = [
-  // Required fields - userId will come from req.user.id in auth middleware
-  body('vehicleId')
-    .notEmpty()
-    .isMongoId()
-    .withMessage('Valid vehicle ID is required'),
-  body('stationId')
-    .notEmpty()
-    .isMongoId()
-    .withMessage('Valid station ID is required'),
-  body('startTime')
-    .notEmpty()
-    .isISO8601()
-    .withMessage('Valid start time is required (ISO8601 format)'),
-  body('endTime')
-    .optional()
-    .isISO8601()
-    .withMessage('End time must be valid ISO8601 format')
-    .custom((endTime, { req }) => {
-      if (endTime && req.body.startTime) {
-        const startTime = new Date(req.body.startTime);
-        const endTimeDate = new Date(endTime);
-        if (endTimeDate <= startTime) {
-          throw new Error('End time must be after start time');
-        }
-      }
-      return true;
-    }),
-  body('pickupLocation')
-    .notEmpty()
-    .trim()
-    .isLength({ min: 3, max: 200 })
-    .withMessage('Pickup location is required and must be 3-200 characters'),
-  body('dropoffLocation')
-    .optional()
-    .trim()
-    .isLength({ min: 3, max: 200 })
-    .withMessage('Dropoff location must be 3-200 characters'),
-
-  // Actual fields (optional - filled during rental process)
-  body('actualStartTime')
-    .optional()
-    .isISO8601()
-    .withMessage('Actual start time must be valid ISO8601 format')
-    .custom((actualStartTime, { req }) => {
-      if (actualStartTime && req.body.startTime) {
-        const plannedStart = new Date(req.body.startTime);
-        const actualStart = new Date(actualStartTime);
-        // Allow some flexibility - actual start can be before planned start
-        const maxEarlyStart = new Date(plannedStart.getTime() - 30 * 60 * 1000); // 30 minutes early
-        if (actualStart < maxEarlyStart) {
-          throw new Error(
-            'Actual start time cannot be more than 30 minutes before planned start time'
-          );
-        }
-      }
-      return true;
-    }),
-  body('actualEndTime')
-    .optional()
-    .isISO8601()
-    .withMessage('Actual end time must be valid ISO8601 format')
-    .custom((actualEndTime, { req }) => {
-      if (actualEndTime) {
-        // Check against actual start time if provided
-        if (req.body.actualStartTime) {
-          const actualStart = new Date(req.body.actualStartTime);
-          const actualEnd = new Date(actualEndTime);
-          if (actualEnd <= actualStart) {
-            throw new Error('Actual end time must be after actual start time');
-          }
-        }
-        // Check against planned start time if no actual start time
-        else if (req.body.startTime) {
-          const plannedStart = new Date(req.body.startTime);
-          const actualEnd = new Date(actualEndTime);
-          if (actualEnd <= plannedStart) {
-            throw new Error('Actual end time must be after planned start time');
-          }
-        }
-      }
-      return true;
-    }),
-  body('actualPickupLocation')
-    .optional()
-    .trim()
-    .isLength({ min: 3, max: 200 })
-    .withMessage('Actual pickup location must be 3-200 characters'),
-  body('actualReturnLocation')
-    .optional()
-    .trim()
-    .isLength({ min: 3, max: 200 })
-    .withMessage('Actual return location must be 3-200 characters'),
-
-  // Odometer readings
-  body('pickupOdometer')
-    .optional()
-    .isFloat({ min: 0 })
-    .withMessage('Pickup odometer must be a non-negative number'),
-  body('returnOdometer')
-    .optional()
-    .isFloat({ min: 0 })
-    .withMessage('Return odometer must be a non-negative number')
-    .custom((returnOdometer, { req }) => {
-      if (
-        returnOdometer !== undefined &&
-        req.body.pickupOdometer !== undefined
-      ) {
-        const pickup = parseFloat(req.body.pickupOdometer);
-        const returnVal = parseFloat(returnOdometer);
-        if (returnVal < pickup) {
-          throw new Error(
-            'Return odometer cannot be less than pickup odometer'
-          );
-        }
-        // Reasonable distance check (max 1000 km per rental)
-        if (returnVal - pickup > 1000) {
-          throw new Error(
-            'Odometer reading difference seems unrealistic (max 1000 km per rental)'
-          );
-        }
-      }
-      return true;
-    }),
-
-  // Optional notes field
-  body('notes')
-    .optional()
-    .trim()
-    .isLength({ max: 500 })
-    .withMessage('Notes must not exceed 500 characters'),
-
-  // Promotions array (optional)
-  body('promotions')
-    .optional()
-    .isArray()
-    .withMessage('Promotions must be an array')
-    .custom((promotions) => {
-      if (promotions && promotions.length > 0) {
-        for (const promotion of promotions) {
-          if (typeof promotion !== 'string' || promotion.trim().length === 0) {
-            throw new Error(
-              'Each promotion must be a non-empty string (ID or code)'
-            );
-          }
-        }
-      }
-      return true;
-    }),
-
-  handleValidationErrors,
-];
-
 export const createBooking = async (req, res, next) => {
   try {
     const userId = req.user?.id; // Get from authenticated user
@@ -819,37 +581,7 @@ export const createBooking = async (req, res, next) => {
   }
 };
 
-// Complete booking validation
-export const completeBookingValidation = [
-  param('id').isMongoId().withMessage('Invalid booking ID'),
-  body('actualEndTime')
-    .notEmpty()
-    .isISO8601()
-    .withMessage(
-      'Actual end time is required and must be valid ISO8601 format'
-    ),
-  body('actualReturnLocation')
-    .trim()
-    .isLength({ min: 3, max: 200 })
-    .withMessage('Actual return location must be 3-200 characters'),
-  body('returnOdometer')
-    .isFloat({ min: 0 })
-    .withMessage('Return odometer must be a non-negative number'),
-  body('notes')
-    .trim()
-    .isLength({ max: 500 })
-    .withMessage('Notes must not exceed 500 characters'),
-  body('damageReport')
-    .optional()
-    .trim()
-    .isLength({ max: 1000 })
-    .withMessage('Damage report must not exceed 1000 characters'),
-  body('fuelLevel')
-    .isFloat({ min: 0, max: 100 })
-    .withMessage('Fuel level must be between 0 and 100'),
-  handleValidationErrors,
-];
-
+// Complete booking
 export const completeBooking = async (req, res, next) => {
   try {
     const { id } = req.params;
