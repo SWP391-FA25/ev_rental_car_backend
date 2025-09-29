@@ -10,10 +10,6 @@
 
   @@index([validFrom, validUntil]) */
 import { prisma } from '../lib/prisma.js';
-import {
-  missingFieldsPromise,
-  validateDateRangePromise,
-} from '../middleware/validations.js';
 
 // CREATE - Create a new promotion
 const createPromotion = async (req, res, next) => {

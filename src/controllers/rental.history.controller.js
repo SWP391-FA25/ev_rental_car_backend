@@ -15,37 +15,11 @@
 }
  */
 import { prisma } from '../lib/prisma.js';
-import { missingFieldsPromise } from '../middleware/validations.js';
 
 // CREATE - Create rental history (when booking is completed)
 const createRentalHistory = async (req, res, next) => {
   try {
     const { userId, bookingId, distance, rating, feedback } = req.body;
-
-    // Validate required fields
-    await missingFieldsPromise(
-      'userId',
-      'bookingId',
-      'distance',
-      'rating',
-      'feedback'
-    )(req);
-
-    // Validate distance if provided
-    if (distance < 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'Distance must be a non-negative number',
-      });
-    }
-
-    // Validate rating if provided (1-5 stars)
-    if (rating < 1 || rating > 5 || !Number.isInteger(rating)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Rating must be an integer between 1 and 5',
-      });
-    }
 
     // Check if user exists
     const user = await prisma.user.findUnique({
@@ -100,9 +74,6 @@ const createRentalHistory = async (req, res, next) => {
       data: { rentalHistory },
     });
   } catch (error) {
-    if (error.status) {
-      return res.status(error.status).json(error.body);
-    }
     next(error);
   }
 };
@@ -372,28 +343,6 @@ const updateRentalHistory = async (req, res, next) => {
       return res.status(404).json({
         success: false,
         message: 'Rental history not found',
-      });
-    }
-
-    // Validate distance if provided
-    if (
-      distance !== undefined &&
-      (typeof distance !== 'number' || distance < 0)
-    ) {
-      return res.status(400).json({
-        success: false,
-        message: 'Distance must be a non-negative number',
-      });
-    }
-
-    // Validate rating if provided
-    if (
-      rating !== undefined &&
-      (!Number.isInteger(rating) || rating < 1 || rating > 5)
-    ) {
-      return res.status(400).json({
-        success: false,
-        message: 'Rating must be an integer between 1 and 5',
       });
     }
 

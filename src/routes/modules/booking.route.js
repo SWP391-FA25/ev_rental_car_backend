@@ -2,24 +2,26 @@ import { Router } from 'express';
 import { authenticate } from '../../middleware/authenticate.js';
 import { authorize } from '../../middleware/authorize.js';
 import {
-  getBookings,
   getBookingsValidation,
-  getBookingById,
   getBookingByIdValidation,
-  getUserBookings,
   getUserBookingsValidation,
-  updateBooking,
   updateBookingValidation,
-  updateBookingStatus,
   updateBookingStatusValidation,
-  cancelBooking,
   cancelBookingValidation,
-  getBookingAnalytics,
   getBookingAnalyticsValidation,
-  createBooking,
   createBookingValidation,
-  completeBooking,
   completeBookingValidation,
+} from '../../middleware/booking.middleware.js';
+import {
+  getBookings,
+  getBookingById,
+  getUserBookings,
+  updateBooking,
+  updateBookingStatus,
+  cancelBooking,
+  getBookingAnalytics,
+  createBooking,
+  completeBooking,
 } from '../../controllers/booking.controller.js';
 
 const router = Router();
