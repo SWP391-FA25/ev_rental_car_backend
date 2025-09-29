@@ -299,12 +299,12 @@ class DocumentController {
     }
   }
 
-  // Admin: Verify document
+  // Staff/Admin: Verify document
   async verifyDocument(req, res) {
     try {
       const { documentId } = req.params;
       const { status, rejectionReason } = req.body;
-      const { userId, name } = req.user; // Admin user info
+      const { userId, name, role } = req.user; // User info (could be staff or admin)
 
       if (!['APPROVED', 'REJECTED'].includes(status)) {
         return res.status(400).json({
@@ -337,7 +337,7 @@ class DocumentController {
         data: {
           status,
           verifiedAt: new Date(),
-          verifiedBy: `${name} (${userId})`,
+          verifiedBy: `${name} (${userId}) [${role}]`,
           rejectionReason: status === 'REJECTED' ? rejectionReason : null,
         },
       });

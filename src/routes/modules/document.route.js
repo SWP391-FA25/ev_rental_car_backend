@@ -2,6 +2,7 @@ import express from 'express';
 import multer from 'multer';
 import DocumentController from '../../controllers/document.controller.js';
 import { authenticate } from '../../middleware/authenticate.js';
+import { authorize } from '../../middleware/authorize.js';
 
 const router = express.Router();
 
@@ -36,11 +37,17 @@ router.post(
 router.get('/my-documents', authenticate, DocumentController.getUserDocuments);
 router.delete('/:documentId', authenticate, DocumentController.deleteDocument);
 
-// Admin routes
-router.get('/all', authenticate, DocumentController.getAllDocuments);
+// Staff/Admin routes
+router.get(
+  '/all',
+  authenticate,
+  authorize('STAFF', 'ADMIN'),
+  DocumentController.getAllDocuments
+);
 router.patch(
   '/:documentId/verify',
   authenticate,
+  authorize('STAFF', 'ADMIN'),
   DocumentController.verifyDocument
 );
 
