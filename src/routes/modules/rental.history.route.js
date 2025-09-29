@@ -19,7 +19,7 @@ import {
   getRentalHistoriesByUserIdValidation,
   getRentalHistoryByBookingIdValidation,
   deleteRentalHistoryValidation,
-  getRentalStatisticsValidation
+  getRentalStatisticsValidation,
 } from '../../middleware/rental.history.middleware.js';
 
 const router = Router();
@@ -89,9 +89,9 @@ router.put(
 
 // DELETE - Delete rental history
 router.delete(
-  '/:id', 
-  authenticate, 
-  authorize(['ADMIN']), 
+  '/:id',
+  authenticate,
+  authorize(['ADMIN']),
   deleteRentalHistoryValidation,
   deleteRentalHistory
 );

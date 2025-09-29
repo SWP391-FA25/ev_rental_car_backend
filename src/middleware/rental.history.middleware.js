@@ -175,11 +175,27 @@ export const getRentalStatisticsValidator = checkSchema({
 });
 
 // Middleware array exports for easy use
-export const createRentalHistoryValidation = validate([createRentalHistoryValidator]);
-export const getRentalHistoriesValidation = validate([getRentalHistoriesValidator]);
-export const getRentalHistoryByIdValidation = validate([getRentalHistoryByIdValidator]);
-export const getRentalHistoriesByUserIdValidation = validate([getRentalHistoriesByUserIdValidator]);
-export const getRentalHistoryByBookingIdValidation = validate([getRentalHistoryByBookingIdValidator]);
-export const updateRentalHistoryValidation = validate([updateRentalHistoryValidator]);
-export const deleteRentalHistoryValidation = validate([deleteRentalHistoryValidator]);
-export const getRentalStatisticsValidation = validate([getRentalStatisticsValidator]);
+export const createRentalHistoryValidation = validate([
+  createRentalHistoryValidator,
+]);
+export const getRentalHistoriesValidation = validate([
+  getRentalHistoriesValidator,
+]);
+export const getRentalHistoryByIdValidation = validate([
+  getRentalHistoryByIdValidator,
+]);
+export const getRentalHistoriesByUserIdValidation = validate([
+  getRentalHistoriesByUserIdValidator,
+]);
+export const getRentalHistoryByBookingIdValidation = validate([
+  getRentalHistoryByBookingIdValidator,
+]);
+export const updateRentalHistoryValidation = validate([
+  updateRentalHistoryValidator,
+]);
+export const deleteRentalHistoryValidation = validate([
+  deleteRentalHistoryValidator,
+]);
+export const getRentalStatisticsValidation = validate([
+  getRentalStatisticsValidator,
+]);
