@@ -1205,6 +1205,108 @@ export const openapiSpec = {
     },
     // Booking endpoints
     '/api/bookings': {
+      get: {
+        summary: 'Get all bookings with filters',
+        tags: ['Bookings'],
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          {
+            name: 'status',
+            in: 'query',
+            schema: {
+              type: 'string',
+              enum: [
+                'PENDING',
+                'CONFIRMED',
+                'IN_PROGRESS',
+                'COMPLETED',
+                'CANCELLED',
+              ],
+            },
+            description: 'Filter by booking status',
+          },
+          {
+            name: 'userId',
+            in: 'query',
+            schema: { type: 'string' },
+            description: 'Filter by user ID',
+          },
+          {
+            name: 'vehicleId',
+            in: 'query',
+            schema: { type: 'string' },
+            description: 'Filter by vehicle ID',
+          },
+          {
+            name: 'stationId',
+            in: 'query',
+            schema: { type: 'string' },
+            description: 'Filter by station ID',
+          },
+          {
+            name: 'startDate',
+            in: 'query',
+            schema: { type: 'string', format: 'date-time' },
+            description: 'Filter bookings from this date',
+          },
+          {
+            name: 'endDate',
+            in: 'query',
+            schema: { type: 'string', format: 'date-time' },
+            description: 'Filter bookings until this date',
+          },
+          {
+            name: 'page',
+            in: 'query',
+            schema: { type: 'integer', minimum: 1, default: 1 },
+            description: 'Page number for pagination',
+          },
+          {
+            name: 'limit',
+            in: 'query',
+            schema: { type: 'integer', minimum: 1, maximum: 100, default: 20 },
+            description: 'Number of items per page',
+          },
+        ],
+        responses: {
+          200: {
+            description: 'Bookings retrieved successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        bookings: {
+                          type: 'array',
+                          items: {
+                            $ref: '#/components/schemas/BookingWithRelations',
+                          },
+                        },
+                        pagination: {
+                          type: 'object',
+                          properties: {
+                            currentPage: { type: 'integer' },
+                            totalPages: { type: 'integer' },
+                            totalItems: { type: 'integer' },
+                            itemsPerPage: { type: 'integer' },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          400: { description: 'Bad request - invalid query parameters' },
+          401: { description: 'Unauthorized' },
+          403: { description: 'Forbidden - insufficient permissions' },
+        },
+      },
       post: {
         summary: 'Create a new booking',
         tags: ['Bookings'],
@@ -1215,7 +1317,12 @@ export const openapiSpec = {
             'application/json': {
               schema: {
                 type: 'object',
-                required: ['vehicleId', 'stationId', 'startTime', 'endTime'],
+                required: [
+                  'vehicleId',
+                  'stationId',
+                  'startTime',
+                  'pickupLocation',
+                ],
                 properties: {
                   vehicleId: {
                     type: 'string',
@@ -1233,15 +1340,20 @@ export const openapiSpec = {
                   endTime: {
                     type: 'string',
                     format: 'date-time',
-                    description: 'Booking end time',
+                    description: 'Booking end time (optional)',
                   },
                   pickupLocation: {
                     type: 'string',
-                    description: 'Pickup location (optional)',
+                    description: 'Pickup location',
                   },
                   dropoffLocation: {
                     type: 'string',
                     description: 'Dropoff location (optional)',
+                  },
+                  promotions: {
+                    type: 'array',
+                    items: { type: 'string' },
+                    description: 'Array of promotion codes or IDs',
                   },
                 },
               },
@@ -1257,24 +1369,15 @@ export const openapiSpec = {
                   type: 'object',
                   properties: {
                     success: { type: 'boolean', example: true },
+                    message: {
+                      type: 'string',
+                      example: 'Booking created successfully',
+                    },
                     data: {
                       type: 'object',
                       properties: {
                         booking: {
-                          type: 'object',
-                          properties: {
-                            id: { type: 'string' },
-                            userId: { type: 'string' },
-                            vehicleId: { type: 'string' },
-                            stationId: { type: 'string' },
-                            startTime: { type: 'string', format: 'date-time' },
-                            endTime: { type: 'string', format: 'date-time' },
-                            pickupLocation: { type: 'string', nullable: true },
-                            dropoffLocation: { type: 'string', nullable: true },
-                            status: { type: 'string', example: 'PENDING' },
-                            createdAt: { type: 'string', format: 'date-time' },
-                            updatedAt: { type: 'string', format: 'date-time' },
-                          },
+                          $ref: '#/components/schemas/BookingWithRelations',
                         },
                       },
                     },
@@ -1288,20 +1391,179 @@ export const openapiSpec = {
               'Bad request - missing required fields or invalid time range',
           },
           401: { description: 'Unauthorized' },
+          404: { description: 'Vehicle, station, or user not found' },
           409: {
-            description: 'Vehicle not available or already booked in that slot',
+            description: 'Vehicle not available for booking',
           },
         },
       },
     },
-    '/api/bookings/{bookingId}/complete': {
-      post: {
-        summary: 'Complete a booking',
+    '/api/bookings/analytics': {
+      get: {
+        summary: 'Get booking analytics',
         tags: ['Bookings'],
         security: [{ cookieAuth: [] }],
         parameters: [
           {
-            name: 'bookingId',
+            name: 'startDate',
+            in: 'query',
+            schema: { type: 'string', format: 'date-time' },
+            description: 'Analytics start date filter',
+          },
+          {
+            name: 'endDate',
+            in: 'query',
+            schema: { type: 'string', format: 'date-time' },
+            description: 'Analytics end date filter',
+          },
+        ],
+        responses: {
+          200: {
+            description: 'Analytics data retrieved successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        summary: {
+                          type: 'object',
+                          properties: {
+                            totalBookings: { type: 'integer' },
+                            totalRevenue: { type: 'number' },
+                            averageBookingValue: { type: 'number' },
+                          },
+                        },
+                        statusBreakdown: {
+                          type: 'object',
+                          additionalProperties: { type: 'integer' },
+                        },
+                        popularVehicles: {
+                          type: 'array',
+                          items: {
+                            type: 'object',
+                            properties: {
+                              vehicleId: { type: 'string' },
+                              bookingCount: { type: 'integer' },
+                            },
+                          },
+                        },
+                        popularStations: {
+                          type: 'array',
+                          items: {
+                            type: 'object',
+                            properties: {
+                              stationId: { type: 'string' },
+                              bookingCount: { type: 'integer' },
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          400: { description: 'Bad request - invalid date parameters' },
+          401: { description: 'Unauthorized' },
+          403: { description: 'Forbidden - admin/staff only' },
+        },
+      },
+    },
+    '/api/bookings/user/{userId}': {
+      get: {
+        summary: 'Get user bookings',
+        tags: ['Bookings'],
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          {
+            name: 'userId',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+            description: 'User ID',
+          },
+          {
+            name: 'status',
+            in: 'query',
+            schema: {
+              type: 'string',
+              enum: [
+                'PENDING',
+                'CONFIRMED',
+                'IN_PROGRESS',
+                'COMPLETED',
+                'CANCELLED',
+              ],
+            },
+            description: 'Filter by booking status',
+          },
+          {
+            name: 'page',
+            in: 'query',
+            schema: { type: 'integer', minimum: 1, default: 1 },
+            description: 'Page number for pagination',
+          },
+          {
+            name: 'limit',
+            in: 'query',
+            schema: { type: 'integer', minimum: 1, maximum: 100, default: 20 },
+            description: 'Number of items per page',
+          },
+        ],
+        responses: {
+          200: {
+            description: 'User bookings retrieved successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        bookings: {
+                          type: 'array',
+                          items: {
+                            $ref: '#/components/schemas/BookingWithRelations',
+                          },
+                        },
+                        pagination: {
+                          type: 'object',
+                          properties: {
+                            currentPage: { type: 'integer' },
+                            totalPages: { type: 'integer' },
+                            totalItems: { type: 'integer' },
+                            itemsPerPage: { type: 'integer' },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          400: { description: 'Bad request - invalid user ID or parameters' },
+          401: { description: 'Unauthorized' },
+          403: { description: 'Forbidden' },
+          404: { description: 'User not found' },
+        },
+      },
+    },
+    '/api/bookings/{id}': {
+      get: {
+        summary: 'Get booking by ID',
+        tags: ['Bookings'],
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          {
+            name: 'id',
             in: 'path',
             required: true,
             schema: { type: 'string' },
@@ -1310,7 +1572,7 @@ export const openapiSpec = {
         ],
         responses: {
           200: {
-            description: 'Booking completed successfully',
+            description: 'Booking retrieved successfully',
             content: {
               'application/json': {
                 schema: {
@@ -1321,19 +1583,324 @@ export const openapiSpec = {
                       type: 'object',
                       properties: {
                         booking: {
+                          $ref: '#/components/schemas/BookingWithRelations',
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          400: { description: 'Bad request - invalid booking ID' },
+          401: { description: 'Unauthorized' },
+          403: { description: 'Forbidden' },
+          404: { description: 'Booking not found' },
+        },
+      },
+      put: {
+        summary: 'Update booking',
+        tags: ['Bookings'],
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Booking ID',
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  startTime: {
+                    type: 'string',
+                    format: 'date-time',
+                    description: 'Updated start time',
+                  },
+                  endTime: {
+                    type: 'string',
+                    format: 'date-time',
+                    description: 'Updated end time',
+                  },
+                  pickupLocation: {
+                    type: 'string',
+                    description: 'Updated pickup location',
+                  },
+                  dropoffLocation: {
+                    type: 'string',
+                    description: 'Updated dropoff location',
+                  },
+                  notes: {
+                    type: 'string',
+                    description: 'Additional notes',
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          200: {
+            description: 'Booking updated successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    message: {
+                      type: 'string',
+                      example: 'Booking updated successfully',
+                    },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        booking: {
+                          $ref: '#/components/schemas/BookingWithRelations',
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          400: {
+            description:
+              'Bad request - cannot update completed or cancelled bookings',
+          },
+          401: { description: 'Unauthorized' },
+          403: { description: 'Forbidden' },
+          404: { description: 'Booking not found' },
+        },
+      },
+    },
+    '/api/bookings/{id}/status': {
+      patch: {
+        summary: 'Update booking status',
+        tags: ['Bookings'],
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Booking ID',
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['status'],
+                properties: {
+                  status: {
+                    type: 'string',
+                    enum: [
+                      'PENDING',
+                      'CONFIRMED',
+                      'IN_PROGRESS',
+                      'COMPLETED',
+                      'CANCELLED',
+                    ],
+                    description: 'New booking status',
+                  },
+                  notes: {
+                    type: 'string',
+                    description: 'Optional notes for status change',
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          200: {
+            description: 'Booking status updated successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    message: {
+                      type: 'string',
+                      example: 'Booking status updated successfully',
+                    },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        booking: {
+                          $ref: '#/components/schemas/BookingWithRelations',
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          400: { description: 'Bad request - invalid status value' },
+          401: { description: 'Unauthorized' },
+          403: { description: 'Forbidden - admin/staff only' },
+          404: { description: 'Booking not found' },
+        },
+      },
+    },
+    '/api/bookings/{id}/cancel': {
+      patch: {
+        summary: 'Cancel booking',
+        tags: ['Bookings'],
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Booking ID',
+          },
+        ],
+        requestBody: {
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  reason: {
+                    type: 'string',
+                    description: 'Reason for cancellation',
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          200: {
+            description: 'Booking cancelled successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    message: {
+                      type: 'string',
+                      example: 'Booking cancelled successfully',
+                    },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        booking: {
+                          $ref: '#/components/schemas/BookingWithRelations',
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          400: {
+            description:
+              'Bad request - cannot cancel completed, cancelled, or in-progress bookings',
+          },
+          401: { description: 'Unauthorized' },
+          403: { description: 'Forbidden' },
+          404: { description: 'Booking not found' },
+        },
+      },
+    },
+    '/api/bookings/{id}/complete': {
+      post: {
+        summary: 'Complete a booking',
+        tags: ['Bookings'],
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Booking ID',
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['actualEndTime'],
+                properties: {
+                  actualEndTime: {
+                    type: 'string',
+                    format: 'date-time',
+                    description: 'Actual end time of the rental',
+                  },
+                  actualReturnLocation: {
+                    type: 'string',
+                    description: 'Actual return location',
+                  },
+                  returnOdometer: {
+                    type: 'number',
+                    description: 'Odometer reading at return',
+                  },
+                  notes: {
+                    type: 'string',
+                    description: 'Additional notes',
+                  },
+                  damageReport: {
+                    type: 'string',
+                    description: 'Any damage report',
+                  },
+                  fuelLevel: {
+                    type: 'number',
+                    minimum: 0,
+                    maximum: 100,
+                    description: 'Battery/fuel level percentage',
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          200: {
+            description: 'Booking completed successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    message: {
+                      type: 'string',
+                      example: 'Booking completed successfully',
+                    },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        booking: {
+                          $ref: '#/components/schemas/BookingWithRelations',
+                        },
+                        summary: {
                           type: 'object',
                           properties: {
-                            id: { type: 'string' },
-                            userId: { type: 'string' },
-                            vehicleId: { type: 'string' },
-                            stationId: { type: 'string' },
+                            duration: { type: 'string', example: '5 hours' },
+                            distance: { type: 'string', example: '120.5 km' },
                             startTime: { type: 'string', format: 'date-time' },
                             endTime: { type: 'string', format: 'date-time' },
-                            pickupLocation: { type: 'string', nullable: true },
-                            dropoffLocation: { type: 'string', nullable: true },
-                            status: { type: 'string', example: 'COMPLETED' },
-                            createdAt: { type: 'string', format: 'date-time' },
-                            updatedAt: { type: 'string', format: 'date-time' },
                           },
                         },
                       },
@@ -1343,11 +1910,13 @@ export const openapiSpec = {
               },
             },
           },
-          400: { description: 'Bad request - missing bookingId' },
+          400: {
+            description:
+              'Bad request - invalid data or booking not in progress',
+          },
           401: { description: 'Unauthorized' },
-          403: { description: 'Forbidden - not the booking owner' },
+          403: { description: 'Forbidden' },
           404: { description: 'Booking not found' },
-          409: { description: 'Booking not in progress' },
         },
       },
     },
@@ -5157,6 +5726,155 @@ export const openapiSpec = {
         type: 'apiKey',
         in: 'cookie',
         name: 'access_token',
+      },
+    },
+    schemas: {
+      Booking: {
+        type: 'object',
+        properties: {
+          id: { type: 'string', description: 'Booking ID' },
+          userId: { type: 'string', description: 'User ID' },
+          vehicleId: { type: 'string', description: 'Vehicle ID' },
+          stationId: { type: 'string', description: 'Station ID' },
+          startTime: {
+            type: 'string',
+            format: 'date-time',
+            description: 'Planned start time',
+          },
+          endTime: {
+            type: 'string',
+            format: 'date-time',
+            nullable: true,
+            description: 'Planned end time',
+          },
+          actualStartTime: {
+            type: 'string',
+            format: 'date-time',
+            nullable: true,
+            description: 'Actual start time',
+          },
+          actualEndTime: {
+            type: 'string',
+            format: 'date-time',
+            nullable: true,
+            description: 'Actual end time',
+          },
+          pickupLocation: {
+            type: 'string',
+            nullable: true,
+            description: 'Planned pickup location',
+          },
+          dropoffLocation: {
+            type: 'string',
+            nullable: true,
+            description: 'Planned dropoff location',
+          },
+          actualPickupLocation: {
+            type: 'string',
+            nullable: true,
+            description: 'Actual pickup location',
+          },
+          actualReturnLocation: {
+            type: 'string',
+            nullable: true,
+            description: 'Actual return location',
+          },
+          pickupOdometer: {
+            type: 'number',
+            nullable: true,
+            description: 'Odometer reading at pickup',
+          },
+          returnOdometer: {
+            type: 'number',
+            nullable: true,
+            description: 'Odometer reading at return',
+          },
+          notes: {
+            type: 'string',
+            nullable: true,
+            description: 'Additional notes',
+          },
+          status: {
+            type: 'string',
+            enum: [
+              'PENDING',
+              'CONFIRMED',
+              'IN_PROGRESS',
+              'COMPLETED',
+              'CANCELLED',
+            ],
+            description: 'Booking status',
+          },
+          createdAt: {
+            type: 'string',
+            format: 'date-time',
+            description: 'Creation timestamp',
+          },
+          updatedAt: {
+            type: 'string',
+            format: 'date-time',
+            description: 'Last update timestamp',
+          },
+        },
+      },
+      BookingWithRelations: {
+        allOf: [
+          { $ref: '#/components/schemas/Booking' },
+          {
+            type: 'object',
+            properties: {
+              user: {
+                type: 'object',
+                properties: {
+                  id: { type: 'string' },
+                  name: { type: 'string', nullable: true },
+                  email: { type: 'string' },
+                  phone: { type: 'string', nullable: true },
+                },
+              },
+              vehicle: {
+                type: 'object',
+                properties: {
+                  id: { type: 'string' },
+                  model: { type: 'string' },
+                  licensePlate: { type: 'string' },
+                  batteryLevel: { type: 'number', nullable: true },
+                  status: { type: 'string' },
+                },
+              },
+              station: {
+                type: 'object',
+                properties: {
+                  id: { type: 'string' },
+                  name: { type: 'string' },
+                  address: { type: 'string' },
+                },
+              },
+              payments: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    id: { type: 'string' },
+                    amount: { type: 'number' },
+                    status: { type: 'string' },
+                  },
+                },
+              },
+              appliedPromotions: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    id: { type: 'string' },
+                    code: { type: 'string' },
+                    discount: { type: 'number' },
+                  },
+                },
+              },
+            },
+          },
+        ],
       },
     },
   },
