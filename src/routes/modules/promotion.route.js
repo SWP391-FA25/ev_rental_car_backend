@@ -11,10 +11,10 @@ import {
 } from '../../controllers/promotion.controller.js';
 import {
   createPromotionValidation,
-  getPromotionByIdValidation,
-  getPromotionByCodeValidation,
   updatePromotionValidation,
   deletePromotionValidation,
+  getPromotionByIdValidation,
+  getPromotionByCodeValidation,
 } from '../../middleware/promotion.middleware.js';
 import { authenticate } from '../../middleware/authenticate.js';
 import { authorize } from '../../middleware/authorize.js';

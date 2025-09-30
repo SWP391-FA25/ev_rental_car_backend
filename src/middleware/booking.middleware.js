@@ -4,7 +4,7 @@ import validate from '../utils/validation.js';
 // Get all bookings validation
 export const getBookingsValidator = checkSchema({
   status: {
-    in: { options: [['query']] },
+    in: ['query'],
     optional: true,
     isIn: {
       options: [
@@ -14,31 +14,31 @@ export const getBookingsValidator = checkSchema({
     errorMessage: 'Invalid status value',
   },
   userId: {
-    in: { options: [['query']] },
+    in: ['query'],
     optional: true,
     isMongoId: true,
     errorMessage: 'Invalid user ID',
   },
   vehicleId: {
-    in: { options: [['query']] },
+    in: ['query'],
     optional: true,
     isMongoId: true,
     errorMessage: 'Invalid vehicle ID',
   },
   stationId: {
-    in: { options: [['query']] },
+    in: ['query'],
     optional: true,
     isMongoId: true,
     errorMessage: 'Invalid station ID',
   },
   startDate: {
-    in: { options: [['query']] },
+    in: ['query'],
     optional: true,
     isISO8601: true,
     errorMessage: 'Invalid start date',
   },
   endDate: {
-    in: { options: [['query']] },
+    in: ['query'],
     optional: true,
     isISO8601: true,
     errorMessage: 'Invalid end date',
@@ -56,7 +56,7 @@ export const getBookingsValidator = checkSchema({
     },
   },
   page: {
-    in: { options: [['query']] },
+    in: ['query'],
     optional: true,
     isInt: {
       options: { min: 1 },
@@ -64,7 +64,7 @@ export const getBookingsValidator = checkSchema({
     errorMessage: 'Page must be a positive integer',
   },
   limit: {
-    in: { options: [['query']] },
+    in: ['query'],
     optional: true,
     isInt: {
       options: { min: 1, max: 100 },
@@ -76,7 +76,7 @@ export const getBookingsValidator = checkSchema({
 // Get booking by ID validation
 export const getBookingByIdValidator = checkSchema({
   id: {
-    in: { options: [['params']] },
+    in: ['params'],
     isMongoId: true,
     errorMessage: 'Invalid booking ID',
   },
@@ -85,12 +85,12 @@ export const getBookingByIdValidator = checkSchema({
 // Get user's bookings validation
 export const getUserBookingsValidator = checkSchema({
   userId: {
-    in: { options: [['params']] },
+    in: ['params'],
     isMongoId: true,
     errorMessage: 'Invalid user ID',
   },
   status: {
-    in: { options: [['query']] },
+    in: ['query'],
     optional: true,
     isIn: {
       options: [
@@ -100,7 +100,7 @@ export const getUserBookingsValidator = checkSchema({
     errorMessage: 'Invalid status value',
   },
   page: {
-    in: { options: [['query']] },
+    in: ['query'],
     optional: true,
     isInt: {
       options: { min: 1 },
@@ -108,7 +108,7 @@ export const getUserBookingsValidator = checkSchema({
     errorMessage: 'Page must be a positive integer',
   },
   limit: {
-    in: { options: [['query']] },
+    in: ['query'],
     optional: true,
     isInt: {
       options: { min: 1, max: 100 },
@@ -120,18 +120,18 @@ export const getUserBookingsValidator = checkSchema({
 // Update booking validation
 export const updateBookingValidator = checkSchema({
   id: {
-    in: { options: [['params']] },
+    in: ['params'],
     isMongoId: true,
     errorMessage: 'Invalid booking ID',
   },
   startTime: {
-    in: { options: [['body']] },
+    in: ['body'],
     optional: true,
     isISO8601: true,
     errorMessage: 'Invalid start time',
   },
   endTime: {
-    in: { options: [['body']] },
+    in: ['body'],
     optional: true,
     isISO8601: true,
     errorMessage: 'Invalid end time',
@@ -149,7 +149,7 @@ export const updateBookingValidator = checkSchema({
     },
   },
   pickupLocation: {
-    in: { options: [['body']] },
+    in: ['body'],
     optional: true,
     trim: true,
     isLength: {
@@ -158,7 +158,7 @@ export const updateBookingValidator = checkSchema({
     errorMessage: 'Pickup location must be 3-200 characters',
   },
   dropoffLocation: {
-    in: { options: [['body']] },
+    in: ['body'],
     optional: true,
     trim: true,
     isLength: {
@@ -167,7 +167,7 @@ export const updateBookingValidator = checkSchema({
     errorMessage: 'Dropoff location must be 3-200 characters',
   },
   notes: {
-    in: { options: [['body']] },
+    in: ['body'],
     optional: true,
     trim: true,
     isLength: {
@@ -180,12 +180,12 @@ export const updateBookingValidator = checkSchema({
 // Update booking status validation
 export const updateBookingStatusValidator = checkSchema({
   id: {
-    in: { options: [['params']] },
+    in: ['params'],
     isMongoId: true,
     errorMessage: 'Invalid booking ID',
   },
   status: {
-    in: { options: [['body']] },
+    in: ['body'],
     isIn: {
       options: [
         ['PENDING', 'CONFIRMED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'],
@@ -194,7 +194,7 @@ export const updateBookingStatusValidator = checkSchema({
     errorMessage: 'Invalid status value',
   },
   notes: {
-    in: { options: [['body']] },
+    in: ['body'],
     optional: true,
     trim: true,
     isLength: {
@@ -207,12 +207,12 @@ export const updateBookingStatusValidator = checkSchema({
 // Cancel booking validation
 export const cancelBookingValidator = checkSchema({
   id: {
-    in: { options: [['params']] },
+    in: ['params'],
     isMongoId: true,
     errorMessage: 'Invalid booking ID',
   },
   reason: {
-    in: { options: [['body']] },
+    in: ['body'],
     optional: true,
     trim: true,
     isLength: {
@@ -225,13 +225,13 @@ export const cancelBookingValidator = checkSchema({
 // Get booking analytics validation
 export const getBookingAnalyticsValidator = checkSchema({
   startDate: {
-    in: { options: [['query']] },
+    in: ['query'],
     optional: true,
     isISO8601: true,
     errorMessage: 'Invalid start date',
   },
   endDate: {
-    in: { options: [['query']] },
+    in: ['query'],
     optional: true,
     isISO8601: true,
     errorMessage: 'Invalid end date',
@@ -253,33 +253,38 @@ export const getBookingAnalyticsValidator = checkSchema({
 // Create booking validation
 export const createBookingValidator = checkSchema({
   vehicleId: {
-    in: { options: [['body']] },
+    in: ['body'],
     notEmpty: true,
     isMongoId: true,
     errorMessage: 'Valid vehicle ID is required',
   },
   stationId: {
-    in: { options: [['body']] },
+    in: ['body'],
     notEmpty: true,
     isMongoId: true,
     errorMessage: 'Valid station ID is required',
   },
   startTime: {
-    in: { options: [['body']] },
+    in: ['body'],
     notEmpty: true,
-    isISO8601: true,
+    isString: true,
+    isISO8601: { options: { strict: true } },
     errorMessage: 'Valid start time is required (ISO8601 format)',
   },
   endTime: {
-    in: { options: [['body']] },
+    in: ['body'],
     optional: true,
-    isISO8601: true,
+    isString: true,
+    isISO8601: { options: { strict: true } },
     errorMessage: 'End time must be valid ISO8601 format',
     custom: {
       options: (endTime, { req }) => {
         if (endTime && req.body.startTime) {
           const startTime = new Date(req.body.startTime);
           const endTimeDate = new Date(endTime);
+          if (isNaN(startTime) || isNaN(endTimeDate)) {
+            throw new Error('Invalid date format for startTime or endTime');
+          }
           if (endTimeDate <= startTime) {
             throw new Error('End time must be after start time');
           }
@@ -289,37 +294,40 @@ export const createBookingValidator = checkSchema({
     },
   },
   pickupLocation: {
-    in: { options: [['body']] },
+    in: ['body'],
     notEmpty: true,
+    isString: true,
     trim: true,
-    isLength: {
-      options: { min: 3, max: 200 },
-    },
+    isLength: { options: { min: 3, max: 200 } },
     errorMessage: 'Pickup location is required and must be 3-200 characters',
   },
   dropoffLocation: {
-    in: { options: [['body']] },
+    in: ['body'],
     optional: true,
+    isString: true,
     trim: true,
-    isLength: {
-      options: { min: 3, max: 200 },
-    },
+    isLength: { options: { min: 3, max: 200 } },
     errorMessage: 'Dropoff location must be 3-200 characters',
   },
   actualStartTime: {
-    in: { options: [['body']] },
+    in: ['body'],
     optional: true,
-    isISO8601: true,
+    isString: true,
+    isISO8601: { options: { strict: true } },
     errorMessage: 'Actual start time must be valid ISO8601 format',
     custom: {
       options: (actualStartTime, { req }) => {
         if (actualStartTime && req.body.startTime) {
           const plannedStart = new Date(req.body.startTime);
           const actualStart = new Date(actualStartTime);
-          // Allow some flexibility - actual start can be before planned start
+          if (isNaN(plannedStart) || isNaN(actualStart)) {
+            throw new Error(
+              'Invalid date format for startTime or actualStartTime'
+            );
+          }
           const maxEarlyStart = new Date(
             plannedStart.getTime() - 30 * 60 * 1000
-          ); // 30 minutes early
+          );
           if (actualStart < maxEarlyStart) {
             throw new Error(
               'Actual start time cannot be more than 30 minutes before planned start time'
@@ -331,27 +339,35 @@ export const createBookingValidator = checkSchema({
     },
   },
   actualEndTime: {
-    in: { options: [['body']] },
+    in: ['body'],
     optional: true,
-    isISO8601: true,
+    isString: true,
+    isISO8601: { options: { strict: true } },
     errorMessage: 'Actual end time must be valid ISO8601 format',
     custom: {
       options: (actualEndTime, { req }) => {
         if (actualEndTime) {
-          // Check against actual start time if provided
           if (req.body.actualStartTime) {
             const actualStart = new Date(req.body.actualStartTime);
             const actualEnd = new Date(actualEndTime);
+            if (isNaN(actualStart) || isNaN(actualEnd)) {
+              throw new Error(
+                'Invalid date format for actualStartTime or actualEndTime'
+              );
+            }
             if (actualEnd <= actualStart) {
               throw new Error(
                 'Actual end time must be after actual start time'
               );
             }
-          }
-          // Check against planned start time if no actual start time
-          else if (req.body.startTime) {
+          } else if (req.body.startTime) {
             const plannedStart = new Date(req.body.startTime);
             const actualEnd = new Date(actualEndTime);
+            if (isNaN(plannedStart) || isNaN(actualEnd)) {
+              throw new Error(
+                'Invalid date format for startTime or actualEndTime'
+              );
+            }
             if (actualEnd <= plannedStart) {
               throw new Error(
                 'Actual end time must be after planned start time'
@@ -364,37 +380,33 @@ export const createBookingValidator = checkSchema({
     },
   },
   actualPickupLocation: {
-    in: { options: [['body']] },
+    in: ['body'],
     optional: true,
+    isString: true,
     trim: true,
-    isLength: {
-      options: { min: 3, max: 200 },
-    },
+    isLength: { options: { min: 3, max: 200 } },
     errorMessage: 'Actual pickup location must be 3-200 characters',
   },
   actualReturnLocation: {
-    in: { options: [['body']] },
+    in: ['body'],
     optional: true,
+    isString: true,
     trim: true,
-    isLength: {
-      options: { min: 3, max: 200 },
-    },
+    isLength: { options: { min: 3, max: 200 } },
     errorMessage: 'Actual return location must be 3-200 characters',
   },
   pickupOdometer: {
-    in: { options: [['body']] },
+    in: ['body'],
     optional: true,
-    isFloat: {
-      options: { min: 0 },
-    },
+    isFloat: { options: { min: 0 } },
+    toFloat: true,
     errorMessage: 'Pickup odometer must be a non-negative number',
   },
   returnOdometer: {
-    in: { options: [['body']] },
+    in: ['body'],
     optional: true,
-    isFloat: {
-      options: { min: 0 },
-    },
+    isFloat: { options: { min: 0 } },
+    toFloat: true,
     errorMessage: 'Return odometer must be a non-negative number',
     custom: {
       options: (returnOdometer, { req }) => {
@@ -409,7 +421,6 @@ export const createBookingValidator = checkSchema({
               'Return odometer cannot be less than pickup odometer'
             );
           }
-          // Reasonable distance check (max 1000 km per rental)
           if (returnVal - pickup > 1000) {
             throw new Error(
               'Odometer reading difference seems unrealistic (max 1000 km per rental)'
@@ -421,16 +432,15 @@ export const createBookingValidator = checkSchema({
     },
   },
   notes: {
-    in: { options: [['body']] },
+    in: ['body'],
     optional: true,
+    isString: true,
     trim: true,
-    isLength: {
-      options: { max: 500 },
-    },
+    isLength: { options: { max: 500 } },
     errorMessage: 'Notes must not exceed 500 characters',
   },
   promotions: {
-    in: { options: [['body']] },
+    in: ['body'],
     optional: true,
     isArray: true,
     errorMessage: 'Promotions must be an array',
@@ -442,9 +452,11 @@ export const createBookingValidator = checkSchema({
               typeof promotion !== 'string' ||
               promotion.trim().length === 0
             ) {
-              throw new Error(
-                'Each promotion must be a non-empty string (ID or code)'
-              );
+              throw new Error('Each promotion must be a non-empty string');
+            }
+            // Kiểm tra định dạng MongoID (nếu cần)
+            if (!/^[0-9a-fA-F]{24}$/.test(promotion)) {
+              throw new Error('Each promotion must be a valid MongoID');
             }
           }
         }
@@ -454,58 +466,112 @@ export const createBookingValidator = checkSchema({
   },
 });
 
-// Complete booking validation
 export const completeBookingValidator = checkSchema({
   id: {
-    in: { options: [['params']] },
+    in: ['params'],
     isMongoId: true,
     errorMessage: 'Invalid booking ID',
   },
   actualEndTime: {
-    in: { options: [['body']] },
+    in: ['body'],
     notEmpty: true,
-    isISO8601: true,
+    isString: true,
+    isISO8601: { options: { strict: true } },
     errorMessage:
       'Actual end time is required and must be valid ISO8601 format',
+    custom: {
+      options: async (actualEndTime, { req }) => {
+        // Giả sử bạn có thể truy vấn booking từ database
+        const booking = await prisma.booking.findUnique({
+          where: { id: req.params.id },
+          select: { startTime: true, actualStartTime: true },
+        });
+        if (!booking) {
+          throw new Error('Booking not found');
+        }
+        const endTimeDate = new Date(actualEndTime);
+        if (isNaN(endTimeDate)) {
+          throw new Error('Invalid date format for actualEndTime');
+        }
+        // Kiểm tra actualEndTime so với startTime hoặc actualStartTime
+        const referenceTime = booking.actualStartTime || booking.startTime;
+        if (referenceTime && endTimeDate <= new Date(referenceTime)) {
+          throw new Error(
+            'Actual end time must be after start time or actual start time'
+          );
+        }
+        return true;
+      },
+    },
   },
   actualReturnLocation: {
-    in: { options: [['body']] },
+    in: ['body'],
+    notEmpty: true,
+    isString: true,
     trim: true,
-    isLength: {
-      options: { min: 3, max: 200 },
-    },
-    errorMessage: 'Actual return location must be 3-200 characters',
+    isLength: { options: { min: 3, max: 200 } },
+    errorMessage:
+      'Actual return location is required and must be 3-200 characters',
   },
   returnOdometer: {
-    in: { options: [['body']] },
-    isFloat: {
-      options: { min: 0 },
+    in: ['body'],
+    notEmpty: true,
+    isFloat: { options: { min: 0 } },
+    toFloat: true,
+    errorMessage:
+      'Return odometer is required and must be a non-negative number',
+    custom: {
+      options: async (returnOdometer, { req }) => {
+        // Giả sử bạn có thể truy vấn pickupOdometer từ database
+        const booking = await prisma.booking.findUnique({
+          where: { id: req.params.id },
+          select: { pickupOdometer: true },
+        });
+        if (!booking) {
+          throw new Error('Booking not found');
+        }
+        if (
+          booking.pickupOdometer !== null &&
+          booking.pickupOdometer !== undefined
+        ) {
+          const pickup = parseFloat(booking.pickupOdometer);
+          if (returnOdometer < pickup) {
+            throw new Error(
+              'Return odometer cannot be less than pickup odometer'
+            );
+          }
+          if (returnOdometer - pickup > 1000) {
+            throw new Error(
+              'Odometer reading difference seems unrealistic (max 1000 km per rental)'
+            );
+          }
+        }
+        return true;
+      },
     },
-    errorMessage: 'Return odometer must be a non-negative number',
   },
   notes: {
-    in: { options: [['body']] },
+    in: ['body'],
+    optional: true,
+    isString: true,
     trim: true,
-    isLength: {
-      options: { max: 500 },
-    },
+    isLength: { options: { max: 500 } },
     errorMessage: 'Notes must not exceed 500 characters',
   },
   damageReport: {
-    in: { options: [['body']] },
+    in: ['body'],
     optional: true,
+    isString: true,
     trim: true,
-    isLength: {
-      options: { max: 1000 },
-    },
+    isLength: { options: { max: 1000 } },
     errorMessage: 'Damage report must not exceed 1000 characters',
   },
   fuelLevel: {
-    in: { options: [['body']] },
-    isFloat: {
-      options: { min: 0, max: 100 },
-    },
-    errorMessage: 'Fuel level must be between 0 and 100',
+    in: ['body'],
+    notEmpty: true,
+    isFloat: { options: { min: 0, max: 100 } },
+    toFloat: true,
+    errorMessage: 'Fuel level is required and must be between 0 and 100',
   },
 });
 
