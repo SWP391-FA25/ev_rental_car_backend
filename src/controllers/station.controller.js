@@ -52,7 +52,19 @@ const getStationByID = async (req, res, next) => {
       where: { id: id },
       include: {
         vehicles: true,
-        stationStaff: true,
+        stationStaff: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                phone: true,
+                role: true,
+              },
+            },
+          },
+        },
         bookings: true,
       },
     });
@@ -382,13 +394,13 @@ const getStaffAtStation = async (req, res, next) => {
 };
 
 export {
-  getStations,
-  getStationByID,
-  getUnavailableStations,
-  softDeleteStation,
-  updateStation,
   createStation,
   deleteStation,
-  getVehiclesAtStation,
   getStaffAtStation,
+  getStationByID,
+  getStations,
+  getUnavailableStations,
+  getVehiclesAtStation,
+  softDeleteStation,
+  updateStation,
 };

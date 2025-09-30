@@ -69,7 +69,26 @@ const createAssignment = async (req, res, next) => {
 const getAssignments = async (req, res, next) => {
   try {
     const assignments = await prisma.stationStaff.findMany({
-      orderBy: { createdAt: 'desc' },
+      include: {
+        station: {
+          select: {
+            id: true,
+            name: true,
+            address: true,
+            status: true,
+            capacity: true,
+          },
+        },
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            phone: true,
+            role: true,
+          },
+        },
+      },
     });
 
     if (assignments.length === 0) {
@@ -170,10 +189,90 @@ const deleteAssignment = async (req, res, next) => {
   }
 };
 
+// Get unassigned staff
+const getUnassignedStaff = async (req, res, next) => {
+  try {
+    // Get all staff users
+    const allStaff = await prisma.user.findMany({
+      where: {
+        role: 'STAFF',
+        accountStatus: 'ACTIVE',
+        softDeleted: false,
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        role: true,
+      },
+    });
+
+    // Get assigned staff IDs
+    const assignedStaffIds = await prisma.stationStaff.findMany({
+      select: { userId: true },
+    });
+
+    const assignedIds = assignedStaffIds.map((assignment) => assignment.userId);
+
+    // Filter out assigned staff
+    const unassignedStaff = allStaff.filter(
+      (staff) => !assignedIds.includes(staff.id)
+    );
+
+    return res.status(200).json({ staff: unassignedStaff });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Get assignment by staff ID
+const getAssignmentByStaffId = async (req, res, next) => {
+  try {
+    const { staffId } = req.params;
+
+    const assignment = await prisma.stationStaff.findFirst({
+      where: { userId: staffId },
+      include: {
+        station: {
+          select: {
+            id: true,
+            name: true,
+            address: true,
+            status: true,
+            capacity: true,
+          },
+        },
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            phone: true,
+            role: true,
+          },
+        },
+      },
+    });
+
+    if (!assignment) {
+      return res
+        .status(404)
+        .json({ success: false, message: 'Assignment not found' });
+    }
+
+    return res.status(200).json({ assignment });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export {
   createAssignment,
   deleteAssignment,
   getAssignmentById,
+  getAssignmentByStaffId,
   getAssignments,
+  getUnassignedStaff,
   updateAssignment,
 };
