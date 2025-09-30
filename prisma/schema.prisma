@@ -95,6 +95,12 @@ enum PaymentMethod {
   CASH
 }
 
+enum VerifyStatus {
+  UNVERIFIED
+  PENDING
+  VERIFIED
+}
+
 
 
 model User {
@@ -107,6 +113,8 @@ model User {
   address       String? // Added for user address
   dateOfBirth   DateTime? // Added for age verification
   gender        String? // Added for reporting
+  verifyToken  String?         @default("") // Token used for email verification
+  verifyStatus VerifyStatus    @default(UNVERIFIED)
   accountStatus AccountStatus   @default(ACTIVE)
   softDeleted   Boolean         @default(false)
   createdAt     DateTime        @default(now())
@@ -120,6 +128,7 @@ model User {
   auditLogs     AuditLog[] // Add relation to audit logs
   contractTemplates ContractTemplate[] // Add relation to contract templates
   contractSignatures ContractSignature[] // Add relation to contract signatures
+
 
   @@index([role])
   @@index([softDeleted])

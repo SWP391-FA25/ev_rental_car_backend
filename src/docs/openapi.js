@@ -205,6 +205,128 @@ export const openapiSpec = {
         },
       },
     },
+    '/api/email/send-verification': {
+      post: {
+        summary: 'Send email verification',
+        tags: ['Email'],
+        security: [{ cookieAuth: [] }],
+        description: 'Send a verification email to the authenticated user',
+        responses: {
+          200: {
+            description: 'Verification email sent successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    message: {
+                      type: 'string',
+                      example: 'Verification email sent',
+                    },
+                  },
+                },
+              },
+            },
+          },
+          400: {
+            description: 'Bad request - User not found or missing email',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    message: { type: 'string', example: 'User not found' },
+                  },
+                },
+              },
+            },
+          },
+          401: { description: 'Unauthorized - User not authenticated' },
+          500: {
+            description: 'Internal server error',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    message: { type: 'string', example: 'Error sending email' },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/api/email/verify/{token}': {
+      get: {
+        summary: 'Verify email with token',
+        tags: ['Email'],
+        description: 'Verify user email address using verification token',
+        parameters: [
+          {
+            name: 'token',
+            in: 'path',
+            required: true,
+            description: 'Email verification token',
+            schema: {
+              type: 'string',
+            },
+          },
+        ],
+        responses: {
+          200: {
+            description: 'Email verified successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    message: {
+                      type: 'string',
+                      example: 'Email verified successfully',
+                    },
+                  },
+                },
+              },
+            },
+          },
+          400: {
+            description: 'Bad request - Invalid token or user not found',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    message: {
+                      type: 'string',
+                      example: 'Invalid token',
+                    },
+                  },
+                },
+              },
+            },
+          },
+          500: {
+            description: 'Internal server error',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    message: {
+                      type: 'string',
+                      example: 'Internal server error',
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
     '/api/vehicles': {
       get: {
         summary: 'Get all vehicles',
