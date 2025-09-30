@@ -14,24 +14,7 @@ import { prisma } from '../lib/prisma.js';
 // CREATE - Create a new promotion
 const createPromotion = async (req, res, next) => {
   try {
-    const { code, description, discount } = req.body;
-
-    // Use Promise-based validation for cleaner async/await syntax
-    await missingFieldsPromise(
-      'code',
-      'discount',
-      'validFrom',
-      'validUntil'
-    )(req);
-    await validateDateRangePromise('validFrom', 'validUntil')(req);
-
-    // Additional business validation
-    if (typeof discount !== 'number' || discount <= 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'Discount must be a positive number',
-      });
-    }
+    const { code, description, discount, validFrom, validUntil } = req.body;
 
     // Check if promotion code already exists
     const existingPromotion = await prisma.promotion.findUnique({
@@ -45,14 +28,14 @@ const createPromotion = async (req, res, next) => {
       });
     }
 
-    // Create the promotion (dates are already processed by validateDateRangePromise)
+    // Create the promotion
     const promotion = await prisma.promotion.create({
       data: {
         code,
         description,
         discount,
-        validFrom: req.body.validFrom, // Already converted to Date object
-        validUntil: req.body.validUntil, // Already converted to Date object
+        validFrom: new Date(validFrom),
+        validUntil: new Date(validUntil),
       },
     });
 
@@ -62,12 +45,6 @@ const createPromotion = async (req, res, next) => {
       data: { promotion },
     });
   } catch (error) {
-    // Handle validation errors from Promise-based validators
-    if (error.status) {
-      return res.status(error.status).json(error.body);
-    }
-
-    // Handle other errors (database, etc.)
     next(error);
   }
 };
@@ -203,7 +180,7 @@ const getActivePromotions = async (req, res, next) => {
 const updatePromotion = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { code, description, discount } = req.body;
+    const { code, description, discount, validFrom, validUntil } = req.body;
 
     // Check if promotion exists
     const existingPromotion = await prisma.promotion.findUnique({
@@ -214,33 +191,6 @@ const updatePromotion = async (req, res, next) => {
       return res.status(404).json({
         success: false,
         message: 'Promotion not found',
-      });
-    }
-
-    // Validate required fields if they are being updated
-    const fieldsToValidate = [];
-    if (code !== undefined) fieldsToValidate.push('code');
-    if (discount !== undefined) fieldsToValidate.push('discount');
-    if (req.body.validFrom !== undefined) fieldsToValidate.push('validFrom');
-    if (req.body.validUntil !== undefined) fieldsToValidate.push('validUntil');
-
-    if (fieldsToValidate.length > 0) {
-      await missingFieldsPromise(...fieldsToValidate)(req);
-    }
-
-    // Validate dates if they are being updated
-    if (req.body.validFrom !== undefined && req.body.validUntil !== undefined) {
-      await validateDateRangePromise('validFrom', 'validUntil')(req);
-    }
-
-    // Validate discount if provided
-    if (
-      discount !== undefined &&
-      (typeof discount !== 'number' || discount <= 0)
-    ) {
-      return res.status(400).json({
-        success: false,
-        message: 'Discount must be a positive number',
       });
     }
 
@@ -263,10 +213,8 @@ const updatePromotion = async (req, res, next) => {
     if (code !== undefined) updateData.code = code;
     if (description !== undefined) updateData.description = description;
     if (discount !== undefined) updateData.discount = discount;
-    if (req.body.validFrom !== undefined)
-      updateData.validFrom = req.body.validFrom;
-    if (req.body.validUntil !== undefined)
-      updateData.validUntil = req.body.validUntil;
+    if (validFrom !== undefined) updateData.validFrom = new Date(validFrom);
+    if (validUntil !== undefined) updateData.validUntil = new Date(validUntil);
 
     const updatedPromotion = await prisma.promotion.update({
       where: { id },
@@ -282,9 +230,6 @@ const updatePromotion = async (req, res, next) => {
       data: { promotion: updatedPromotion },
     });
   } catch (error) {
-    if (error.status) {
-      return res.status(error.status).json(error.body);
-    }
     next(error);
   }
 };

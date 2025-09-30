@@ -4,19 +4,19 @@ import validate from '../utils/validation.js';
 // Create rental history validation
 export const createRentalHistoryValidator = checkSchema({
   userId: {
-    in: { options: [['body']] },
+    in: ['body'],
     notEmpty: true,
     isMongoId: true,
     errorMessage: 'Valid user ID is required',
   },
   bookingId: {
-    in: { options: [['body']] },
+    in: ['body'],
     notEmpty: true,
     isMongoId: true,
     errorMessage: 'Valid booking ID is required',
   },
   distance: {
-    in: { options: [['body']] },
+    in: ['body'],
     notEmpty: true,
     isFloat: {
       options: { min: 0 },
@@ -24,7 +24,7 @@ export const createRentalHistoryValidator = checkSchema({
     errorMessage: 'Distance is required and must be a non-negative number',
   },
   rating: {
-    in: { options: [['body']] },
+    in: ['body'],
     notEmpty: true,
     isInt: {
       options: { min: 1, max: 5 },
@@ -32,7 +32,7 @@ export const createRentalHistoryValidator = checkSchema({
     errorMessage: 'Rating is required and must be an integer between 1 and 5',
   },
   feedback: {
-    in: { options: [['body']] },
+    in: ['body'],
     notEmpty: true,
     isString: true,
     trim: true,
@@ -46,7 +46,7 @@ export const createRentalHistoryValidator = checkSchema({
 // Get rental histories validation (query params)
 export const getRentalHistoriesValidator = checkSchema({
   page: {
-    in: { options: [['query']] },
+    in: ['query'],
     optional: true,
     isInt: {
       options: { min: 1 },
@@ -54,7 +54,7 @@ export const getRentalHistoriesValidator = checkSchema({
     errorMessage: 'Page must be a positive integer',
   },
   limit: {
-    in: { options: [['query']] },
+    in: ['query'],
     optional: true,
     isInt: {
       options: { min: 1, max: 100 },
@@ -62,13 +62,13 @@ export const getRentalHistoriesValidator = checkSchema({
     errorMessage: 'Limit must be between 1 and 100',
   },
   userId: {
-    in: { options: [['query']] },
+    in: ['query'],
     optional: true,
     isMongoId: true,
     errorMessage: 'Invalid user ID',
   },
   rating: {
-    in: { options: [['query']] },
+    in: ['query'],
     optional: true,
     isInt: {
       options: { min: 1, max: 5 },
@@ -80,7 +80,7 @@ export const getRentalHistoriesValidator = checkSchema({
 // Get rental history by ID validation
 export const getRentalHistoryByIdValidator = checkSchema({
   id: {
-    in: { options: [['params']] },
+    in: ['params'],
     isMongoId: true,
     errorMessage: 'Invalid rental history ID',
   },
@@ -89,12 +89,12 @@ export const getRentalHistoryByIdValidator = checkSchema({
 // Get rental histories by user ID validation
 export const getRentalHistoriesByUserIdValidator = checkSchema({
   userId: {
-    in: { options: [['params']] },
+    in: ['params'],
     isMongoId: true,
     errorMessage: 'Invalid user ID',
   },
   page: {
-    in: { options: [['query']] },
+    in: ['query'],
     optional: true,
     isInt: {
       options: { min: 1 },
@@ -102,7 +102,7 @@ export const getRentalHistoriesByUserIdValidator = checkSchema({
     errorMessage: 'Page must be a positive integer',
   },
   limit: {
-    in: { options: [['query']] },
+    in: ['query'],
     optional: true,
     isInt: {
       options: { min: 1, max: 100 },
@@ -114,7 +114,7 @@ export const getRentalHistoriesByUserIdValidator = checkSchema({
 // Get rental history by booking ID validation
 export const getRentalHistoryByBookingIdValidator = checkSchema({
   bookingId: {
-    in: { options: [['params']] },
+    in: ['params'],
     isMongoId: true,
     errorMessage: 'Invalid booking ID',
   },
@@ -123,12 +123,12 @@ export const getRentalHistoryByBookingIdValidator = checkSchema({
 // Update rental history validation
 export const updateRentalHistoryValidator = checkSchema({
   id: {
-    in: { options: [['params']] },
+    in: ['params'],
     isMongoId: true,
     errorMessage: 'Invalid rental history ID',
   },
   distance: {
-    in: { options: [['body']] },
+    in: ['body'],
     optional: true,
     isFloat: {
       options: { min: 0 },
@@ -136,7 +136,7 @@ export const updateRentalHistoryValidator = checkSchema({
     errorMessage: 'Distance must be a non-negative number',
   },
   rating: {
-    in: { options: [['body']] },
+    in: ['body'],
     optional: true,
     isInt: {
       options: { min: 1, max: 5 },
@@ -144,7 +144,7 @@ export const updateRentalHistoryValidator = checkSchema({
     errorMessage: 'Rating must be an integer between 1 and 5',
   },
   feedback: {
-    in: { options: [['body']] },
+    in: ['body'],
     optional: true,
     isString: true,
     trim: true,
@@ -158,7 +158,7 @@ export const updateRentalHistoryValidator = checkSchema({
 // Delete rental history validation
 export const deleteRentalHistoryValidator = checkSchema({
   id: {
-    in: { options: [['params']] },
+    in: ['params'],
     isMongoId: true,
     errorMessage: 'Invalid rental history ID',
   },
@@ -167,7 +167,7 @@ export const deleteRentalHistoryValidator = checkSchema({
 // Get rental statistics validation
 export const getRentalStatisticsValidator = checkSchema({
   userId: {
-    in: { options: [['query']] },
+    in: ['query'],
     optional: true,
     isMongoId: true,
     errorMessage: 'Invalid user ID',

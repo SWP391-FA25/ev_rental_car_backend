@@ -1,0 +1,49 @@
+{
+  "validPromotion": {
+    "code": "WINTER2024",
+    "description": "Winter holiday discount",
+    "discount": 15.5,
+    "validFrom": "2024-12-01T00:00:00.000Z",
+    "validUntil": "2024-12-31T23:59:59.000Z"
+  },
+  "invalidPromotions": {
+    "shortCode": {
+      "code": "A",
+      "description": "Code too short",
+      "discount": 10,
+      "validFrom": "2024-12-01T00:00:00.000Z",
+      "validUntil": "2024-12-31T23:59:59.000Z"
+    },
+    "negativeDiscount": {
+      "code": "NEGATIVE",
+      "description": "Negative discount test",
+      "discount": -10,
+      "validFrom": "2024-12-01T00:00:00.000Z",
+      "validUntil": "2024-12-31T23:59:59.000Z"
+    },
+    "invalidDate": {
+      "code": "BADDATE",
+      "description": "Invalid date test",
+      "discount": 15,
+      "validFrom": "not-a-date",
+      "validUntil": "2024-12-31T23:59:59.000Z"
+    },
+    "dateOrderWrong": {
+      "code": "WRONGORDER",
+      "description": "Valid until before valid from",
+      "discount": 20,
+      "validFrom": "2024-12-31T00:00:00.000Z",
+      "validUntil": "2024-12-01T00:00:00.000Z"
+    },
+    "missingFields": {
+      "description": "Missing required fields"
+    },
+    "zeroDiscount": {
+      "code": "ZERODISCOUNT",
+      "description": "Zero discount test",
+      "discount": 0,
+      "validFrom": "2024-12-01T00:00:00.000Z",
+      "validUntil": "2024-12-31T23:59:59.000Z"
+    }
+  }
+}
