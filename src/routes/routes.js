@@ -27,6 +27,6 @@ router.use('/renters', renterRouter);
 router.use('/vehicles', vehicleRouter);
 router.use('/promotions', promotionRouter);
 router.use('/rental-histories', rentalHistoryRouter);
-router.use('/email', emailRouter);
+router.use('/emails', emailRouter);
 
 export default router;

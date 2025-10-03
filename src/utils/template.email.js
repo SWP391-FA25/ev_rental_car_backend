@@ -114,11 +114,11 @@ const getEmailConfig = (purpose) => {
       message:
         'To complete your registration and start experiencing our electric vehicle rental service, please verify your email address by clicking the button below.',
       buttonText: 'Verify Email Now',
-      actionUrl: (token) => `'http://localhost:5173'}/users?verify=${token}`,
+      actionUrl: (token) => `http://localhost:5173/users?verify=${token}`,
       warningIcon: '🔒',
       warningTitle: 'Security Notice:',
       warningMessage:
-        'This verification link will expire in 24 hours. If you did not create this account, please ignore this email.',
+        'This verification link will expire in 5 minutes. If you did not create this account, please ignore this email.',
       warningBgColor: '#FEF3C7',
       warningBorderColor: '#F59E0B',
       warningTextColor: '#92400E',
@@ -134,7 +134,7 @@ const getEmailConfig = (purpose) => {
         'To reset your password, please click the button below. If you did not request a password reset, you can ignore this email.',
       buttonText: 'Reset Password',
       actionUrl: (token) =>
-        `'http://localhost:5173'}/reset-password?token=${token}`,
+        `http://localhost:5173/reset-password?token=${token}`,
       warningIcon: '⚠️',
       warningTitle: 'Important:',
       warningMessage:
