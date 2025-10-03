@@ -1,6 +1,6 @@
 import { prisma } from '../lib/prisma.js';
 import { generateToken, verifyToken } from '../utils/jwt.js';
-import transporter from '../utils/sendingEmail.js';
+import { sendVerificationEmail } from '../utils/sendingEmail.js';
 
 const sendVerifyEmail = async (req, res, next) => {
   try {
@@ -26,39 +26,37 @@ const sendVerifyEmail = async (req, res, next) => {
       return res.status(400).json({ message: 'You need to enter your email' });
     }
 
-    const token = generateToken({ email, userId: user.id }, '15m');
+    const token = await generateToken(
+      { email, userId: user.id },
+      { expiresIn: '5m' }
+    );
 
-    const mailOptions = {
-      from: `${process.env.EMAIL_USERNAME}`,
-      to: email,
-      subject: 'Email Verification',
-      html: `
-      <div style="font-family: Arial, sans-serif; line-height: 1.5; color: #333;">
-        <h2 style="color:#2c3e50;">Hi there!</h2>
-        <p>You recently visited our website and entered your email address.</p>
-        <p>Please click the button below to verify your email:</p>
+    // Update user with new verification token
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { verifyToken: token, verifyStatus: 'PENDING' },
+    });
 
-        <a href="http://localhost:5000/api/email/verify/${token}"
-          style="
-            display: inline-block;
-            padding: 12px 20px;
-            margin: 20px 0;
-            background-color: #4CAF50;
-            color: #ffffff;
-            text-decoration: none;
-            border-radius: 6px;
-            font-weight: bold;
-          ">
-          Verify Email
-        </a>
+    // Send verification email using the template system
+    try {
+      const emailResult = await sendVerificationEmail(email, token);
 
-        <p>If the button doesn’t work, you can also copy and paste this link into your browser:</p>
-        <p><a href="http://localhost:5000/api/email/verify/${token}">Click here</a></p>
-
-        <p>Thanks,<br/>The Your App Team</p>
-      </div>
-    `,
-    };
+      if (emailResult.success) {
+        return res.status(200).json({
+          message: 'Verification email sent successfully',
+          messageId: emailResult.messageId,
+        });
+      } else {
+        return res
+          .status(500)
+          .json({ message: 'Failed to send verification email' });
+      }
+    } catch (emailError) {
+      console.error('Error sending verification email:', emailError);
+      return res
+        .status(500)
+        .json({ message: 'Error sending verification email' });
+    }
 
     await prisma.user.update({
       where: { id: user.id },
@@ -84,13 +82,55 @@ const verifyEmailToken = async (req, res, next) => {
     const { token } = req.params;
 
     if (!token) {
-      return res.status(400).json({ message: 'Invalid token' });
+      return res.status(400).send(`
+        <!DOCTYPE html>
+        <html lang="vi">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Invalid Token - EV Rental</title>
+          <style>
+            body { font-family: Arial, sans-serif; text-align: center; padding: 50px; background: linear-gradient(135deg, #A8B8C8 0%, #B8C5D3 100%); }
+            .container { max-width: 500px; margin: 0 auto; background: white; padding: 40px; border-radius: 16px; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15); }
+            .error { color: #dc3545; font-size: 24px; margin-bottom: 20px; }
+            .message { color: #6c757d; font-size: 16px; line-height: 1.6; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="error">❌ Invalid Token</div>
+            <div class="message">The verification link is invalid or malformed.</div>
+          </div>
+        </body>
+        </html>
+      `);
     }
 
     const decodedToken = verifyToken(token);
 
     if (!decodedToken) {
-      return res.status(400).json({ message: 'Invalid token' });
+      return res.status(400).send(`
+        <!DOCTYPE html>
+        <html lang="vi">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Invalid Token - EV Rental</title>
+          <style>
+            body { font-family: Arial, sans-serif; text-align: center; padding: 50px; background: linear-gradient(135deg, #A8B8C8 0%, #B8C5D3 100%); }
+            .container { max-width: 500px; margin: 0 auto; background: white; padding: 40px; border-radius: 16px; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15); }
+            .error { color: #dc3545; font-size: 24px; margin-bottom: 20px; }
+            .message { color: #6c757d; font-size: 16px; line-height: 1.6; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="error">❌ Invalid or Expired Token</div>
+            <div class="message">The verification link has expired or is invalid. Please request a new verification email.</div>
+          </div>
+        </body>
+        </html>
+      `);
     }
 
     const { email, userId } = decodedToken;
@@ -121,9 +161,33 @@ const verifyEmailToken = async (req, res, next) => {
       data: { verifyStatus: 'VERIFIED', verifyToken: '' },
     });
 
-    res.status(200).json({
-      message: 'Email verified successfully',
-    });
+    // Send a success response that could be displayed in browser
+    res.status(200).send(`
+      <!DOCTYPE html>
+      <html lang="vi">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Email Verified - EV Rental</title>
+        <style>
+          body { font-family: Arial, sans-serif; text-align: center; padding: 50px; background: linear-gradient(135deg, #A8B8C8 0%, #B8C5D3 100%); }
+          .container { max-width: 500px; margin: 0 auto; background: white; padding: 40px; border-radius: 16px; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15); }
+          .success { color: #28a745; font-size: 24px; margin-bottom: 20px; }
+          .message { color: #6c757d; font-size: 16px; line-height: 1.6; }
+          .button { display: inline-block; padding: 12px 24px; background: #8B9DAF; color: white; text-decoration: none; border-radius: 8px; margin-top: 20px; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="success">✅ Email Verified Successfully!</div>
+          <div class="message">
+            Your email has been verified successfully. You can now access all features of EV Rental.
+          </div>
+          <a href="${process.env.CLIENT_URL || 'http://localhost:3000'}" class="button">Return to EV Rental</a>
+        </div>
+      </body>
+      </html>
+    `);
   } catch (error) {
     console.error('Error verifying email token:', error);
     next(error);
