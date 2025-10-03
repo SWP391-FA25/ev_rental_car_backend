@@ -114,8 +114,7 @@ const getEmailConfig = (purpose) => {
       message:
         'To complete your registration and start experiencing our electric vehicle rental service, please verify your email address by clicking the button below.',
       buttonText: 'Verify Email Now',
-      actionUrl: (token) =>
-        `${process.env.BASE_URL || 'http://localhost:5000'}/api/email/verify/${token}`,
+      actionUrl: (token) => `'http://localhost:5173'}/users?verify=${token}`,
       warningIcon: '🔒',
       warningTitle: 'Security Notice:',
       warningMessage:
@@ -135,7 +134,7 @@ const getEmailConfig = (purpose) => {
         'To reset your password, please click the button below. If you did not request a password reset, you can ignore this email.',
       buttonText: 'Reset Password',
       actionUrl: (token) =>
-        `${process.env.BASE_URL || 'http://localhost:5000'}/api/auth/reset-password/${token}`,
+        `'http://localhost:5173'}/reset-password?token=${token}`,
       warningIcon: '⚠️',
       warningTitle: 'Important:',
       warningMessage:
