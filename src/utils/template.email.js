@@ -2,7 +2,7 @@ const generateEmailTemplate = (token, purpose) => {
   const config = getEmailConfig(purpose);
 
   return `<!DOCTYPE html>
-<html lang="vi">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -50,10 +50,10 @@ const generateEmailTemplate = (token, purpose) => {
 
                             <div style="margin: 40px 0 0; padding: 24px; background-color: #F3F6F9; border-radius: 10px; border-left: 4px solid #8B9DAF;">
                                 <p style="margin: 0 0 12px; font-size: 14px; color: #4b5563; font-weight: 600;">
-                                    Nút không hoạt động?
+                                    Button not working?
                                 </p>
                                 <p style="margin: 0 0 12px; font-size: 14px; color: #6b7280; line-height: 1.6;">
-                                    Sao chép và dán liên kết này vào trình duyệt của bạn:
+                                    Copy and paste this link into your browser:
                                 </p>
                                 <p style="margin: 0; font-size: 13px; color: #8B9DAF; word-break: break-all; font-family: 'Courier New', monospace; background-color: #ffffff; padding: 12px; border-radius: 6px;">
                                     ${config.actionUrl(token)}
@@ -71,11 +71,11 @@ const generateEmailTemplate = (token, purpose) => {
                     <tr>
                         <td style="padding: 40px 48px; background: linear-gradient(135deg, #F3F6F9 0%, #E8EDF2 100%); border-top: 1px solid #D1D5DB;">
                             <p style="margin: 0 0 20px; font-size: 15px; color: #4b5563; text-align: center; line-height: 1.6;">
-                                Cần hỗ trợ? Liên hệ đội ngũ của chúng tôi tại<br>
-                                <a href="mailto:support@evrental.com" style="color: #8B9DAF; text-decoration: none; font-weight: 600;">support@evrental.com</a>
+                                Need help? Contact our team at<br>
+                                <a href="mailto:${process.env.EMAIL_USERNAME || 'support@evrental.com'}" style="color: #8B9DAF; text-decoration: none; font-weight: 600;">${process.env.EMAIL_USERNAME || 'support@evrental.com'}</a>
                             </p>
                             <p style="margin: 0; font-size: 13px; color: #9CA3AF; text-align: center;">
-                                © 2025 EV Rental - Cùng Bạn Trên Mọi Hành Trình
+                                © 2025 EV Rental - With You on Every Journey
                             </p>
                         </td>
                     </tr>
@@ -107,44 +107,44 @@ const generateEmailTemplate = (token, purpose) => {
 const getEmailConfig = (purpose) => {
   const configs = {
     'verify-email': {
-      title: 'Xác Thực Email',
-      heading: 'Xác Thực Địa Chỉ Email',
+      title: 'Email Verification',
+      heading: 'Verify Your Email Address',
       greeting:
-        'Chào mừng bạn đến với <strong>EV Rental</strong>! Chúng tôi rất vui mừng được đồng hành cùng bạn trên mọi hành trình.',
+        'Welcome to <strong>EV Rental</strong>! We are excited to accompany you on every journey.',
       message:
-        'Để hoàn tất đăng ký và bắt đầu trải nghiệm dịch vụ thuê xe điện của chúng tôi, vui lòng xác thực địa chỉ email bằng cách nhấp vào nút bên dưới.',
-      buttonText: 'Xác Thực Email Ngay',
+        'To complete your registration and start experiencing our electric vehicle rental service, please verify your email address by clicking the button below.',
+      buttonText: 'Verify Email Now',
       actionUrl: (token) =>
         `${process.env.BASE_URL || 'http://localhost:5000'}/api/email/verify/${token}`,
       warningIcon: '🔒',
-      warningTitle: 'Thông Báo Bảo Mật:',
+      warningTitle: 'Security Notice:',
       warningMessage:
-        'Liên kết xác thực này sẽ hết hạn sau 24 giờ. Nếu bạn không tạo tài khoản này, vui lòng bỏ qua email này.',
+        'This verification link will expire in 24 hours. If you did not create this account, please ignore this email.',
       warningBgColor: '#FEF3C7',
       warningBorderColor: '#F59E0B',
       warningTextColor: '#92400E',
       footerText:
-        'Email này được gửi đến bạn vì bạn đã đăng ký tài khoản EV Rental.<br>Nếu bạn không yêu cầu email này, bạn có thể bỏ qua nó một cách an toàn.',
+        'This email was sent to you because you registered for an EV Rental account.<br>If you did not request this email, you can safely ignore it.',
     },
     'reset-password': {
-      title: 'Đặt Lại Mật Khẩu',
-      heading: 'Đặt Lại Mật Khẩu',
+      title: 'Reset Password',
+      heading: 'Reset Your Password',
       greeting:
-        'Xin chào! Chúng tôi đã nhận được yêu cầu đặt lại mật khẩu cho tài khoản <strong>EV Rental</strong> của bạn.',
+        'Hello! We have received a request to reset the password for your <strong>EV Rental</strong> account.',
       message:
-        'Để đặt lại mật khẩu của bạn, vui lòng nhấp vào nút bên dưới. Nếu bạn không yêu cầu đặt lại mật khẩu, bạn có thể bỏ qua email này.',
-      buttonText: 'Đặt Lại Mật Khẩu',
+        'To reset your password, please click the button below. If you did not request a password reset, you can ignore this email.',
+      buttonText: 'Reset Password',
       actionUrl: (token) =>
         `${process.env.BASE_URL || 'http://localhost:5000'}/api/auth/reset-password/${token}`,
       warningIcon: '⚠️',
-      warningTitle: 'Quan Trọng:',
+      warningTitle: 'Important:',
       warningMessage:
-        'Liên kết này chỉ có hiệu lực trong 1 giờ vì lý do bảo mật. Nếu bạn không yêu cầu đặt lại mật khẩu, vui lòng bỏ qua email này và mật khẩu của bạn sẽ không thay đổi.',
+        'This link is only valid for 1 hour for security reasons. If you did not request a password reset, please ignore this email and your password will remain unchanged.',
       warningBgColor: '#FEE2E2',
       warningBorderColor: '#EF4444',
       warningTextColor: '#991B1B',
       footerText:
-        'Email này được gửi đến bạn vì có yêu cầu đặt lại mật khẩu cho tài khoản của bạn.<br>Nếu bạn không thực hiện yêu cầu này, vui lòng liên hệ với chúng tôi ngay lập tức.',
+        'This email was sent to you because a password reset was requested for your account.<br>If you did not make this request, please contact us immediately.',
     },
   };
 
