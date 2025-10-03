@@ -1,6 +1,6 @@
 import { prisma } from '../lib/prisma.js';
 import { generateToken, verifyToken } from '../utils/jwt.js';
-import transporter from '../utils/sendingEmail.js';
+import { sendVerificationEmail } from '../utils/sendingEmail.js';
 
 const sendVerifyEmail = async (req, res, next) => {
   try {
@@ -26,53 +26,37 @@ const sendVerifyEmail = async (req, res, next) => {
       return res.status(400).json({ message: 'You need to enter your email' });
     }
 
-    const token = generateToken({ email, userId: user.id }, '15m');
+    const token = await generateToken(
+      { email, userId: user.id },
+      { expiresIn: '5m' }
+    );
 
-    const mailOptions = {
-      from: `${process.env.EMAIL_USERNAME}`,
-      to: email,
-      subject: 'Email Verification',
-      html: `
-      <div style="font-family: Arial, sans-serif; line-height: 1.5; color: #333;">
-        <h2 style="color:#2c3e50;">Hi there!</h2>
-        <p>You recently visited our website and entered your email address.</p>
-        <p>Please click the button below to verify your email:</p>
-
-        <a href="http://localhost:5000/api/email/verify/${token}"
-          style="
-            display: inline-block;
-            padding: 12px 20px;
-            margin: 20px 0;
-            background-color: #4CAF50;
-            color: #ffffff;
-            text-decoration: none;
-            border-radius: 6px;
-            font-weight: bold;
-          ">
-          Verify Email
-        </a>
-
-        <p>If the button doesn’t work, you can also copy and paste this link into your browser:</p>
-        <p><a href="http://localhost:5000/api/email/verify/${token}">Click here</a></p>
-
-        <p>Thanks,<br/>The Your App Team</p>
-      </div>
-    `,
-    };
-
+    // Update user with new verification token
     await prisma.user.update({
       where: { id: user.id },
       data: { verifyToken: token, verifyStatus: 'PENDING' },
     });
 
-    transporter.sendMail(mailOptions, (error, info) => {
-      if (error) {
-        console.error('Error sending email:', error);
-        return res.status(500).json({ message: 'Error sending email' });
+    // Send verification email using the template system
+    try {
+      const emailResult = await sendVerificationEmail(email, token);
+
+      if (emailResult.success) {
+        return res.status(200).json({
+          message: 'Verification email sent successfully',
+          messageId: emailResult.messageId,
+        });
       } else {
-        console.log('Email sent: ' + info.response);
+        return res
+          .status(500)
+          .json({ message: 'Failed to send verification email' });
       }
-    });
+    } catch (emailError) {
+      console.error('Error sending verification email:', emailError);
+      return res
+        .status(500)
+        .json({ message: 'Error sending verification email' });
+    }
   } catch (error) {
     console.error('Error sending verification email:', error);
     next(error);
@@ -84,13 +68,20 @@ const verifyEmailToken = async (req, res, next) => {
     const { token } = req.params;
 
     if (!token) {
-      return res.status(400).json({ message: 'Invalid token' });
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid token',
+      });
     }
 
-    const decodedToken = verifyToken(token);
-
-    if (!decodedToken) {
-      return res.status(400).json({ message: 'Invalid token' });
+    let decodedToken;
+    try {
+      decodedToken = await verifyToken(token);
+    } catch (error) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid or expired token',
+      });
     }
 
     const { email, userId } = decodedToken;
@@ -98,11 +89,17 @@ const verifyEmailToken = async (req, res, next) => {
     const user = await prisma.user.findUnique({ where: { id: userId } });
 
     if (!user) {
-      return res.status(400).json({ message: 'User not found' });
+      return res.status(400).json({
+        success: false,
+        message: 'User not found',
+      });
     }
 
     if (user.email !== email) {
-      return res.status(400).json({ message: 'Invalid token' });
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid token',
+      });
     }
 
     if (user.verifyToken !== token) {
@@ -111,6 +108,7 @@ const verifyEmailToken = async (req, res, next) => {
         data: { verifyStatus: 'UNVERIFIED', verifyToken: '' },
       });
       return res.status(400).json({
+        success: false,
         message:
           'Token has been used or invalidated, please request a new verification email',
       });
@@ -122,7 +120,13 @@ const verifyEmailToken = async (req, res, next) => {
     });
 
     res.status(200).json({
+      success: true,
       message: 'Email verified successfully',
+      data: {
+        userId: user.id,
+        email: user.email,
+        verifyStatus: 'VERIFIED',
+      },
     });
   } catch (error) {
     console.error('Error verifying email token:', error);
