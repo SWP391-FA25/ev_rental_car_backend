@@ -1,6 +1,9 @@
 import { prisma } from '../lib/prisma.js';
 import { generateToken, verifyToken } from '../utils/jwt.js';
-import { sendVerificationEmail } from '../utils/sendingEmail.js';
+import {
+  sendVerificationEmail,
+  sendPasswordResetEmail,
+} from '../utils/sendingEmail.js';
 
 const sendVerifyEmail = async (req, res, next) => {
   try {
@@ -59,6 +62,75 @@ const sendVerifyEmail = async (req, res, next) => {
     }
   } catch (error) {
     console.error('Error sending verification email:', error);
+    next(error);
+  }
+};
+
+const sendForgetPasswordEmail = async (req, res, next) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email is required',
+      });
+    }
+
+    // Find user by email
+    const user = await prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (!user) {
+      // For security, don't reveal if email exists or not
+      return res.status(200).json({
+        success: true,
+        message:
+          'If an account with that email exists, a password reset email has been sent',
+      });
+    }
+
+    // Generate reset token (expires in 1 hour)
+    const resetToken = await generateToken(
+      { email: user.email, userId: user.id },
+      { expiresIn: '1h' }
+    );
+
+    // Update user with reset token and expiration
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        forgetPasswordToken: resetToken,
+      },
+    });
+
+    // Send password reset email using the template system
+    try {
+      const emailResult = await sendPasswordResetEmail(email, resetToken);
+
+      if (emailResult.success) {
+        return res.status(200).json({
+          success: true,
+          message: 'Password reset email sent successfully',
+          messageId: emailResult.messageId,
+          token: resetToken,
+        });
+      } else {
+        return res.status(500).json({
+          success: false,
+          message: 'Failed to send password reset email',
+        });
+      }
+    } catch (emailError) {
+      console.error('Error sending password reset email:', emailError);
+      return res.status(500).json({
+        success: false,
+        message: 'Error sending password reset email',
+      });
+    }
+  } catch (error) {
+    console.error('Error sending forget password email:', error);
     next(error);
   }
 };
@@ -134,4 +206,79 @@ const verifyEmailToken = async (req, res, next) => {
   }
 };
 
-export { sendVerifyEmail, verifyEmailToken };
+const verifyForgetPasswordToken = async (req, res, next) => {
+  try {
+    const { token } = req.params;
+
+    if (!token) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid token',
+      });
+    }
+
+    let decodedToken;
+    try {
+      decodedToken = await verifyToken(token);
+    } catch (error) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid or expired token',
+      });
+    }
+
+    const { email, userId } = decodedToken;
+
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: 'User not found',
+      });
+    }
+
+    if (user.email !== email) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid token',
+      });
+    }
+
+    // Check if the token matches the stored reset token
+    if (user.forgetPasswordToken !== token) {
+      return res.status(400).json({
+        success: false,
+        message:
+          'Token has been used or invalidated, please request a new password reset',
+      });
+    }
+
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        forgetPasswordToken: '',
+      },
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'Password reset token is valid',
+      data: {
+        userId: user.id,
+        email: user.email,
+        token: token,
+      },
+    });
+  } catch (error) {
+    console.error('Error verifying password reset token:', error);
+    next(error);
+  }
+};
+
+export {
+  sendVerifyEmail,
+  sendForgetPasswordEmail,
+  verifyEmailToken,
+  verifyForgetPasswordToken,
+};

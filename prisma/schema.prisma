@@ -115,6 +115,7 @@ model User {
   gender        String? // Added for reporting
   verifyToken  String?         @default("") // Token used for email verification
   verifyStatus VerifyStatus    @default(UNVERIFIED)
+  forgetPasswordToken String?         @default("") // Token used for password reset
   accountStatus AccountStatus   @default(ACTIVE)
   softDeleted   Boolean         @default(false)
   createdAt     DateTime        @default(now())
