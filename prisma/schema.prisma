@@ -337,12 +337,19 @@ model Notification {
   title     String
   message   String
   type      String // INFO, WARNING, ERROR, SUCCESS
+  priority  Int      @default(1) // 1: Low, 2: Medium, 3: High
   read      Boolean  @default(false)
+  readAt    DateTime?
+  expiresAt DateTime?
+  actionUrl String?  // URL for actionable notifications
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
   user      User     @relation(fields: [userId], references: [id])
 
   @@index([userId, read])
   @@index([createdAt])
+  @@index([priority])
+  @@index([expiresAt])
 }
 
 model AuditLog {
