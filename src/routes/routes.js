@@ -12,6 +12,7 @@ import vehicleRouter from './modules/vehicle.route.js';
 import promotionRouter from './modules/promotion.route.js';
 import rentalHistoryRouter from './modules/rental.history.route.js';
 import emailRouter from './modules/email.route.js';
+import notificationRouter from './modules/notification.route.js';
 
 const router = Router();
 
@@ -28,5 +29,6 @@ router.use('/vehicles', vehicleRouter);
 router.use('/promotions', promotionRouter);
 router.use('/rental-histories', rentalHistoryRouter);
 router.use('/emails', emailRouter);
+router.use('/notifications', notificationRouter);
 
 export default router;
