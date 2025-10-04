@@ -2,6 +2,30 @@ import { prisma } from '../lib/prisma.js';
 
 const VALID_STATUSES = ['ACTIVE', 'INACTIVE', 'MAINTENANCE'];
 
+// Haversine formula to calculate distance between two points
+const calculateDistance = (lat1, lon1, lat2, lon2) => {
+  const R = 6371; // Radius of the Earth in kilometers
+
+  // Convert degrees to radians
+  const lat1Rad = (lat1 * Math.PI) / 180;
+  const lat2Rad = (lat2 * Math.PI) / 180;
+  const deltaLat = ((lat2 - lat1) * Math.PI) / 180;
+  const deltaLon = ((lon2 - lon1) * Math.PI) / 180;
+
+  // Haversine formula
+  const a =
+    Math.sin(deltaLat / 2) * Math.sin(deltaLat / 2) +
+    Math.cos(lat1Rad) *
+      Math.cos(lat2Rad) *
+      Math.sin(deltaLon / 2) *
+      Math.sin(deltaLon / 2);
+
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  const distance = R * c; // Distance in kilometers
+
+  return distance;
+};
+
 const getStations = async (req, res, next) => {
   try {
     const stations = await prisma.station.findMany({
@@ -393,9 +417,107 @@ const getStaffAtStation = async (req, res, next) => {
   }
 };
 
+// Get nearby stations based on user location
+const getNearbyStations = async (req, res, next) => {
+  try {
+    const { lat, lng, radius = 10 } = req.query; // radius in km, default 10km
+
+    // Validate required parameters
+    if (!lat || !lng) {
+      return res.status(400).json({
+        success: false,
+        message: 'Latitude and longitude are required',
+      });
+    }
+
+    const userLat = parseFloat(lat);
+    const userLng = parseFloat(lng);
+    const searchRadius = parseFloat(radius);
+
+    // Validate coordinates
+    if (isNaN(userLat) || isNaN(userLng) || isNaN(searchRadius)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid coordinates or radius',
+      });
+    }
+
+    // Get all active stations
+    const allStations = await prisma.station.findMany({
+      where: {
+        softDeleted: false,
+        status: 'ACTIVE',
+      },
+      include: {
+        vehicles: {
+          where: {
+            status: 'AVAILABLE',
+            softDeleted: false,
+          },
+          include: {
+            images: true,
+          },
+        },
+      },
+    });
+
+    // Calculate distance and filter stations within radius
+    const nearbyStations = allStations
+      .map((station) => {
+        // Extract coordinates from GeoJSON format
+        let stationLat, stationLng;
+
+        if (station.location && station.location.coordinates) {
+          // GeoJSON format: { type: "Point", coordinates: [lng, lat] }
+          stationLng = station.location.coordinates[0];
+          stationLat = station.location.coordinates[1];
+        } else if (
+          station.location &&
+          station.location.lat &&
+          station.location.lng
+        ) {
+          // Alternative format: { lat: number, lng: number }
+          stationLat = station.location.lat;
+          stationLng = station.location.lng;
+        } else {
+          return null; // Skip stations with invalid location
+        }
+
+        const distance = calculateDistance(
+          userLat,
+          userLng,
+          stationLat,
+          stationLng
+        );
+
+        return {
+          ...station,
+          latitude: stationLat, // Add for compatibility
+          longitude: stationLng, // Add for compatibility
+          distance: Math.round(distance * 100) / 100, // Round to 2 decimal places
+        };
+      })
+      .filter((station) => station !== null && station.distance <= searchRadius)
+      .sort((a, b) => a.distance - b.distance); // Sort by distance
+
+    return res.json({
+      success: true,
+      data: {
+        stations: nearbyStations,
+        userLocation: { lat: userLat, lng: userLng },
+        searchRadius,
+        totalFound: nearbyStations.length,
+      },
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
 export {
   createStation,
   deleteStation,
+  getNearbyStations,
   getStaffAtStation,
   getStationByID,
   getStations,

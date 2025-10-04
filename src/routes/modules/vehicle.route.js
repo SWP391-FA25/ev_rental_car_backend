@@ -16,10 +16,10 @@ import { authorize } from '../../middleware/authorize.js';
 const router = Router();
 
 // Get all vehicles
-router.get('/', authenticate, authorize('ADMIN', 'STAFF'), getVehicles);
+router.get('/', getVehicles);
 
 // Get vehicle by ID
-router.get('/:id', authenticate, authorize('ADMIN', 'STAFF'), getVehicleById);
+router.get('/:id', getVehicleById);
 
 // Create a new vehicle
 router.post('/', authenticate, authorize('ADMIN', 'STAFF'), createVehicle);

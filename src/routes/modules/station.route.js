@@ -1,14 +1,15 @@
 import { Router } from 'express';
 import {
-  getStations,
-  getStationByID,
-  getUnavailableStations,
   createStation,
-  updateStation,
-  softDeleteStation,
   deleteStation,
-  getVehiclesAtStation,
+  getNearbyStations,
   getStaffAtStation,
+  getStationByID,
+  getStations,
+  getUnavailableStations,
+  getVehiclesAtStation,
+  softDeleteStation,
+  updateStation,
 } from '../../controllers/station.controller.js';
 import { authenticate } from '../../middleware/authenticate.js';
 import { authorize } from '../../middleware/authorize.js';
@@ -17,6 +18,8 @@ const router = Router();
 
 // Lấy tất cả station (active)
 router.get('/', authenticate, authorize('ADMIN', 'STAFF'), getStations);
+// Lấy stations gần vị trí user (public endpoint)
+router.get('/nearby', getNearbyStations);
 // Lấy station theo id
 router.get('/:id', authenticate, authorize('ADMIN', 'STAFF'), getStationByID);
 // Lấy các station đã xóa hoặc inactive

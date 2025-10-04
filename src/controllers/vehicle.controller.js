@@ -29,6 +29,7 @@ const getVehicles = async (req, res, next) => {
       },
       include: {
         station: true,
+        images: true, // Include vehicle images
       },
       orderBy: { createdAt: 'desc' },
     });
