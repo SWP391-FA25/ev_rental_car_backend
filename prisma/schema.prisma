@@ -129,7 +129,7 @@ model User {
   auditLogs     AuditLog[] // Add relation to audit logs
   contractTemplates ContractTemplate[] // Add relation to contract templates
   contractSignatures ContractSignature[] // Add relation to contract signatures
-
+  inspections   VehicleInspection[]
 
   @@index([role])
   @@index([softDeleted])
@@ -167,12 +167,14 @@ model Vehicle {
   batteryLevel Float         @default(0.0) // 0..100 (enforce ở validator DB)
   fuelType     FuelType      @default(ELECTRIC) // Added fuel type
   status       VehicleStatus @default(AVAILABLE)
+  price        Float         @default(0.0)
   softDeleted  Boolean       @default(false)
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
   station      Station       @relation(fields: [stationId], references: [id])
   bookings     Booking[]
   images       VehicleImage[]
+  inspections  VehicleInspection[]
 
   @@index([stationId, status])
   @@index([status])
@@ -208,6 +210,7 @@ model Booking {
   rentalHistories      RentalHistory[]
   promotionBookings    PromotionBooking[]
   rentalContracts      RentalContract[] // Add relation to rental contracts
+  inspections          VehicleInspection[]
 
   @@index([userId, status, startTime])
   @@index([vehicleId, status, startTime])
@@ -316,21 +319,6 @@ model UserDocument {
 }
 
 // New models for better data management
-model Pricing {
-  id          String      @id @default(auto()) @map("_id") @db.ObjectId
-  vehicleType VehicleType
-  hourlyRate  Float
-  dailyRate   Float
-  weeklyRate  Float
-  monthlyRate Float
-  currency    String      @default("VND")
-  validFrom   DateTime
-  validUntil  DateTime?
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-
-  @@index([vehicleType, validFrom])
-}
 
 model Notification {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
@@ -461,4 +449,26 @@ model VehicleImage {
 
   @@index([vehicleId])
   @@index([uploadedAt])
+}
+
+model VehicleInspection {
+  id              String     @id @default(auto()) @map("_id") @db.ObjectId
+  vehicleId       String     @db.ObjectId
+  staffId         String     @db.ObjectId
+  bookingId       String?    @db.ObjectId
+  inspectionType  String     // "CHECK_IN" or "CHECK_OUT"
+  batteryLevel    Float      // Battery percentage 0-100
+  exteriorCondition String   // "GOOD", "FAIR", "POOR"
+  interiorCondition String   // "GOOD", "FAIR", "POOR"
+  notes           String?
+  images          Json?      // Array of image URLs from inspection
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+  vehicle         Vehicle    @relation(fields: [vehicleId], references: [id])
+  staff           User       @relation(fields: [staffId], references: [id])
+  booking         Booking?   @relation(fields: [bookingId], references: [id])
+
+  @@index([vehicleId, createdAt])
+  @@index([staffId])
+  @@index([inspectionType])
 }
