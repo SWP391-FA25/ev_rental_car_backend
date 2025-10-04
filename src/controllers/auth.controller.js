@@ -1,7 +1,8 @@
-import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 import Joi from 'joi';
+import jwt from 'jsonwebtoken';
 import { prisma } from '../lib/prisma.js';
+import { verifyToken } from '../utils/jwt.js';
 
 function signAccessToken(user) {
   const payload = { sub: user.id, role: user.role };
@@ -205,5 +206,82 @@ export async function me(req, res, next) {
     return res.json({ success: true, data: { user: safeUser } });
   } catch (err) {
     return next(err);
+  }
+}
+
+export async function resetPassword(req, res, next) {
+  try {
+    // Validation schema
+    const schema = Joi.object({
+      token: Joi.string().required(),
+      password: Joi.string().min(6).required(),
+    });
+
+    const { error, value } = schema.validate(req.body);
+    if (error) {
+      return res
+        .status(400)
+        .json({ success: false, message: error.details[0].message });
+    }
+
+    const { token, password } = value;
+
+    // Verify token
+    let decodedToken;
+    try {
+      decodedToken = await verifyToken(token);
+    } catch (error) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid or expired token',
+      });
+    }
+
+    const { email, userId } = decodedToken;
+
+    // Find user
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: 'User not found',
+      });
+    }
+
+    // Verify email matches
+    if (user.email !== email) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid token',
+      });
+    }
+
+    // Check if token matches the stored reset token
+    if (user.forgetPasswordToken !== token) {
+      return res.status(400).json({
+        success: false,
+        message: 'Token has been used or invalidated',
+      });
+    }
+
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Update password and clear reset token
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        password: hashedPassword,
+        forgetPasswordToken: '',
+      },
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'Password reset successfully',
+    });
+  } catch (error) {
+    console.error('Error resetting password:', error);
+    next(error);
   }
 }

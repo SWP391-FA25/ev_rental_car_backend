@@ -1,8 +1,8 @@
 import { prisma } from '../lib/prisma.js';
 import { generateToken, verifyToken } from '../utils/jwt.js';
 import {
-  sendVerificationEmail,
   sendPasswordResetEmail,
+  sendVerificationEmail,
 } from '../utils/sendingEmail.js';
 
 const sendVerifyEmail = async (req, res, next) => {
@@ -149,7 +149,7 @@ const verifyEmailToken = async (req, res, next) => {
     let decodedToken;
     try {
       decodedToken = await verifyToken(token);
-    } catch (error) {
+    } catch {
       return res.status(400).json({
         success: false,
         message: 'Invalid or expired token',
@@ -174,7 +174,30 @@ const verifyEmailToken = async (req, res, next) => {
       });
     }
 
+    // Check if user is already verified
+    if (user.verifyStatus === 'VERIFIED') {
+      return res.status(200).json({
+        success: true,
+        message: 'Email is already verified',
+        data: {
+          userId: user.id,
+          email: user.email,
+          verifyStatus: 'VERIFIED',
+        },
+      });
+    }
+
     if (user.verifyToken !== token) {
+      // If token is empty, it means it was already used
+      if (!user.verifyToken) {
+        return res.status(400).json({
+          success: false,
+          message:
+            'This verification link has already been used. Please request a new verification email.',
+        });
+      }
+
+      // If token exists but doesn't match, clear it
       await prisma.user.update({
         where: { id: userId },
         data: { verifyStatus: 'UNVERIFIED', verifyToken: '' },
@@ -220,7 +243,7 @@ const verifyForgetPasswordToken = async (req, res, next) => {
     let decodedToken;
     try {
       decodedToken = await verifyToken(token);
-    } catch (error) {
+    } catch {
       return res.status(400).json({
         success: false,
         message: 'Invalid or expired token',
@@ -254,13 +277,6 @@ const verifyForgetPasswordToken = async (req, res, next) => {
       });
     }
 
-    await prisma.user.update({
-      where: { id: userId },
-      data: {
-        forgetPasswordToken: '',
-      },
-    });
-
     res.status(200).json({
       success: true,
       message: 'Password reset token is valid',
@@ -277,8 +293,8 @@ const verifyForgetPasswordToken = async (req, res, next) => {
 };
 
 export {
-  sendVerifyEmail,
   sendForgetPasswordEmail,
+  sendVerifyEmail,
   verifyEmailToken,
   verifyForgetPasswordToken,
 };
