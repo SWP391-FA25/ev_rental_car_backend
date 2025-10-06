@@ -167,11 +167,12 @@ model Vehicle {
   batteryLevel Float         @default(0.0) // 0..100 (enforce ở validator DB)
   fuelType     FuelType      @default(ELECTRIC) // Added fuel type
   status       VehicleStatus @default(AVAILABLE)
-  price        Float         @default(0.0)
+  pricingId    String?       @db.ObjectId // Foreign key to Pricing entity
   softDeleted  Boolean       @default(false)
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
   station      Station       @relation(fields: [stationId], references: [id])
+  pricing      Pricing?      @relation(fields: [pricingId], references: [id])
   bookings     Booking[]
   images       VehicleImage[]
   inspections  VehicleInspection[]
@@ -201,6 +202,13 @@ model Booking {
   returnOdometer       Float? // Added return odometer
   notes                String? // Added notes
   status               BookingStatus      @default(PENDING)
+  basePrice            Float              @default(0.0) // Base rental price
+  insuranceAmount      Float              @default(0.0) // Insurance charges
+  taxAmount            Float              @default(0.0) // Tax charges
+  discountAmount       Float              @default(0.0) // Total discount applied
+  totalAmount          Float              @default(0.0) // Total amount to be paid
+  depositAmount        Float              @default(0.0) // Security deposit amount
+  depositStatus        PaymentStatus?     // Status of security deposit
   createdAt            DateTime           @default(now())
   updatedAt            DateTime           @updatedAt
   user                 User               @relation(fields: [userId], references: [id])
@@ -230,6 +238,9 @@ model Payment {
   paymentDate     DateTime?
   refundAmount    Float? // Added refund amount
   refundDate      DateTime? // Added refund date
+  isDeposit       Boolean       @default(false) // Indicates if this is a security deposit
+  depositStatus   PaymentStatus? // Status of deposit (PENDING, AUTHORIZED, CAPTURED, REFUNDED)
+  depositRefundDate DateTime?   // When deposit was refunded
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
   user            User          @relation(fields: [userId], references: [id])
@@ -273,11 +284,30 @@ model PromotionBooking {
   id          String    @id @default(auto()) @map("_id") @db.ObjectId
   promotionId String    @db.ObjectId
   bookingId   String    @db.ObjectId
+  discountAmount Float  @default(0.0) // Actual discount amount applied
   promotion   Promotion @relation(fields: [promotionId], references: [id])
   booking     Booking   @relation(fields: [bookingId], references: [id])
 
   @@index([promotionId])
   @@index([bookingId])
+}
+
+model Pricing { 
+  id           String     @id @default(auto()) @map("_id") @db.ObjectId
+  name         String     // Pricing plan name (e.g., "Standard", "Premium")
+  baseRate     Float      // Base daily rate
+  hourlyRate   Float      @default(0.0) // Hourly rate for short rentals
+  weeklyRate   Float      @default(0.0) // Weekly rate for discounts
+  monthlyRate  Float      @default(0.0) // Monthly rate for long-term rentals
+  depositAmount Float     @default(0.0) // Security deposit amount
+  insuranceRate Float     @default(0.0) // Daily insurance rate
+  description  String?    // Description of the pricing plan
+  isActive     Boolean    @default(true) // Whether this pricing plan is active
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  vehicles     Vehicle[]  // Vehicles using this pricing plan
+
+  @@index([isActive])
 }
 
 // Model trung gian cho quan hệ staff-station (many-to-many)
