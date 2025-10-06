@@ -1,8 +1,8 @@
 import { Router } from 'express';
 import {
+  sendForgetPasswordEmail,
   sendVerifyEmail,
   verifyEmailToken,
-  sendForgetPasswordEmail,
   verifyForgetPasswordToken,
 } from '../../controllers/verifyEmailToken.js';
 import { authenticate } from '../../middleware/authenticate.js';

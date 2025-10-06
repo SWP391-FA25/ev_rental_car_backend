@@ -114,7 +114,7 @@ const getEmailConfig = (purpose) => {
       message:
         'To complete your registration and start experiencing our electric vehicle rental service, please verify your email address by clicking the button below.',
       buttonText: 'Verify Email Now',
-      actionUrl: (token) => `http://localhost:5173/users?verify=${token}`,
+      actionUrl: (token) => `http://localhost:5173/verify-email?token=${token}`,
       warningIcon: '🔒',
       warningTitle: 'Security Notice:',
       warningMessage:
