@@ -1,13 +1,9 @@
-import express from 'express';
+import { Router } from 'express';
 import TestController from '../../controllers/test.controller.js';
 
-const router = express.Router();
+const router = Router();
 
-// Test routes for ImageKit integration
-router.get('/imagekit/connection', TestController.testImageKitConnection);
-router.get(
-  '/imagekit/transformations',
-  TestController.testImageTransformations
-);
+router.get('/imagekit', TestController.testImageKitConnection);
+router.get('/transform', TestController.testImageTransformations);
 
 export default router;
