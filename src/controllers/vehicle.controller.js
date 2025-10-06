@@ -7,7 +7,7 @@ const storage = multer.memoryStorage();
 const upload = multer({
   storage: storage,
   limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB limit
+    fileSize: 5 * 1024 * 1024, // 5MB limit per file
   },
   fileFilter: (req, file, cb) => {
     if (file.mimetype.startsWith('image/')) {
@@ -18,7 +18,8 @@ const upload = multer({
   },
 });
 
-const uploadMiddleware = upload.single('image');
+// Updated to handle multiple files
+const uploadMiddleware = upload.array('images', 10); // Allow up to 10 images
 
 // Get all vehicles
 const getVehicles = async (req, res, next) => {
@@ -337,7 +338,7 @@ const deleteVehicle = async (req, res, next) => {
   }
 };
 
-// Upload vehicle image
+// Upload vehicle image - Modified to handle multiple images
 const uploadVehicleImage = async (req, res, next) => {
   try {
     // Handle file upload with multer
@@ -346,7 +347,13 @@ const uploadVehicleImage = async (req, res, next) => {
         if (err.code === 'LIMIT_FILE_SIZE') {
           return res.status(400).json({
             success: false,
-            message: 'File size too large. Maximum 5MB allowed.',
+            message: 'File size too large. Maximum 5MB allowed per file.',
+          });
+        }
+        if (err.code === 'LIMIT_UNEXPECTED_FILE') {
+          return res.status(400).json({
+            success: false,
+            message: 'Too many files. Maximum 10 images allowed.',
           });
         }
         return res.status(400).json({
@@ -360,11 +367,11 @@ const uploadVehicleImage = async (req, res, next) => {
         });
       }
 
-      // Check if file was uploaded
-      if (!req.file) {
+      // Check if files were uploaded
+      if (!req.files || req.files.length === 0) {
         return res.status(400).json({
           success: false,
-          message: 'No image file provided',
+          message: 'No image files provided',
         });
       }
 
@@ -382,39 +389,54 @@ const uploadVehicleImage = async (req, res, next) => {
         });
       }
 
-      // Upload to ImageKit
-      const fileName = `${vehicleId}_${Date.now()}_${req.file.originalname}`;
-      const uploadResult = await ImageKitService.uploadVehicleImage(
-        req.file.buffer,
-        fileName,
-        vehicleId
-      );
+      // Process all uploaded files
+      const uploadResults = [];
 
-      if (!uploadResult.success) {
+      for (const file of req.files) {
+        try {
+          const fileName = `${vehicleId}_${Date.now()}_${file.originalname}`;
+          const uploadResult = await ImageKitService.uploadVehicleImage(
+            file.buffer,
+            fileName,
+            vehicleId
+          );
+
+          if (uploadResult.success) {
+            // Save image reference to database
+            const vehicleImage = await prisma.vehicleImage.create({
+              data: {
+                vehicleId: vehicleId,
+                imageKitFileId: uploadResult.data.fileId,
+                url: uploadResult.data.url,
+                thumbnailUrl: uploadResult.data.thumbnailUrl,
+                fileName: uploadResult.data.name,
+                size: uploadResult.data.size,
+                fileType: uploadResult.data.fileType,
+              },
+            });
+            uploadResults.push(vehicleImage);
+          } else {
+            console.error(
+              'Failed to upload image to ImageKit:',
+              uploadResult.error
+            );
+          }
+        } catch (fileError) {
+          console.error('Error processing file:', fileError);
+        }
+      }
+
+      if (uploadResults.length === 0) {
         return res.status(500).json({
           success: false,
-          message: 'Failed to upload image to ImageKit',
-          error: uploadResult.error,
+          message: 'Failed to upload any images to ImageKit',
         });
       }
 
-      // Save image reference to database
-      const vehicleImage = await prisma.vehicleImage.create({
-        data: {
-          vehicleId: vehicleId,
-          imageKitFileId: uploadResult.data.fileId,
-          url: uploadResult.data.url,
-          thumbnailUrl: uploadResult.data.thumbnailUrl,
-          fileName: uploadResult.data.name,
-          size: uploadResult.data.size,
-          fileType: uploadResult.data.fileType,
-        },
-      });
-
       return res.status(201).json({
         success: true,
-        message: 'Vehicle image uploaded successfully',
-        data: { image: vehicleImage },
+        message: `Successfully uploaded ${uploadResults.length} image(s)`,
+        data: { images: uploadResults },
       });
     });
   } catch (error) {
