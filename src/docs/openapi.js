@@ -2407,6 +2407,175 @@ export const openapiSpec = {
         },
       },
     },
+    // PayOS endpoints
+    '/api/payos/create': {
+      post: {
+        summary: 'Create PayOS payment link',
+        tags: ['PayOS'],
+        security: [{ cookieAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['bookingId', 'amount'],
+                properties: {
+                  bookingId: {
+                    type: 'string',
+                    description: 'ID of the booking to pay for',
+                  },
+                  amount: { 
+                    type: 'number', 
+                    description: 'Payment amount in VND' 
+                  },
+                  description: {
+                    type: 'string',
+                    description: 'Payment description (optional)'
+                  }
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          201: {
+            description: 'Payment link created successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        paymentId: { type: 'string' },
+                        orderCode: { type: 'number' },
+                        paymentUrl: { type: 'string' },
+                        message: { type: 'string' }
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          400: { description: 'Bad request - missing required fields' },
+          401: { description: 'Unauthorized' },
+          403: { description: 'Forbidden - access to booking denied' },
+          404: { description: 'Booking not found' },
+        },
+      },
+    },
+    '/api/payos/status/{paymentId}': {
+      get: {
+        summary: 'Get PayOS payment status',
+        tags: ['PayOS'],
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          {
+            name: 'paymentId',
+            in: 'path',
+            required: true,
+            schema: {
+              type: 'string',
+            },
+            description: 'ID of the payment',
+          },
+        ],
+        responses: {
+          200: {
+            description: 'Payment status retrieved successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        paymentId: { type: 'string' },
+                        status: { type: 'string' },
+                        amount: { type: 'number' },
+                        paymentMethod: { type: 'string' },
+                        transactionId: { type: 'string' },
+                        paymentDate: {
+                          type: 'string',
+                          format: 'date-time',
+                        }
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          401: { description: 'Unauthorized' },
+          403: { description: 'Forbidden - access to payment denied' },
+          404: { description: 'Payment not found' },
+        },
+      },
+    },
+    '/api/payos/webhook': {
+      post: {
+        summary: 'Handle PayOS webhook callback',
+        tags: ['PayOS'],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  code: { type: 'string' },
+                  desc: { type: 'string' },
+                  success: { type: 'boolean' },
+                  data: {
+                    type: 'object',
+                    properties: {
+                      orderCode: { type: 'number' },
+                      amount: { type: 'number' },
+                      description: { type: 'string' },
+                      accountNumber: { type: 'string' },
+                      reference: { type: 'string' },
+                      transactionDateTime: { type: 'string' },
+                      currency: { type: 'string' },
+                      paymentLinkId: { type: 'string' },
+                      counterAccountBankId: { type: 'string' },
+                      counterAccountBankName: { type: 'string' },
+                      counterAccountName: { type: 'string' },
+                      counterAccountNumber: { type: 'string' },
+                      virtualAccountName: { type: 'string' },
+                      virtualAccountNumber: { type: 'string' },
+                    }
+                  },
+                  signature: { type: 'string' }
+                }
+              }
+            }
+          }
+        },
+        responses: {
+          200: {
+            description: 'Webhook processed successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean' },
+                    message: { type: 'string' }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
     // Payment endpoints
     '/api/payments': {
       post: {

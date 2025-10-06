@@ -93,6 +93,7 @@ enum PaymentMethod {
   BANK_TRANSFER
   DIGITAL_WALLET
   CASH
+  PAYOS
 }
 
 enum VerifyStatus {

@@ -2,7 +2,6 @@ import renterRouter from './modules/renter.route.js';
 import { Router } from 'express';
 import authRouter from './modules/auth.route.js';
 import bookingRouter from './modules/booking.route.js';
-import paymentRouter from './modules/payment.route.js';
 import documentRouter from './modules/document.route.js';
 import testRouter from './modules/test.route.js';
 import staffRouter from './modules/staff.route.js';
@@ -13,12 +12,12 @@ import promotionRouter from './modules/promotion.route.js';
 import rentalHistoryRouter from './modules/rental.history.route.js';
 import emailRouter from './modules/email.route.js';
 import notificationRouter from './modules/notification.route.js';
+import payosRouter from './modules/payos.route.js';
 
 const router = Router();
 
 router.use('/auth', authRouter);
 router.use('/bookings', bookingRouter);
-router.use('/payments', paymentRouter);
 router.use('/documents', documentRouter);
 router.use('/test', testRouter);
 router.use('/staffs', staffRouter);
@@ -30,5 +29,6 @@ router.use('/promotions', promotionRouter);
 router.use('/rental-histories', rentalHistoryRouter);
 router.use('/emails', emailRouter);
 router.use('/notifications', notificationRouter);
+router.use('/payos', payosRouter);
 
 export default router;
