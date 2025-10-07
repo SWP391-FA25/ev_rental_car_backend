@@ -46,7 +46,18 @@ export const getBookings = async (req, res, next) => {
         take: parseInt(limit),
         include: {
           user: { select: { id: true, name: true, email: true } },
-          vehicle: { select: { id: true, model: true, licensePlate: true } },
+          vehicle: {
+            select: {
+              id: true,
+              model: true,
+              brand: true,
+              type: true,
+              licensePlate: true
+            },
+            include: {
+              pricing: true
+            }
+          },
           station: { select: { id: true, name: true, address: true } },
           payments: true,
         },
@@ -86,10 +97,18 @@ export const getBookingById = async (req, res, next) => {
           select: {
             id: true,
             model: true,
+            brand: true,
+            type: true,
+            year: true,
+            color: true,
+            seats: true,
             licensePlate: true,
             batteryLevel: true,
             status: true,
           },
+          include: {
+            pricing: true
+          }
         },
         station: { select: { id: true, name: true, address: true } },
         payments: true,
@@ -149,7 +168,18 @@ export const getUserBookings = async (req, res, next) => {
         skip: parseInt(skip),
         take: parseInt(limit),
         include: {
-          vehicle: { select: { id: true, model: true, licensePlate: true } },
+          vehicle: {
+            select: {
+              id: true,
+              model: true,
+              brand: true,
+              type: true,
+              licensePlate: true
+            },
+            include: {
+              pricing: true
+            }
+          },
           station: { select: { id: true, name: true, address: true } },
           payments: { select: { id: true, amount: true, status: true } },
         },
@@ -235,7 +265,7 @@ export const updateBookingStatus = async (req, res, next) => {
 
     const booking = await prisma.booking.findUnique({
       where: { id },
-      select: { id: true, status: true, userId: true },
+      select: { id: true, status: true, userId: true, vehicleId: true },
     });
 
     if (!booking) {
@@ -245,23 +275,60 @@ export const updateBookingStatus = async (req, res, next) => {
       });
     }
 
+    // Determine vehicle status based on booking status
+    let vehicleStatus;
+    switch (status) {
+      case 'CONFIRMED':
+        vehicleStatus = 'RESERVED';
+        break;
+      case 'IN_PROGRESS':
+        vehicleStatus = 'RENTED';
+        break;
+      case 'COMPLETED':
+      case 'CANCELLED':
+        vehicleStatus = 'AVAILABLE';
+        break;
+      default:
+        vehicleStatus = null; // Don't update vehicle status for other statuses
+    }
+
     const updateData = { status, updatedAt: new Date() };
     if (notes) updateData.notes = notes;
 
-    const updatedBooking = await prisma.booking.update({
-      where: { id },
-      data: updateData,
-      include: {
-        user: { select: { id: true, name: true, email: true } },
-        vehicle: { select: { id: true, model: true, licensePlate: true } },
-        station: { select: { id: true, name: true, address: true } },
-      },
+    // Use transaction to update both booking and vehicle status
+    const result = await prisma.$transaction(async (tx) => {
+      // Update booking status
+      const updatedBooking = await tx.booking.update({
+        where: { id },
+        data: updateData,
+        include: {
+          user: { select: { id: true, name: true, email: true } },
+          vehicle: { select: { id: true, model: true, licensePlate: true, status: true } },
+          station: { select: { id: true, name: true, address: true } },
+        },
+      });
+
+      // Update vehicle status if needed
+      if (vehicleStatus) {
+        await tx.vehicle.update({
+          where: { id: booking.vehicleId },
+          data: {
+            status: vehicleStatus,
+            updatedAt: new Date()
+          },
+        });
+      }
+
+      return updatedBooking;
     });
 
     return res.json({
       success: true,
       message: 'Booking status updated successfully',
-      data: { booking: updatedBooking },
+      data: {
+        booking: result,
+        vehicleStatusUpdated: vehicleStatus ? `Vehicle status changed to ${vehicleStatus}` : 'Vehicle status unchanged'
+      },
     });
   } catch (error) {
     return next(error);
@@ -277,7 +344,7 @@ export const cancelBooking = async (req, res, next) => {
 
     const booking = await prisma.booking.findUnique({
       where: { id },
-      select: { id: true, status: true },
+      select: { id: true, status: true, vehicleId: true },
     });
 
     if (!booking) {
@@ -309,14 +376,29 @@ export const cancelBooking = async (req, res, next) => {
 
     if (reason) updateData.notes = reason;
 
-    const updatedBooking = await prisma.booking.update({
-      where: { id },
-      data: updateData,
-      include: {
-        user: { select: { id: true, name: true, email: true } },
-        vehicle: { select: { id: true, model: true, licensePlate: true } },
-        station: { select: { id: true, name: true, address: true } },
-      },
+    // Use transaction to update both booking and vehicle status
+    const updatedBooking = await prisma.$transaction(async (tx) => {
+      // Update booking status
+      const booking = await tx.booking.update({
+        where: { id },
+        data: updateData,
+        include: {
+          user: { select: { id: true, name: true, email: true } },
+          vehicle: { select: { id: true, model: true, licensePlate: true } },
+          station: { select: { id: true, name: true, address: true } },
+        },
+      });
+
+      // Reset vehicle status to AVAILABLE when booking is cancelled
+      await tx.vehicle.update({
+        where: { id: booking.vehicleId },
+        data: {
+          status: 'AVAILABLE',
+          updatedAt: new Date()
+        },
+      });
+
+      return booking;
     });
 
     return res.json({
@@ -463,23 +545,18 @@ export const createBooking = async (req, res, next) => {
       promotions = [],
     } = req.body;
 
-    // Validate that user exists
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { id: true, name: true, email: true },
-    });
-
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: 'User not found',
-      });
-    }
-
-    // Validate that vehicle exists and is available
+    // Check vehicle exists, is available, and has pricing
     const vehicle = await prisma.vehicle.findUnique({
       where: { id: vehicleId },
-      select: { id: true, model: true, licensePlate: true, status: true },
+      select: {
+        id: true,
+        model: true,
+        licensePlate: true,
+        status: true
+      },
+      include: {
+        pricing: true,
+      },
     });
 
     if (!vehicle) {
@@ -496,32 +573,73 @@ export const createBooking = async (req, res, next) => {
       });
     }
 
-    // Validate that station exists
-    const station = await prisma.station.findUnique({
-      where: { id: stationId },
-      select: { id: true, name: true, address: true },
-    });
-
-    if (!station) {
-      return res.status(404).json({
+    if (!vehicle.pricing) {
+      return res.status(400).json({
         success: false,
-        message: 'Station not found',
+        message: 'Vehicle pricing information not found',
       });
     }
 
+    // Calculate booking duration and pricing
+    const startDate = new Date(startTime);
+    const endDate = endTime ? new Date(endTime) : new Date(startDate.getTime() + (24 * 60 * 60 * 1000)); // Default 24 hours if no end time
+
+    // Check for conflicting bookings
+    const conflictingBooking = await prisma.booking.findFirst({
+      where: {
+        vehicleId,
+        OR: [
+          {
+            startTime: { lte: endDate },
+            endTime: { gte: startDate },
+          },
+        ],
+        status: { not: 'CANCELLED' },
+      },
+    });
+
+    if (conflictingBooking) {
+      return res.status(400).json({
+        success: false,
+        message: 'Vehicle is already booked for the requested time',
+      });
+    }
+
+    const durationMs = endDate.getTime() - startDate.getTime();
+    const durationHours = Math.ceil(durationMs / (1000 * 60 * 60));
+
+    // Calculate base pricing using the vehicle's pricing information
+    const hourlyRate = vehicle.pricing.hourlyRate;
+    const basePrice = durationHours * hourlyRate;
+
+    // Calculate deposit amount from pricing
+    const depositAmount = vehicle.pricing.depositAmount || 0;
+
+    // Calculate insurance and tax amounts (percentage-based)
+    const insuranceRate = 0.1; // 10% insurance
+    const taxRate = 0.08; // 8% tax
+    const insuranceAmount = basePrice * insuranceRate;
+    const taxAmount = basePrice * taxRate;
+
     // Use transaction to create booking with promotions
     const result = await prisma.$transaction(async (tx) => {
-      // Create booking
+      // Create booking first
       const newBooking = await tx.booking.create({
         data: {
           userId,
           vehicleId,
           stationId,
-          startTime: new Date(startTime),
-          endTime: endTime ? new Date(endTime) : null,
+          startTime: startDate,
+          endTime: endDate,
           pickupLocation,
           dropoffLocation,
-          status: 'IN_PROGRESS',
+          basePrice,
+          insuranceAmount,
+          taxAmount,
+          depositAmount, // Add deposit amount
+          discountAmount: 0, // Will be updated after promotions
+          totalAmount: 0, // Will be updated after promotions
+          status: 'PENDING',
         },
         include: {
           user: { select: { id: true, name: true, email: true } },
@@ -530,7 +648,7 @@ export const createBooking = async (req, res, next) => {
         },
       });
 
-      // Create promotion bookings if promotions are provided
+      // Process promotions if any
       const appliedPromotions = [];
       if (promotions && promotions.length > 0) {
         for (const element of promotions) {
@@ -546,10 +664,14 @@ export const createBooking = async (req, res, next) => {
               promotion.validFrom <= currentDate &&
               promotion.validUntil >= currentDate
             ) {
+              // Calculate discount amount for this specific promotion
+              const promotionDiscountAmount = basePrice * promotion.discount;
+
               const promotionBooking = await tx.promotionBooking.create({
                 data: {
                   bookingId: newBooking.id,
                   promotionId: promotion.id,
+                  discountAmount: promotionDiscountAmount, // Store actual discount amount
                 },
                 include: {
                   promotion: {
@@ -557,23 +679,76 @@ export const createBooking = async (req, res, next) => {
                   },
                 },
               });
-              appliedPromotions.push(promotionBooking.promotion);
+              appliedPromotions.push({
+                ...promotionBooking.promotion,
+                appliedDiscountAmount: promotionDiscountAmount,
+              });
             }
           }
         }
       }
 
-      return { booking: newBooking, appliedPromotions };
+      // Calculate total discount amount
+      let totalDiscountAmount = 0;
+
+      for (const promotion of appliedPromotions) {
+        // Use the calculated discount amount for each promotion
+        totalDiscountAmount += promotion.appliedDiscountAmount;
+      }
+
+      // Ensure discount doesn't exceed the total cost
+      const subtotal = basePrice + insuranceAmount + taxAmount;
+      totalDiscountAmount = Math.min(totalDiscountAmount, subtotal);
+
+      // Calculate final total amount (rental amount, not including deposit)
+      const finalTotalAmount = subtotal - totalDiscountAmount;
+
+      // Update booking with final amounts
+      const updatedBooking = await tx.booking.update({
+        where: { id: newBooking.id },
+        data: {
+          discountAmount: totalDiscountAmount,
+          totalAmount: finalTotalAmount,
+        },
+        include: {
+          user: { select: { id: true, name: true, email: true } },
+          vehicle: { select: { id: true, model: true, licensePlate: true } },
+          station: { select: { id: true, name: true, address: true } },
+        },
+      });
+
+      // Don't update vehicle status to RENTED yet - keep it AVAILABLE until booking is confirmed
+
+      return {
+        booking: updatedBooking,
+        appliedPromotions,
+        pricingBreakdown: {
+          basePrice,
+          insuranceAmount,
+          taxAmount,
+          discountAmount: totalDiscountAmount,
+          subtotal,
+          totalAmount: finalTotalAmount, // This is rental amount (excluding deposit)
+          depositAmount, // Separate deposit amount
+          totalPayable: finalTotalAmount + depositAmount, // Total including deposit
+          duration: `${durationHours} hours`,
+        },
+      };
+
     });
 
     return res.status(201).json({
       success: true,
       message: 'Booking created successfully',
       data: {
-        booking: {
-          ...result.booking,
-          appliedPromotions: result.appliedPromotions,
-        },
+        booking: result.booking,
+        appliedPromotions: result.appliedPromotions.map(promo => ({
+          id: promo.id,
+          code: promo.code,
+          discount: promo.discount,
+          appliedDiscountAmount: promo.appliedDiscountAmount,
+        })),
+        pricingBreakdown: result.pricingBreakdown,
       },
     });
   } catch (error) {
@@ -591,7 +766,8 @@ export const completeBooking = async (req, res, next) => {
       returnOdometer,
       notes,
       damageReport,
-      fuelLevel,
+      batteryLevel, // Changed from fuelLevel to batteryLevel for EVs
+      rating, // Add rating for rental history
     } = req.body;
 
     // Find the booking
@@ -661,14 +837,31 @@ export const completeBooking = async (req, res, next) => {
       }
     }
 
+    // Validate rating if provided
+    if (rating !== undefined && (rating < 1 || rating > 5)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Rating must be between 1 and 5',
+      });
+    }
+
+    // Validate battery level if provided
+    if (batteryLevel !== undefined && (batteryLevel < 0 || batteryLevel > 100)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Battery level must be between 0 and 100',
+      });
+    }
+
     // Calculate rental duration
     const durationMs = actualEndDate.getTime() - actualStartDate.getTime();
     const durationHours = Math.ceil(durationMs / (1000 * 60 * 60));
 
-    // Prepare update data
+    // Prepare update data (pricing was already calculated during booking creation)
     const updateData = {
       status: 'COMPLETED',
       actualEndTime: actualEndDate,
+      depositStatus: 'REFUNDED', // Mark deposit as refunded when rental completes successfully
       updatedAt: new Date(),
     };
 
@@ -699,12 +892,12 @@ export const completeBooking = async (req, res, next) => {
         },
       }),
 
-      // Update vehicle status and odometer
+      // Update vehicle status and battery level
       prisma.vehicle.update({
         where: { id: booking.vehicleId },
         data: {
           status: 'AVAILABLE',
-          batteryLevel: fuelLevel !== undefined ? fuelLevel : Prisma.skip,
+          batteryLevel: batteryLevel !== undefined ? batteryLevel : Prisma.skip,
           updatedAt: new Date(),
         },
       }),
@@ -718,7 +911,8 @@ export const completeBooking = async (req, res, next) => {
             returnOdometer && booking.pickupOdometer
               ? returnOdometer - booking.pickupOdometer
               : 0.0,
-          feedback: damageReport || '',
+          rating: rating || null, // Add customer rating
+          feedback: damageReport || notes || '', // Combine damage report and notes
         },
       }),
     ]);
@@ -736,6 +930,15 @@ export const completeBooking = async (req, res, next) => {
               : 'Not recorded',
           startTime: actualStartDate.toISOString(),
           endTime: actualEndDate.toISOString(),
+          pricing: {
+            basePrice: updatedBooking.basePrice,
+            insuranceAmount: updatedBooking.insuranceAmount,
+            taxAmount: updatedBooking.taxAmount,
+            discountAmount: updatedBooking.discountAmount,
+            totalAmount: updatedBooking.totalAmount,
+            depositAmount: updatedBooking.depositAmount,
+            depositStatus: updatedBooking.depositStatus,
+          },
         },
       },
     });
@@ -743,3 +946,4 @@ export const completeBooking = async (req, res, next) => {
     return next(error);
   }
 };
+
