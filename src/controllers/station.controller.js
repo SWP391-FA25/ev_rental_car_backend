@@ -514,6 +514,220 @@ const getNearbyStations = async (req, res, next) => {
   }
 };
 
+const getVehiclesAtStationDuringPeriod = async (req, res, next) => {
+  try {
+    const { stationId, startTime, endTime } = req.body;
+    const requestStartTime = new Date(startTime);
+    const requestEndTime = new Date(endTime);
+
+    // Validate period
+    if (requestStartTime >= requestEndTime) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid period: startTime must be before endTime',
+      });
+    }
+
+    // Verify station exists and is not soft-deleted
+    const station = await prisma.station.findUnique({
+      where: {
+        id: stationId,
+        softDeleted: false,
+      },
+      select: {
+        id: true,
+        name: true,
+        address: true,
+      },
+    });
+
+    if (!station) {
+      return res.status(404).json({
+        success: false,
+        message: 'Station not found',
+      });
+    }
+
+    // Fetch vehicles with their bookings in a single query for better performance
+    const allVehiclesAtStation = await prisma.vehicle.findMany({
+      where: {
+        stationId: stationId,
+        softDeleted: false,
+        status: { in: ['AVAILABLE', 'RENTED'] },
+      },
+      include: {
+        images: true,
+        station: {
+          select: {
+            id: true,
+            name: true,
+            address: true,
+          },
+        },
+        // This fetches only bookings that conflict with the requested period
+        bookings: {
+          where: {
+            status: { in: ['PENDING', 'CONFIRMED', 'IN_PROGRESS'] },
+            endTime: { gt: requestStartTime },
+            startTime: { lt: requestEndTime },
+          },
+          select: {
+            vehicleId: true,
+            startTime: true,
+            endTime: true,
+            status: true,
+          },
+          orderBy: {
+            startTime: 'asc',
+          },
+        },
+      },
+    });
+
+    // If no vehicles found, return empty response
+    if (allVehiclesAtStation.length === 0) {
+      return res.json({
+        success: true,
+        message: 'No vehicles found at this station',
+        data: {
+          station: {
+            id: station.id,
+            name: station.name,
+            address: station.address,
+          },
+          availableVehicles: [],
+          period: { startTime: requestStartTime, endTime: requestEndTime },
+          summary: {
+            totalAtStation: 0,
+            availableDuringPeriod: 0,
+            unavailableDuringPeriod: 0,
+          },
+        },
+      });
+    }
+
+    // Analyze vehicle availability
+    const vehicleAvailability = allVehiclesAtStation.map((vehicle) => {
+      const vehicleBookings = vehicle.bookings || [];
+      // Initialize availability state
+      let isAvailableDuringPeriod = true;
+      let availableFrom = requestStartTime;
+      let nextAvailableTime = null;
+      let currentBooking = null;
+      let latestBlockingEnd = null;
+      let blockingBooking = null;
+
+      // Check bookings for conflicts (robust to multiple overlaps)
+      for (const booking of vehicleBookings) {
+        const bookingStart = new Date(booking.startTime);
+        const bookingEnd = new Date(booking.endTime);
+
+        // Validate booking data
+        if (bookingEnd <= bookingStart) {
+          console.error(`Invalid booking data for vehicle ${vehicle.id}: endTime <= startTime`);
+          continue;
+        }
+
+        // Check if booking overlaps with requested period
+        if (bookingStart < requestEndTime && bookingEnd > requestStartTime) {
+          isAvailableDuringPeriod = false;
+          // Track the latest end time and associated booking
+          if (!latestBlockingEnd || bookingEnd > latestBlockingEnd) {
+            latestBlockingEnd = bookingEnd;
+            blockingBooking = {
+              startTime: booking.startTime,
+              endTime: booking.endTime,
+              status: booking.status,
+            };
+          }
+        }
+      }
+
+      if (!isAvailableDuringPeriod) {
+        nextAvailableTime = latestBlockingEnd;
+        currentBooking = blockingBooking;
+      }
+
+      return {
+        ...vehicle,
+        availability: {
+          isAvailableDuringPeriod,
+          availableFrom: isAvailableDuringPeriod ? availableFrom : null,
+          availableUntil: requestEndTime,
+          nextAvailableTime: isAvailableDuringPeriod ? null : nextAvailableTime,
+          currentStatus: vehicle.status,
+          currentBooking,
+        },
+      };
+    });
+
+    // Separate available and unavailable vehicles
+    const availableVehicles = vehicleAvailability.filter(
+      (vehicle) => vehicle.availability.isAvailableDuringPeriod
+    );
+    const unavailableVehicles = vehicleAvailability.filter(
+      (vehicle) => !vehicle.availability.isAvailableDuringPeriod
+    );
+
+    const formatAvailableVehicle = (vehicle) => ({
+      id: vehicle.id,
+      type: vehicle.type,
+      brand: vehicle.brand,
+      model: vehicle.model,
+      year: vehicle.year,
+      color: vehicle.color,
+      seats: vehicle.seats,
+      licensePlate: vehicle.licensePlate,
+      batteryLevel: vehicle.batteryLevel,
+      fuelType: vehicle.fuelType,
+      currentStatus: vehicle.availability.currentStatus,
+      availableFrom: vehicle.availability.availableFrom,
+      images: vehicle.images,
+      pricing: vehicle.pricing,
+    });
+
+    const formatUnavailableVehicle = (vehicle) => ({
+      id: vehicle.id,
+      type: vehicle.type,
+      brand: vehicle.brand,
+      model: vehicle.model,
+      licensePlate: vehicle.licensePlate,
+      currentStatus: vehicle.availability.currentStatus,
+      nextAvailableTime: vehicle.availability.nextAvailableTime,
+      currentBooking: vehicle.availability.currentBooking,
+    });
+
+    return res.json({
+      success: true,
+      message: `Found ${availableVehicles.length} vehicles available during the specified period`,
+      data: {
+        station: {
+          id: station.id,
+          name: station.name,
+          address: station.address,
+        },
+        period: {
+          startTime: requestStartTime,
+          endTime: requestEndTime,
+        },
+        summary: {
+          totalAtStation: allVehiclesAtStation.length,
+          availableDuringPeriod: availableVehicles.length,
+          unavailableDuringPeriod: unavailableVehicles.length,
+        },
+        availableVehicles: availableVehicles.map(formatAvailableVehicle),
+        unavailableVehicles: unavailableVehicles.map(formatUnavailableVehicle),
+      },
+    });
+  } catch (error) {
+    console.error(
+      `Error fetching vehicles for station ${req.body.stationId} from ${req.body.startTime} to ${req.body.endTime}:`,
+      error
+    );
+    return next(error);
+  }
+};
+
 export {
   createStation,
   deleteStation,
@@ -523,6 +737,7 @@ export {
   getStations,
   getUnavailableStations,
   getVehiclesAtStation,
+  getVehiclesAtStationDuringPeriod,
   softDeleteStation,
   updateStation,
 };
