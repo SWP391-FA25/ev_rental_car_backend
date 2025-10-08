@@ -47,16 +47,9 @@ export const getBookings = async (req, res, next) => {
         include: {
           user: { select: { id: true, name: true, email: true } },
           vehicle: {
-            select: {
-              id: true,
-              model: true,
-              brand: true,
-              type: true,
-              licensePlate: true
-            },
             include: {
-              pricing: true
-            }
+              pricing: true,
+            },
           },
           station: { select: { id: true, name: true, address: true } },
           payments: true,
@@ -94,21 +87,9 @@ export const getBookingById = async (req, res, next) => {
       include: {
         user: { select: { id: true, name: true, email: true, phone: true } },
         vehicle: {
-          select: {
-            id: true,
-            model: true,
-            brand: true,
-            type: true,
-            year: true,
-            color: true,
-            seats: true,
-            licensePlate: true,
-            batteryLevel: true,
-            status: true,
-          },
           include: {
-            pricing: true
-          }
+            pricing: true,
+          },
         },
         station: { select: { id: true, name: true, address: true } },
         payments: true,
@@ -169,16 +150,10 @@ export const getUserBookings = async (req, res, next) => {
         take: parseInt(limit),
         include: {
           vehicle: {
-            select: {
-              id: true,
-              model: true,
-              brand: true,
-              type: true,
-              licensePlate: true
-            },
             include: {
-              pricing: true
-            }
+              pricing: true,
+              images: true,
+            },
           },
           station: { select: { id: true, name: true, address: true } },
           payments: { select: { id: true, amount: true, status: true } },
@@ -303,7 +278,9 @@ export const updateBookingStatus = async (req, res, next) => {
         data: updateData,
         include: {
           user: { select: { id: true, name: true, email: true } },
-          vehicle: { select: { id: true, model: true, licensePlate: true, status: true } },
+          vehicle: {
+            select: { id: true, model: true, licensePlate: true, status: true },
+          },
           station: { select: { id: true, name: true, address: true } },
         },
       });
@@ -314,7 +291,7 @@ export const updateBookingStatus = async (req, res, next) => {
           where: { id: booking.vehicleId },
           data: {
             status: vehicleStatus,
-            updatedAt: new Date()
+            updatedAt: new Date(),
           },
         });
       }
@@ -327,7 +304,9 @@ export const updateBookingStatus = async (req, res, next) => {
       message: 'Booking status updated successfully',
       data: {
         booking: result,
-        vehicleStatusUpdated: vehicleStatus ? `Vehicle status changed to ${vehicleStatus}` : 'Vehicle status unchanged'
+        vehicleStatusUpdated: vehicleStatus
+          ? `Vehicle status changed to ${vehicleStatus}`
+          : 'Vehicle status unchanged',
       },
     });
   } catch (error) {
@@ -394,7 +373,7 @@ export const cancelBooking = async (req, res, next) => {
         where: { id: booking.vehicleId },
         data: {
           status: 'AVAILABLE',
-          updatedAt: new Date()
+          updatedAt: new Date(),
         },
       });
 
@@ -548,12 +527,6 @@ export const createBooking = async (req, res, next) => {
     // Check vehicle exists, is available, and has pricing
     const vehicle = await prisma.vehicle.findUnique({
       where: { id: vehicleId },
-      select: {
-        id: true,
-        model: true,
-        licensePlate: true,
-        status: true
-      },
       include: {
         pricing: true,
       },
@@ -582,7 +555,9 @@ export const createBooking = async (req, res, next) => {
 
     // Calculate booking duration and pricing
     const startDate = new Date(startTime);
-    const endDate = endTime ? new Date(endTime) : new Date(startDate.getTime() + (24 * 60 * 60 * 1000)); // Default 24 hours if no end time
+    const endDate = endTime
+      ? new Date(endTime)
+      : new Date(startDate.getTime() + 24 * 60 * 60 * 1000); // Default 24 hours if no end time
 
     // Check for conflicting bookings
     const conflictingBooking = await prisma.booking.findFirst({
@@ -734,7 +709,6 @@ export const createBooking = async (req, res, next) => {
           duration: `${durationHours} hours`,
         },
       };
-
     });
 
     return res.status(201).json({
@@ -742,7 +716,7 @@ export const createBooking = async (req, res, next) => {
       message: 'Booking created successfully',
       data: {
         booking: result.booking,
-        appliedPromotions: result.appliedPromotions.map(promo => ({
+        appliedPromotions: result.appliedPromotions.map((promo) => ({
           id: promo.id,
           code: promo.code,
           discount: promo.discount,
@@ -846,7 +820,10 @@ export const completeBooking = async (req, res, next) => {
     }
 
     // Validate battery level if provided
-    if (batteryLevel !== undefined && (batteryLevel < 0 || batteryLevel > 100)) {
+    if (
+      batteryLevel !== undefined &&
+      (batteryLevel < 0 || batteryLevel > 100)
+    ) {
       return res.status(400).json({
         success: false,
         message: 'Battery level must be between 0 and 100',
@@ -946,4 +923,3 @@ export const completeBooking = async (req, res, next) => {
     return next(error);
   }
 };
-

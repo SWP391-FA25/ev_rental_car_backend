@@ -68,7 +68,7 @@ export async function createPayOSPayment(req, res, next) {
     const paymentDescription =
       description && description.length <= 25
         ? description
-        : `Payment for booking ${bookingId.substring(0, 10)}`;
+        : `Deposit ${bookingId.substring(0, 8)}`;
 
     // Create payment link with PayOS
     const paymentLink = await payos.paymentRequests.create({

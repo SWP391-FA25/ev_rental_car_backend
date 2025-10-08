@@ -17,7 +17,7 @@ import { authorize } from '../../middleware/authorize.js';
 const router = Router();
 
 // Lấy tất cả station (active)
-router.get('/', authenticate, authorize('ADMIN', 'STAFF'), getStations);
+router.get('/', getStations);
 // Lấy stations gần vị trí user (public endpoint)
 router.get('/nearby', getNearbyStations);
 // Lấy station theo id

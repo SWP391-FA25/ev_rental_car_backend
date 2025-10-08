@@ -295,7 +295,7 @@ export const createBookingValidator = checkSchema({
   },
   pickupLocation: {
     in: ['body'],
-    notEmpty: true,
+    optional: true,
     isString: true,
     trim: true,
     isLength: { options: { min: 3, max: 200 } },

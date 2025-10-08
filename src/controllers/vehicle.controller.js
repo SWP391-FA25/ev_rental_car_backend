@@ -31,6 +31,7 @@ const getVehicles = async (req, res, next) => {
       include: {
         station: true,
         images: true, // Include vehicle images
+        pricing: true, // Include pricing information
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -56,6 +57,7 @@ const getVehicleById = async (req, res, next) => {
       include: {
         station: true,
         images: true, // Include vehicle images
+        pricing: true, // Include pricing information
       },
     });
 
@@ -86,6 +88,13 @@ const createVehicle = async (req, res, next) => {
       batteryLevel,
       fuelType,
       status,
+      // Pricing fields
+      baseRate,
+      hourlyRate,
+      weeklyRate,
+      monthlyRate,
+      depositAmount,
+      insuranceRate,
     } = req.body;
 
     // Validate required fields
@@ -94,6 +103,15 @@ const createVehicle = async (req, res, next) => {
         success: false,
         message:
           'Missing required fields: stationId, type, brand, model, year, fuelType',
+      });
+    }
+
+    // Validate pricing fields
+    if (!baseRate || !hourlyRate || !depositAmount) {
+      return res.status(400).json({
+        success: false,
+        message:
+          'Missing required pricing fields: baseRate, hourlyRate, depositAmount',
       });
     }
 
@@ -109,6 +127,21 @@ const createVehicle = async (req, res, next) => {
       });
     }
 
+    // Create pricing for the vehicle
+    const pricing = await prisma.pricing.create({
+      data: {
+        name: `${brand} ${model} Pricing`,
+        baseRate: parseFloat(baseRate),
+        hourlyRate: parseFloat(hourlyRate),
+        weeklyRate: weeklyRate ? parseFloat(weeklyRate) : 0.0,
+        monthlyRate: monthlyRate ? parseFloat(monthlyRate) : 0.0,
+        depositAmount: parseFloat(depositAmount),
+        insuranceRate: insuranceRate ? parseFloat(insuranceRate) : 0.1, // Default 10% if not provided
+        description: `Pricing for ${brand} ${model}`,
+        isActive: true,
+      },
+    });
+
     // Create vehicle
     const vehicle = await prisma.vehicle.create({
       data: {
@@ -123,9 +156,11 @@ const createVehicle = async (req, res, next) => {
         batteryLevel: parseFloat(batteryLevel) || 0.0,
         fuelType,
         status: status || 'AVAILABLE',
+        pricingId: pricing.id, // Link to pricing
       },
       include: {
         station: true,
+        pricing: true,
       },
     });
 
@@ -155,6 +190,13 @@ const updateVehicle = async (req, res, next) => {
       batteryLevel,
       fuelType,
       status,
+      // Pricing fields
+      baseRate,
+      hourlyRate,
+      weeklyRate,
+      monthlyRate,
+      depositAmount,
+      insuranceRate,
     } = req.body;
 
     // Check if vehicle exists
@@ -183,6 +225,28 @@ const updateVehicle = async (req, res, next) => {
       }
     }
 
+    // Update pricing if provided
+    if (
+      baseRate ||
+      hourlyRate ||
+      weeklyRate ||
+      monthlyRate ||
+      depositAmount ||
+      insuranceRate
+    ) {
+      await prisma.pricing.update({
+        where: { id: existingVehicle.pricingId },
+        data: {
+          baseRate: baseRate ? parseFloat(baseRate) : undefined,
+          hourlyRate: hourlyRate ? parseFloat(hourlyRate) : undefined,
+          weeklyRate: weeklyRate ? parseFloat(weeklyRate) : undefined,
+          monthlyRate: monthlyRate ? parseFloat(monthlyRate) : undefined,
+          depositAmount: depositAmount ? parseFloat(depositAmount) : undefined,
+          insuranceRate: insuranceRate ? parseFloat(insuranceRate) : undefined,
+        },
+      });
+    }
+
     // Update vehicle
     const vehicle = await prisma.vehicle.update({
       where: { id: id },
@@ -203,6 +267,7 @@ const updateVehicle = async (req, res, next) => {
       },
       include: {
         station: true,
+        pricing: true,
       },
     });
 
