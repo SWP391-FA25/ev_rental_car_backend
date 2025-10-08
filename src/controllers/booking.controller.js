@@ -250,7 +250,6 @@ export const updateBookingStatus = async (req, res, next) => {
       });
     }
 
-    // Determine vehicle status based on booking status
     let vehicleStatus;
     switch (status) {
       case 'CONFIRMED':
@@ -513,7 +512,7 @@ export const getBookingAnalytics = async (req, res, next) => {
 // Create booking validation
 export const createBooking = async (req, res, next) => {
   try {
-    const userId = req.user?.id; // Get from authenticated user
+    const user = req.user; // Get authenticated user
     const {
       vehicleId,
       stationId,
@@ -522,7 +521,51 @@ export const createBooking = async (req, res, next) => {
       pickupLocation,
       dropoffLocation,
       promotions = [],
+      renterId, // Add renterId for when staff/admin creates booking for renter
     } = req.body;
+
+    let userId;
+
+    if(user.role !== 'RENTER'){
+      if (!renterId) {
+        return res.status(400).json({
+          success: false,
+          message: 'renterId is required when staff/admin creates booking for a renter',
+        });
+      }
+      userId = renterId;
+    } else {
+      userId = user.id;
+    }
+
+    // Validate that the renter exists if staff/admin is creating booking
+    if (user.role !== 'RENTER') {
+      const renter = await prisma.user.findUnique({
+        where: { id: renterId },
+        select: { id: true, role: true, accountStatus: true },
+      });
+
+      if (!renter) {
+        return res.status(404).json({
+          success: false,
+          message: 'Renter not found',
+        });
+      }
+
+      if (renter.role !== 'RENTER') {
+        return res.status(400).json({
+          success: false,
+          message: 'Specified user is not a renter',
+        });
+      }
+
+      if (renter.accountStatus !== 'ACTIVE') {
+        return res.status(400).json({
+          success: false,
+          message: 'Renter account is not active',
+        });
+      }
+    }
 
     // Check vehicle exists, is available, and has pricing
     const vehicle = await prisma.vehicle.findUnique({

@@ -8,11 +8,13 @@ import {
   getStations,
   getUnavailableStations,
   getVehiclesAtStation,
+  getVehiclesAtStationDuringPeriod,
   softDeleteStation,
   updateStation,
 } from '../../controllers/station.controller.js';
 import { authenticate } from '../../middleware/authenticate.js';
 import { authorize } from '../../middleware/authorize.js';
+import { getVehiclesAtStationDuringPeriodValidation } from '../../middleware/station.middleware.js';
 
 const router = Router();
 
@@ -55,6 +57,15 @@ router.get(
   authenticate,
   authorize('ADMIN', 'STAFF'),
   getStaffAtStation
+);
+
+// Get available vehicles at station during specific time period
+router.post(
+  '/vehicles-availability',
+  authenticate,
+  authorize('ADMIN', 'STAFF', 'RENTER'),
+  getVehiclesAtStationDuringPeriodValidation,
+  getVehiclesAtStationDuringPeriod
 );
 
 export default router;
