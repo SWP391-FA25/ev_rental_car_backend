@@ -575,6 +575,7 @@ export const completeBookingValidator = checkSchema({
   },
 });
 
+
 // Middleware array exports for easy use
 export const getBookingsValidation = validate([getBookingsValidator]);
 export const getBookingByIdValidation = validate([getBookingByIdValidator]);
