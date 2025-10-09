@@ -520,40 +520,53 @@ const getVehiclesAtStationDuringPeriod = async (req, res, next) => {
     const requestStartTime = new Date(startTime);
     const requestEndTime = new Date(endTime);
 
-    const allVehiclesAtStation = await prisma.vehicle.findMany({
-      where: {
-        stationId: stationId,
-        softDeleted: false,
-        status: { in: ['AVAILABLE', 'RENTED', 'RESERVED'] },
-      },
-      include: {
-        images: true,
-        station: {
-          select: {
-            id: true,
-            name: true,
-            address: true,
+    const [allVehiclesAtStation, station] = await Promise.all([
+      await prisma.vehicle.findMany({
+        where: {
+          stationId: stationId,
+          softDeleted: false,
+          status: { in: ['AVAILABLE', 'RENTED', 'RESERVED'] },
+        },
+        include: {
+          images: true,
+          station: {
+            select: {
+              id: true,
+              name: true,
+              address: true,
+            },
+          },
+          // This fetches only bookings that conflict with the requested period
+          bookings: {
+            where: {
+              status: { in: ['PENDING', 'CONFIRMED', 'IN_PROGRESS'] },
+              endTime: { gt: requestStartTime },
+              startTime: { lt: requestEndTime },
+            },
+            select: {
+              vehicleId: true,
+              startTime: true,
+              endTime: true,
+              status: true,
+            },
+            orderBy: {
+              startTime: 'asc',
+            },
           },
         },
-        // This fetches only bookings that conflict with the requested period
-        bookings: {
-          where: {
-            status: { in: ['PENDING', 'CONFIRMED', 'IN_PROGRESS'] },
-            endTime: { gt: requestStartTime },
-            startTime: { lt: requestEndTime },
-          },
-          select: {
-            vehicleId: true,
-            startTime: true,
-            endTime: true,
-            status: true,
-          },
-          orderBy: {
-            startTime: 'asc',
-          },
+      }),
+      await prisma.station.findUnique({
+        where: {
+          id: stationId,
+          softDeleted: false,
         },
-      },
-    });
+        select: {
+          id: true,
+          name: true,
+          address: true,
+        },
+      }),
+    ]);
 
     // If no vehicles found, return empty response
     if (allVehiclesAtStation.length === 0) {
@@ -641,18 +654,6 @@ const getVehiclesAtStationDuringPeriod = async (req, res, next) => {
     const unavailableVehicles = vehicleAvailability.filter(
       (vehicle) => !vehicle.availability.isAvailableDuringPeriod
     );
-
-    const station = await prisma.station.findUnique({
-      where: {
-        id: stationId,
-        softDeleted: false,
-      },
-      select: {
-        id: true,
-        name: true,
-        address: true,
-      },
-    });
 
     const formatAvailableVehicle = (vehicle) => ({
       id: vehicle.id,
