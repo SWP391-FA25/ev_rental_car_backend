@@ -520,40 +520,11 @@ const getVehiclesAtStationDuringPeriod = async (req, res, next) => {
     const requestStartTime = new Date(startTime);
     const requestEndTime = new Date(endTime);
 
-    // Validate period
-    if (requestStartTime >= requestEndTime) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid period: startTime must be before endTime',
-      });
-    }
-
-    // Verify station exists and is not soft-deleted
-    const station = await prisma.station.findUnique({
-      where: {
-        id: stationId,
-        softDeleted: false,
-      },
-      select: {
-        id: true,
-        name: true,
-        address: true,
-      },
-    });
-
-    if (!station) {
-      return res.status(404).json({
-        success: false,
-        message: 'Station not found',
-      });
-    }
-
-    // Fetch vehicles with their bookings in a single query for better performance
     const allVehiclesAtStation = await prisma.vehicle.findMany({
       where: {
         stationId: stationId,
         softDeleted: false,
-        status: { in: ['AVAILABLE', 'RENTED'] },
+        status: { in: ['AVAILABLE', 'RENTED', 'RESERVED'] },
       },
       include: {
         images: true,
@@ -624,7 +595,9 @@ const getVehiclesAtStationDuringPeriod = async (req, res, next) => {
 
         // Validate booking data
         if (bookingEnd <= bookingStart) {
-          console.error(`Invalid booking data for vehicle ${vehicle.id}: endTime <= startTime`);
+          console.error(
+            `Invalid booking data for vehicle ${vehicle.id}: endTime <= startTime`
+          );
           continue;
         }
 
@@ -668,6 +641,18 @@ const getVehiclesAtStationDuringPeriod = async (req, res, next) => {
     const unavailableVehicles = vehicleAvailability.filter(
       (vehicle) => !vehicle.availability.isAvailableDuringPeriod
     );
+
+    const station = await prisma.station.findUnique({
+      where: {
+        id: stationId,
+        softDeleted: false,
+      },
+      select: {
+        id: true,
+        name: true,
+        address: true,
+      },
+    });
 
     const formatAvailableVehicle = (vehicle) => ({
       id: vehicle.id,
