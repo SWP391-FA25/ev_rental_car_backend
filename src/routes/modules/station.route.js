@@ -62,8 +62,6 @@ router.get(
 // Get available vehicles at station during specific time period
 router.post(
   '/vehicles-availability',
-  authenticate,
-  authorize('ADMIN', 'STAFF', 'RENTER'),
   getVehiclesAtStationDuringPeriodValidation,
   getVehiclesAtStationDuringPeriod
 );
