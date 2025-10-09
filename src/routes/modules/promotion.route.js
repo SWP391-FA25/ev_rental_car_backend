@@ -2,22 +2,22 @@
 import { Router } from 'express';
 import {
   createPromotion,
-  getPromotions,
-  getPromotionById,
-  getPromotionByCode,
-  getActivePromotions,
-  updatePromotion,
   deletePromotion,
+  getActivePromotions,
+  getPromotionByCode,
+  getPromotionById,
+  getPromotions,
+  updatePromotion,
 } from '../../controllers/promotion.controller.js';
-import {
-  createPromotionValidation,
-  updatePromotionValidation,
-  deletePromotionValidation,
-  getPromotionByIdValidation,
-  getPromotionByCodeValidation,
-} from '../../middleware/promotion.middleware.js';
 import { authenticate } from '../../middleware/authenticate.js';
 import { authorize } from '../../middleware/authorize.js';
+import {
+  createPromotionValidation,
+  deletePromotionValidation,
+  getPromotionByCodeValidation,
+  getPromotionByIdValidation,
+  updatePromotionValidation,
+} from '../../middleware/promotion.middleware.js';
 
 const router = Router();
 
@@ -37,7 +37,7 @@ router.get('/', authenticate, authorize('ADMIN', 'STAFF'), getPromotions);
 router.get(
   '/active',
   authenticate,
-  authorize('ADMIN', 'STAFF'),
+  authorize('ADMIN', 'STAFF', 'RENTER'),
   getActivePromotions
 );
 

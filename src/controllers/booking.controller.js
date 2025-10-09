@@ -526,11 +526,12 @@ export const createBooking = async (req, res, next) => {
 
     let userId;
 
-    if(user.role !== 'RENTER'){
+    if (user.role !== 'RENTER') {
       if (!renterId) {
         return res.status(400).json({
           success: false,
-          message: 'renterId is required when staff/admin creates booking for a renter',
+          message:
+            'renterId is required when staff/admin creates booking for a renter',
         });
       }
       userId = renterId;
@@ -683,7 +684,9 @@ export const createBooking = async (req, res, next) => {
               promotion.validUntil >= currentDate
             ) {
               // Calculate discount amount for this specific promotion
-              const promotionDiscountAmount = basePrice * promotion.discount;
+              const subtotal = basePrice + insuranceAmount + taxAmount;
+              const promotionDiscountAmount =
+                subtotal * (promotion.discount / 100);
 
               const promotionBooking = await tx.promotionBooking.create({
                 data: {
