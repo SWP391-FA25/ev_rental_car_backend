@@ -16,7 +16,7 @@ const router = Router();
 router.post('/', authenticate, authorize('ADMIN'), createRenter);
 router.get('/', authenticate, authorize('ADMIN', 'STAFF'), getRenters);
 router.get('/:id', authenticate, authorize('ADMIN', 'STAFF'), getRenterById);
-router.put('/:id', authenticate, authorize('ADMIN'), updateRenter);
+router.put('/:id', authenticate, authorize('ADMIN', 'STAFF'), updateRenter);
 router.patch(
   '/:id/password',
   authenticate,
