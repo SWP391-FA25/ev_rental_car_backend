@@ -624,7 +624,9 @@ const getVehiclesAtStationDuringPeriod = async (req, res, next) => {
 
         // Validate booking data
         if (bookingEnd <= bookingStart) {
-          console.error(`Invalid booking data for vehicle ${vehicle.id}: endTime <= startTime`);
+          console.error(
+            `Invalid booking data for vehicle ${vehicle.id}: endTime <= startTime`
+          );
           continue;
         }
 
@@ -694,6 +696,7 @@ const getVehiclesAtStationDuringPeriod = async (req, res, next) => {
       licensePlate: vehicle.licensePlate,
       currentStatus: vehicle.availability.currentStatus,
       nextAvailableTime: vehicle.availability.nextAvailableTime,
+      images: vehicle.images,
       currentBooking: vehicle.availability.currentBooking,
     });
 
