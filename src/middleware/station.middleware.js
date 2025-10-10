@@ -1,5 +1,6 @@
 import { checkSchema } from 'express-validator';
 import validate from '../utils/validation.js';
+import { prisma } from '../lib/prisma.js';
 
 // Validate request to get vehicles available during a specific period
 export const getVehiclesAtStationDuringPeriodValidator = checkSchema({
@@ -8,6 +9,25 @@ export const getVehiclesAtStationDuringPeriodValidator = checkSchema({
     notEmpty: true,
     isMongoId: true,
     errorMessage: 'Valid station ID is required',
+    custom: {
+      options: async (stationId) => {
+        const station = await prisma.station.findUnique({
+          where: {
+            id: stationId,
+            softDeleted: false,
+          },
+          select: {
+            id: true,
+            name: true,
+            address: true,
+          },
+        });
+        if (!station) {
+          throw new Error("Station doesn't exist");
+        }
+        return true;
+      },
+    },
   },
   startTime: {
     in: { options: [['body']] },
@@ -39,4 +59,6 @@ export const getVehiclesAtStationDuringPeriodValidator = checkSchema({
 });
 
 // Middleware exports for easy use
-export const getVehiclesAtStationDuringPeriodValidation = validate([getVehiclesAtStationDuringPeriodValidator]);
+export const getVehiclesAtStationDuringPeriodValidation = validate([
+  getVehiclesAtStationDuringPeriodValidator,
+]);

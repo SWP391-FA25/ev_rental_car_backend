@@ -520,69 +520,53 @@ const getVehiclesAtStationDuringPeriod = async (req, res, next) => {
     const requestStartTime = new Date(startTime);
     const requestEndTime = new Date(endTime);
 
-    // Validate period
-    if (requestStartTime >= requestEndTime) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid period: startTime must be before endTime',
-      });
-    }
-
-    // Verify station exists and is not soft-deleted
-    const station = await prisma.station.findUnique({
-      where: {
-        id: stationId,
-        softDeleted: false,
-      },
-      select: {
-        id: true,
-        name: true,
-        address: true,
-      },
-    });
-
-    if (!station) {
-      return res.status(404).json({
-        success: false,
-        message: 'Station not found',
-      });
-    }
-
-    // Fetch vehicles with their bookings in a single query for better performance
-    const allVehiclesAtStation = await prisma.vehicle.findMany({
-      where: {
-        stationId: stationId,
-        softDeleted: false,
-        status: { in: ['AVAILABLE', 'RENTED'] },
-      },
-      include: {
-        images: true,
-        station: {
-          select: {
-            id: true,
-            name: true,
-            address: true,
+    const [allVehiclesAtStation, station] = await Promise.all([
+      await prisma.vehicle.findMany({
+        where: {
+          stationId: stationId,
+          softDeleted: false,
+          status: { in: ['AVAILABLE', 'RENTED', 'RESERVED'] },
+        },
+        include: {
+          images: true,
+          station: {
+            select: {
+              id: true,
+              name: true,
+              address: true,
+            },
+          },
+          // This fetches only bookings that conflict with the requested period
+          bookings: {
+            where: {
+              status: { in: ['PENDING', 'CONFIRMED', 'IN_PROGRESS'] },
+              endTime: { gt: requestStartTime },
+              startTime: { lt: requestEndTime },
+            },
+            select: {
+              vehicleId: true,
+              startTime: true,
+              endTime: true,
+              status: true,
+            },
+            orderBy: {
+              startTime: 'asc',
+            },
           },
         },
-        // This fetches only bookings that conflict with the requested period
-        bookings: {
-          where: {
-            status: { in: ['PENDING', 'CONFIRMED', 'IN_PROGRESS'] },
-            endTime: { gt: requestStartTime },
-            startTime: { lt: requestEndTime },
-          },
-          select: {
-            vehicleId: true,
-            startTime: true,
-            endTime: true,
-            status: true,
-          },
-          orderBy: {
-            startTime: 'asc',
-          },
+      }),
+      await prisma.station.findUnique({
+        where: {
+          id: stationId,
+          softDeleted: false,
         },
-      },
-    });
+        select: {
+          id: true,
+          name: true,
+          address: true,
+        },
+      }),
+    ]);
 
     // If no vehicles found, return empty response
     if (allVehiclesAtStation.length === 0) {
