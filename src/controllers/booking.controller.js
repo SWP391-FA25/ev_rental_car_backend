@@ -24,13 +24,7 @@ export const getBookings = async (req, res, next) => {
       limit = 20,
     } = req.query;
 
-    // Additional validation for date range
-    if (startDate && endDate && new Date(startDate) > new Date(endDate)) {
-      return res.status(400).json({
-        success: false,
-        message: 'startDate must be before or equal to endDate',
-      });
-    }
+    // Note: Date range validation is handled by middleware
 
     const where = {};
 
@@ -462,13 +456,7 @@ export const getBookingAnalytics = async (req, res, next) => {
   try {
     const { startDate, endDate } = req.query;
 
-    // Additional validation for date range
-    if (startDate && endDate && new Date(startDate) > new Date(endDate)) {
-      return res.status(400).json({
-        success: false,
-        message: 'startDate must be before or equal to endDate',
-      });
-    }
+    // Validation handled by getBookingAnalyticsValidator middleware
 
     const dateFilter = {};
     if (startDate) dateFilter.gte = new Date(startDate);
@@ -916,10 +904,9 @@ export const checkInBooking = async (req, res, next) => {
       });
     }
 
-    // Validate actual start time
+    // Validate actual start time against scheduled time (business logic)
     const actualStartDate = new Date(actualStartTime);
     const scheduledStartDate = new Date(booking.startTime);
-    const now = new Date();
 
     // Allow check-in up to 24 hours before or after scheduled time
     const timeDiffHours =
@@ -933,32 +920,7 @@ export const checkInBooking = async (req, res, next) => {
       });
     }
 
-    // Validate actual start time is not in the future
-    if (actualStartDate > now) {
-      return res.status(400).json({
-        success: false,
-        message: 'Actual start time cannot be in the future',
-      });
-    }
-
-    // Validate odometer reading
-    if (pickupOdometer !== undefined && pickupOdometer < 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'Pickup odometer reading cannot be negative',
-      });
-    }
-
-    // Validate battery level
-    if (
-      batteryLevel !== undefined &&
-      (batteryLevel < 0 || batteryLevel > 100)
-    ) {
-      return res.status(400).json({
-        success: false,
-        message: 'Battery level must be between 0 and 100',
-      });
-    }
+    // Note: Future time validation is handled by middleware
 
     // Validate staff exists if provided
     if (staffId) {
@@ -1164,16 +1126,7 @@ export const completeBooking = async (req, res, next) => {
       });
     }
 
-    // Validate battery level if provided
-    if (
-      batteryLevel !== undefined &&
-      (batteryLevel < 0 || batteryLevel > 100)
-    ) {
-      return res.status(400).json({
-        success: false,
-        message: 'Battery level must be between 0 and 100',
-      });
-    }
+    // Note: Battery level validation is handled by middleware
 
     // Calculate rental duration
     const durationMs = actualEndDate.getTime() - actualStartDate.getTime();
