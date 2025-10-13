@@ -24,13 +24,7 @@ export const getBookings = async (req, res, next) => {
       limit = 20,
     } = req.query;
 
-    // Additional validation for date range
-    if (startDate && endDate && new Date(startDate) > new Date(endDate)) {
-      return res.status(400).json({
-        success: false,
-        message: 'startDate must be before or equal to endDate',
-      });
-    }
+    // Note: Date range validation is handled by middleware
 
     const where = {};
 
@@ -289,6 +283,8 @@ export const updateBookingStatus = async (req, res, next) => {
         vehicleStatus = 'RESERVED';
         break;
       case 'IN_PROGRESS':
+        // Note: IN_PROGRESS should be set through checkInBooking function
+        // But keeping this for backward compatibility
         vehicleStatus = 'RENTED';
         break;
       case 'COMPLETED':
@@ -460,13 +456,7 @@ export const getBookingAnalytics = async (req, res, next) => {
   try {
     const { startDate, endDate } = req.query;
 
-    // Additional validation for date range
-    if (startDate && endDate && new Date(startDate) > new Date(endDate)) {
-      return res.status(400).json({
-        success: false,
-        message: 'startDate must be before or equal to endDate',
-      });
-    }
+    // Validation handled by getBookingAnalyticsValidator middleware
 
     const dateFilter = {};
     if (startDate) dateFilter.gte = new Date(startDate);
@@ -856,6 +846,197 @@ export const createBooking = async (req, res, next) => {
   }
 };
 
+// Check-in booking (start rental)
+export const checkInBooking = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const {
+      actualStartTime,
+      actualPickupLocation,
+      pickupOdometer,
+      vehicleConditionNotes,
+      batteryLevel,
+      staffId, // Staff member handling the check-in
+    } = req.body;
+
+    // Find the booking
+    const booking = await prisma.booking.findUnique({
+      where: { id },
+      include: {
+        user: { select: { id: true, name: true, email: true, phone: true } },
+        vehicle: {
+          select: {
+            id: true,
+            model: true,
+            licensePlate: true,
+            status: true,
+            batteryLevel: true,
+          },
+        },
+        station: { select: { id: true, name: true, address: true } },
+      },
+    });
+
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: 'Booking not found',
+      });
+    }
+
+    // Validate booking status
+    if (booking.status !== 'CONFIRMED') {
+      return res.status(400).json({
+        success: false,
+        message:
+          'Only confirmed bookings can be checked in. Current status: ' +
+          booking.status,
+      });
+    }
+
+    // Validate vehicle is available for pickup
+    if (booking.vehicle.status !== 'RESERVED') {
+      return res.status(400).json({
+        success: false,
+        message:
+          'Vehicle is not reserved for this booking. Current status: ' +
+          booking.vehicle.status,
+      });
+    }
+
+    // Validate actual start time against scheduled time (business logic)
+    const actualStartDate = new Date(actualStartTime);
+    const scheduledStartDate = new Date(booking.startTime);
+
+    // Allow check-in up to 24 hours before or after scheduled time
+    const timeDiffHours =
+      Math.abs(actualStartDate.getTime() - scheduledStartDate.getTime()) /
+      (1000 * 60 * 60);
+    if (timeDiffHours > 24) {
+      return res.status(400).json({
+        success: false,
+        message:
+          'Check-in time is too far from scheduled start time (max 24 hours difference)',
+      });
+    }
+
+    // Note: Future time validation is handled by middleware
+
+    // Validate staff exists if provided
+    if (staffId) {
+      const staff = await prisma.user.findUnique({
+        where: { id: staffId },
+        select: { id: true, role: true, accountStatus: true },
+      });
+
+      if (!staff || !['ADMIN', 'STAFF'].includes(staff.role)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid staff member',
+        });
+      }
+
+      if (staff.accountStatus !== 'ACTIVE') {
+        return res.status(400).json({
+          success: false,
+          message: 'Staff account is not active',
+        });
+      }
+    }
+
+    // Prepare update data
+    const updateData = {
+      status: 'IN_PROGRESS',
+      actualStartTime: actualStartDate,
+      updatedAt: new Date(),
+    };
+
+    if (actualPickupLocation)
+      updateData.actualPickupLocation = actualPickupLocation;
+    if (pickupOdometer !== undefined)
+      updateData.pickupOdometer = pickupOdometer;
+    if (vehicleConditionNotes) updateData.notes = vehicleConditionNotes;
+
+    // Use transaction to update booking, vehicle, and create audit log
+    const result = await prisma.$transaction(async (tx) => {
+      // Update booking
+      const updatedBooking = await tx.booking.update({
+        where: { id },
+        data: updateData,
+        include: {
+          user: { select: { id: true, name: true, email: true, phone: true } },
+          vehicle: {
+            select: {
+              id: true,
+              model: true,
+              licensePlate: true,
+              status: true,
+              batteryLevel: true,
+            },
+          },
+          station: { select: { id: true, name: true, address: true } },
+        },
+      });
+
+      // Update vehicle status and battery level
+      const vehicleUpdateData = {
+        status: 'RENTED',
+        updatedAt: new Date(),
+      };
+
+      if (batteryLevel !== undefined) {
+        vehicleUpdateData.batteryLevel = batteryLevel;
+      }
+
+      await tx.vehicle.update({
+        where: { id: booking.vehicleId },
+        data: vehicleUpdateData,
+      });
+
+      // Create audit log for check-in
+      await tx.auditLog.create({
+        data: {
+          userId: staffId || req.user?.id || null,
+          action: 'CHECK_IN',
+          tableName: 'Booking',
+          recordId: booking.id,
+          oldData: { status: 'CONFIRMED' },
+          newData: {
+            status: 'IN_PROGRESS',
+            actualStartTime: actualStartDate,
+            actualPickupLocation,
+            pickupOdometer,
+            vehicleConditionNotes,
+            batteryLevel,
+          },
+        },
+      });
+
+      return updatedBooking;
+    });
+
+    return res.json({
+      success: true,
+      message: 'Booking checked in successfully. Vehicle rental has started.',
+      data: {
+        booking: result,
+        checkInSummary: {
+          actualStartTime: actualStartDate.toISOString(),
+          scheduledStartTime: booking.startTime,
+          actualPickupLocation: actualPickupLocation || booking.pickupLocation,
+          pickupOdometer: pickupOdometer || 'Not recorded',
+          batteryLevel:
+            batteryLevel !== undefined ? `${batteryLevel}%` : 'Not updated',
+          vehicleCondition: vehicleConditionNotes || 'No notes',
+          handledBy: staffId ? 'Staff member' : 'System',
+        },
+      },
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
 // Complete booking
 export const completeBooking = async (req, res, next) => {
   try {
@@ -945,16 +1126,7 @@ export const completeBooking = async (req, res, next) => {
       });
     }
 
-    // Validate battery level if provided
-    if (
-      batteryLevel !== undefined &&
-      (batteryLevel < 0 || batteryLevel > 100)
-    ) {
-      return res.status(400).json({
-        success: false,
-        message: 'Battery level must be between 0 and 100',
-      });
-    }
+    // Note: Battery level validation is handled by middleware
 
     // Calculate rental duration
     const durationMs = actualEndDate.getTime() - actualStartDate.getTime();
