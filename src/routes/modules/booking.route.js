@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import {
   cancelBooking,
+  checkInBooking,
   completeBooking,
   createBooking,
   getBookingAnalytics,
@@ -14,6 +15,7 @@ import { authenticate } from '../../middleware/authenticate.js';
 import { authorize } from '../../middleware/authorize.js';
 import {
   cancelBookingValidation,
+  checkInBookingValidation,
   completeBookingValidation,
   createBookingValidation,
   getBookingAnalyticsValidation,
@@ -96,6 +98,15 @@ router.patch(
   authorize('ADMIN', 'STAFF', 'RENTER'),
   cancelBookingValidation,
   cancelBooking
+);
+
+// Check-in booking (start rental)
+router.post(
+  '/:id/checkin',
+  authenticate,
+  authorize('ADMIN', 'STAFF'),
+  checkInBookingValidation,
+  checkInBooking
 );
 
 // Complete booking

@@ -568,13 +568,82 @@ export const completeBookingValidator = checkSchema({
   },
   fuelLevel: {
     in: ['body'],
-    notEmpty: true,
+    optional: true,
     isFloat: { options: { min: 0, max: 100 } },
     toFloat: true,
-    errorMessage: 'Fuel level is required and must be between 0 and 100',
+    errorMessage: 'Fuel level must be between 0 and 100',
+  },
+  batteryLevel: {
+    in: ['body'],
+    optional: true,
+    isFloat: { options: { min: 0, max: 100 } },
+    toFloat: true,
+    errorMessage: 'Battery level must be between 0 and 100',
   },
 });
 
+// Check-in booking validation
+export const checkInBookingValidator = checkSchema({
+  id: {
+    in: ['params'],
+    notEmpty: true,
+    isMongoId: true,
+    errorMessage: 'Invalid booking ID',
+  },
+  actualStartTime: {
+    in: ['body'],
+    notEmpty: true,
+    isISO8601: true,
+    errorMessage:
+      'Actual start time is required and must be a valid ISO8601 date',
+    custom: {
+      options: (value) => {
+        const actualStart = new Date(value);
+        const now = new Date();
+        if (actualStart > now) {
+          throw new Error('Actual start time cannot be in the future');
+        }
+        return true;
+      },
+    },
+  },
+  actualPickupLocation: {
+    in: ['body'],
+    optional: true,
+    isString: true,
+    trim: true,
+    isLength: { options: { min: 5, max: 200 } },
+    errorMessage: 'Actual pickup location must be between 5 and 200 characters',
+  },
+  pickupOdometer: {
+    in: ['body'],
+    optional: true,
+    isFloat: { options: { min: 0 } },
+    toFloat: true,
+    errorMessage: 'Pickup odometer must be a positive number',
+  },
+  vehicleConditionNotes: {
+    in: ['body'],
+    optional: true,
+    isString: true,
+    trim: true,
+    isLength: { options: { max: 1000 } },
+    errorMessage: 'Vehicle condition notes must not exceed 1000 characters',
+  },
+  batteryLevel: {
+    in: ['body'],
+    optional: true,
+    isFloat: { options: { min: 0, max: 100 } },
+    toFloat: true,
+    errorMessage: 'Battery level must be between 0 and 100',
+  },
+  staffId: {
+    in: ['body'],
+    optional: true,
+    isMongoId: true,
+    errorMessage: 'Invalid staff ID',
+  },
+});
 
 // Middleware array exports for easy use
 export const getBookingsValidation = validate([getBookingsValidator]);
@@ -589,4 +658,5 @@ export const getBookingAnalyticsValidation = validate([
   getBookingAnalyticsValidator,
 ]);
 export const createBookingValidation = validate([createBookingValidator]);
+export const checkInBookingValidation = validate([checkInBookingValidator]);
 export const completeBookingValidation = validate([completeBookingValidator]);
