@@ -1,17 +1,17 @@
 import { Router } from 'express';
 import {
-  getNotifications,
-  getUnreadCount,
-  markAsRead,
-  markAllAsRead,
-  deleteNotification,
-  deleteAllNotifications,
-  createNotification,
-  broadcastNotification,
-  getAllNotifications,
   adminDeleteNotification,
+  broadcastNotification,
+  createNotification,
   createTestNotification,
+  deleteAllNotifications,
+  deleteNotification,
+  getAllNotifications,
+  getNotifications,
   getNotificationStats,
+  getUnreadCount,
+  markAllAsRead,
+  markAsRead,
 } from '../../controllers/notification.controller.js';
 import { authenticate } from '../../middleware/authenticate.js';
 import { authorize } from '../../middleware/authorize.js';

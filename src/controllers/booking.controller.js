@@ -1,5 +1,13 @@
 import { Prisma } from '@prisma/client';
 import { prisma } from '../lib/prisma.js';
+import {
+  notifyBookingCancelled,
+  notifyBookingCompleted,
+  notifyBookingConfirmed,
+  notifyBookingCreated,
+  notifyBookingStarted,
+  notifyStaffNewBooking,
+} from '../utils/notificationHelper.js';
 
 // Get all bookings with filters
 
@@ -108,6 +116,31 @@ export const getBookingById = async (req, res, next) => {
         message: 'Booking not found',
       });
     }
+
+    // Log payments for debugging
+    console.log('=== BOOKING PAYMENTS DEBUG ===');
+    console.log('Booking ID:', booking.id);
+    console.log('User:', booking.user.name, '(', booking.user.email, ')');
+    console.log('Vehicle:', booking.vehicle.model);
+    console.log('Payments:', booking.payments);
+    console.log('Total payments:', booking.payments.length);
+
+    if (booking.payments.length > 0) {
+      booking.payments.forEach((payment, index) => {
+        console.log(`Payment ${index + 1}:`, {
+          id: payment.id,
+          amount: payment.amount,
+          status: payment.status,
+          method: payment.paymentMethod,
+          transactionId: payment.transactionId,
+          paymentDate: payment.paymentDate,
+          isDeposit: payment.isDeposit,
+        });
+      });
+    } else {
+      console.log('No payments found for this booking');
+    }
+    console.log('=== END PAYMENTS DEBUG ===');
 
     return res.json({
       success: true,
@@ -300,6 +333,27 @@ export const updateBookingStatus = async (req, res, next) => {
       return updatedBooking;
     });
 
+    // Send notifications based on status change
+    try {
+      switch (status) {
+        case 'CONFIRMED':
+          await notifyBookingConfirmed(result);
+          break;
+        case 'IN_PROGRESS':
+          await notifyBookingStarted(result);
+          break;
+        case 'COMPLETED':
+          await notifyBookingCompleted(result);
+          break;
+        case 'CANCELLED':
+          await notifyBookingCancelled(result, notes);
+          break;
+      }
+    } catch (notificationError) {
+      console.error('Error sending notifications:', notificationError);
+      // Don't fail the status update if notifications fail
+    }
+
     return res.json({
       success: true,
       message: 'Booking status updated successfully',
@@ -380,6 +434,17 @@ export const cancelBooking = async (req, res, next) => {
 
       return booking;
     });
+
+    // Send notification about cancellation
+    try {
+      await notifyBookingCancelled(updatedBooking, reason);
+    } catch (notificationError) {
+      console.error(
+        'Error sending cancellation notification:',
+        notificationError
+      );
+      // Don't fail the cancellation if notifications fail
+    }
 
     return res.json({
       success: true,
@@ -758,6 +823,21 @@ export const createBooking = async (req, res, next) => {
         },
       };
     });
+
+    // Send notifications
+    try {
+      // Notify staff at station about new booking
+      if (req.user.role === 'RENTER') {
+        await notifyStaffNewBooking(result.booking, stationId);
+      }
+      // Notify renter if staff created booking for them
+      if (req.user.role !== 'RENTER') {
+        await notifyBookingCreated(result.booking, req.user.role);
+      }
+    } catch (notificationError) {
+      console.error('Error sending notifications:', notificationError);
+      // Don't fail the booking creation if notifications fail
+    }
 
     return res.status(201).json({
       success: true,
@@ -1158,6 +1238,17 @@ export const completeBooking = async (req, res, next) => {
         },
       }),
     ]);
+
+    // Send notification about completion
+    try {
+      await notifyBookingCompleted(updatedBooking);
+    } catch (notificationError) {
+      console.error(
+        'Error sending completion notification:',
+        notificationError
+      );
+      // Don't fail the completion if notifications fail
+    }
 
     return res.json({
       success: true,

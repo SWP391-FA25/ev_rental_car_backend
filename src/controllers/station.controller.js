@@ -680,6 +680,7 @@ const getVehiclesAtStationDuringPeriod = async (req, res, next) => {
       licensePlate: vehicle.licensePlate,
       currentStatus: vehicle.availability.currentStatus,
       nextAvailableTime: vehicle.availability.nextAvailableTime,
+      images: vehicle.images,
       currentBooking: vehicle.availability.currentBooking,
     });
 
