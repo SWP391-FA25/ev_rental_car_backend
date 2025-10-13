@@ -1,5 +1,9 @@
 import { PayOS } from '@payos/node';
 import { prisma } from '../lib/prisma.js';
+import {
+  notifyPaymentFailed,
+  notifyPaymentReceived,
+} from '../utils/notificationHelper.js';
 
 // Initialize PayOS client
 const payos = new PayOS({
@@ -136,9 +140,9 @@ export async function handlePayOSWebhook(req, res, next) {
     // Update payment status based on webhook result
     if (code === '00') {
       // Payment successful
-      await prisma.$transaction(async (tx) => {
+      const result = await prisma.$transaction(async (tx) => {
         // Update payment status
-        await tx.payment.update({
+        const updatedPayment = await tx.payment.update({
           where: { id: payment.id },
           data: {
             status: 'PAID',
@@ -149,6 +153,10 @@ export async function handlePayOSWebhook(req, res, next) {
         // Update booking status
         const booking = await tx.booking.findUnique({
           where: { id: payment.bookingId },
+          include: {
+            user: { select: { id: true, name: true } },
+            vehicle: { select: { id: true, model: true } },
+          },
         });
 
         if (
@@ -166,7 +174,19 @@ export async function handlePayOSWebhook(req, res, next) {
             data: { status: 'AVAILABLE' },
           });
         }
+
+        return { updatedPayment, booking };
       });
+
+      // Send notification about successful payment
+      try {
+        if (result.booking) {
+          await notifyPaymentReceived(result.updatedPayment, result.booking);
+        }
+      } catch (notificationError) {
+        console.error('Error sending payment notification:', notificationError);
+        // Don't fail the payment if notifications fail
+      }
 
       return res.status(200).json({
         success: true,
@@ -174,10 +194,32 @@ export async function handlePayOSWebhook(req, res, next) {
       });
     } else {
       // Payment failed
-      await prisma.payment.update({
+      const updatedPayment = await prisma.payment.update({
         where: { id: payment.id },
         data: { status: 'FAILED' },
       });
+
+      // Get booking info for notification
+      const booking = await prisma.booking.findUnique({
+        where: { id: payment.bookingId },
+        include: {
+          user: { select: { id: true, name: true } },
+          vehicle: { select: { id: true, model: true } },
+        },
+      });
+
+      // Send notification about failed payment
+      try {
+        if (booking) {
+          await notifyPaymentFailed(updatedPayment, booking);
+        }
+      } catch (notificationError) {
+        console.error(
+          'Error sending payment failure notification:',
+          notificationError
+        );
+        // Don't fail the payment update if notifications fail
+      }
 
       return res.status(200).json({
         success: true,
