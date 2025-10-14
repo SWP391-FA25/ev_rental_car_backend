@@ -1,5 +1,6 @@
 import { checkSchema } from 'express-validator';
 import validate from '../utils/validation.js';
+import { prisma } from '../lib/prisma.js';
 
 // Get all bookings validation
 export const getBookingsValidator = checkSchema({

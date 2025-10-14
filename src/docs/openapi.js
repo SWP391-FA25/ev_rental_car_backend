@@ -2425,14 +2425,14 @@ export const openapiSpec = {
                     type: 'string',
                     description: 'ID of the booking to pay for',
                   },
-                  amount: { 
-                    type: 'number', 
-                    description: 'Payment amount in VND' 
+                  amount: {
+                    type: 'number',
+                    description: 'Payment amount in VND',
                   },
                   description: {
                     type: 'string',
-                    description: 'Payment description (optional)'
-                  }
+                    description: 'Payment description (optional)',
+                  },
                 },
               },
             },
@@ -2453,7 +2453,7 @@ export const openapiSpec = {
                         paymentId: { type: 'string' },
                         orderCode: { type: 'number' },
                         paymentUrl: { type: 'string' },
-                        message: { type: 'string' }
+                        message: { type: 'string' },
                       },
                     },
                   },
@@ -2504,7 +2504,7 @@ export const openapiSpec = {
                         paymentDate: {
                           type: 'string',
                           format: 'date-time',
-                        }
+                        },
                       },
                     },
                   },
@@ -2549,13 +2549,13 @@ export const openapiSpec = {
                       counterAccountNumber: { type: 'string' },
                       virtualAccountName: { type: 'string' },
                       virtualAccountNumber: { type: 'string' },
-                    }
+                    },
                   },
-                  signature: { type: 'string' }
-                }
-              }
-            }
-          }
+                  signature: { type: 'string' },
+                },
+              },
+            },
+          },
         },
         responses: {
           200: {
@@ -2566,14 +2566,14 @@ export const openapiSpec = {
                   type: 'object',
                   properties: {
                     success: { type: 'boolean' },
-                    message: { type: 'string' }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
+                    message: { type: 'string' },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
     },
 
     // Payment endpoints
