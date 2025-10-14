@@ -112,59 +112,47 @@ const calculatePricing = (pricing, durationHours) => {
   };
 };
 
-// Helper function for complete pricing breakdown calculation (for future use)
-// const calculatePricingBreakdown = (pricing, durationHours, appliedPromotions = []) => {
-//   const pricingResult = calculatePricing(pricing, durationHours);
-//   const basePrice = pricingResult.basePrice;
-//
-//   // Calculate insurance and tax amounts
-//   const insuranceAmount = round(basePrice * PRICING_RATES.INSURANCE);
-//   const taxAmount = round(basePrice * PRICING_RATES.TAX);
-//   const subtotal = basePrice + insuranceAmount + taxAmount;
-//
-//   // Calculate total discount from promotions
-//   const totalDiscountAmount = appliedPromotions.reduce(
-//     (sum, promo) => sum + (promo.appliedDiscountAmount || 0),
-//     0
-//   );
-//
-//   // Calculate final amounts
-//   const finalDiscountAmount = Math.min(totalDiscountAmount, subtotal);
-//   const finalTotalAmount = subtotal - finalDiscountAmount;
-//   const depositAmount = pricing.depositAmount || 0;
-//
-//   return {
-//     ...pricingResult,
-//     insuranceAmount,
-//     taxAmount,
-//     subtotal,
-//     discountAmount: finalDiscountAmount,
-//     totalAmount: finalTotalAmount,
-//     depositAmount,
-//     totalPayable: finalTotalAmount + depositAmount,
-//     appliedPromotions: appliedPromotions.length,
-//     breakdown: {
-//       base: basePrice,
-//       insurance: insuranceAmount,
-//       tax: taxAmount,
-//       subtotal: subtotal,
-//       discount: finalDiscountAmount,
-//       rental: finalTotalAmount,
-//       deposit: depositAmount,
-//       total: finalTotalAmount + depositAmount
-//     }
-//   };
-// };
-
 // Helper function for promotion validation
-const validatePromotionUsage = async (tx, promotionId, userId) => {
+const validatePromotionUsage = async (
+  tx,
+  promotionId,
+  userId,
+  rentalAmount = 0
+) => {
   const promotion = await tx.promotion.findUnique({
     where: { id: promotionId },
-    select: { oneTimeUse: true, usageLimit: true },
+    select: {
+      oneTimeUse: true,
+      usageLimit: true,
+      isActive: true,
+      minRentalAmount: true,
+      maxDiscountAmount: true,
+      discountType: true,
+      discount: true,
+      validFrom: true,
+      validUntil: true,
+    },
   });
 
-  if (!promotion) return false;
+  if (!promotion) return { isValid: false, reason: 'PROMOTION_NOT_FOUND' };
 
+  // Check if promotion is active
+  if (!promotion.isActive) {
+    return { isValid: false, reason: 'PROMOTION_INACTIVE' };
+  }
+
+  // Check validity period
+  const now = new Date();
+  if (now < promotion.validFrom || now > promotion.validUntil) {
+    return { isValid: false, reason: 'PROMOTION_EXPIRED' };
+  }
+
+  // Check minimum rental amount
+  if (promotion.minRentalAmount && rentalAmount < promotion.minRentalAmount) {
+    return { isValid: false, reason: 'MIN_RENTAL_AMOUNT_NOT_MET' };
+  }
+
+  // Check one-time use restriction
   if (promotion.oneTimeUse) {
     const existingUse = await tx.promotionBooking.count({
       where: {
@@ -172,17 +160,22 @@ const validatePromotionUsage = async (tx, promotionId, userId) => {
         booking: { userId },
       },
     });
-    if (existingUse > 0) return false;
+    if (existingUse > 0) {
+      return { isValid: false, reason: 'PROMOTION_ALREADY_USED' };
+    }
   }
 
+  // Check usage limit
   if (promotion.usageLimit && promotion.usageLimit > 0) {
     const currentUsage = await tx.promotionBooking.count({
       where: { promotionId },
     });
-    if (currentUsage >= promotion.usageLimit) return false;
+    if (currentUsage >= promotion.usageLimit) {
+      return { isValid: false, reason: 'PROMOTION_USAGE_LIMIT_EXCEEDED' };
+    }
   }
 
-  return true;
+  return { isValid: true };
 };
 
 // Get all bookings with filters
@@ -1153,17 +1146,34 @@ export const createBooking = async (req, res, next) => {
                   promotion.validUntil >= currentDate
                 ) {
                   // Validate promotion usage with helper function
-                  const isValidUsage = await validatePromotionUsage(
+                  const validation = await validatePromotionUsage(
                     tx,
                     promotion.id,
-                    userId
+                    userId,
+                    basePrice + insuranceAmount + taxAmount
                   );
-                  if (!isValidUsage) continue; // Skip if validation fails
+                  if (!validation.isValid) continue; // Skip if validation fails
 
                   // Calculate discount amount for this specific promotion
                   const subtotal = basePrice + insuranceAmount + taxAmount;
-                  const promotionDiscountAmount =
-                    subtotal * (promotion.discount / 100);
+                  let promotionDiscountAmount = 0;
+
+                  if (promotion.discountType === 'FIXED_AMOUNT') {
+                    // Fixed amount discount
+                    promotionDiscountAmount = promotion.discount;
+                  } else {
+                    // Percentage discount (default)
+                    promotionDiscountAmount =
+                      subtotal * (promotion.discount / 100);
+                  }
+
+                  // Apply maximum discount limit if specified
+                  if (
+                    promotion.maxDiscountAmount &&
+                    promotionDiscountAmount > promotion.maxDiscountAmount
+                  ) {
+                    promotionDiscountAmount = promotion.maxDiscountAmount;
+                  }
 
                   const promotionBooking = await tx.promotionBooking.create({
                     data: {

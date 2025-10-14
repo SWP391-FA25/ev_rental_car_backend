@@ -275,13 +275,20 @@ model Promotion {
   code              String             @unique // Unique promotion code
   description       String?
   discount          Float // phần trăm hoặc số tiền (chọn 1 convention)
+  discountType      String             @default("PERCENTAGE") // PERCENTAGE or FIXED_AMOUNT
+  oneTimeUse        Boolean            @default(false) // Can only be used once per user
+  usageLimit        Int? // Maximum number of times this promotion can be used (null = unlimited)
+  minRentalAmount   Float? // Minimum rental amount to apply promotion
+  maxDiscountAmount Float? // Maximum discount amount (for percentage discounts)
   validFrom         DateTime
   validUntil        DateTime
+  isActive          Boolean            @default(true) // Whether promotion is active
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
   promotionBookings PromotionBooking[]
 
   @@index([validFrom, validUntil])
+  @@index([isActive])
 }
 
 // Model trung gian cho quan hệ promotion-booking (many-to-many)
