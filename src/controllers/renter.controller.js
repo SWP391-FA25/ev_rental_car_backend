@@ -145,7 +145,7 @@ const createRenter = async (req, res, next) => {
 const updateRenter = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { name, phone, address, accountStatus} = req.body;
+    const { name, phone, address, accountStatus } = req.body;
 
     const errors = validateRenterInput({ name, phone, accountStatus }, false);
     if (errors.length > 0) {
