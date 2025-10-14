@@ -1329,6 +1329,9 @@ export const checkInBooking = async (req, res, next) => {
       pickupOdometer,
       vehicleConditionNotes,
       batteryLevel,
+      exteriorCondition = 'GOOD', // Default to GOOD if not provided
+      interiorCondition = 'GOOD', // Default to GOOD if not provided
+      inspectionImages = [], // Array of image URLs
     } = req.body;
 
     // Find the booking
@@ -1394,9 +1397,6 @@ export const checkInBooking = async (req, res, next) => {
       });
     }
 
-    // Note: Future time validation is handled by middleware
-
-    // Prepare update data
     const updateData = {
       status: 'IN_PROGRESS',
       actualStartTime: actualStartDate,
@@ -1408,9 +1408,7 @@ export const checkInBooking = async (req, res, next) => {
       updateData.actualPickupLocation = actualPickupLocation;
     if (pickupOdometer !== undefined)
       updateData.pickupOdometer = pickupOdometer;
-    if (vehicleConditionNotes) updateData.notes = vehicleConditionNotes;
 
-    // Use transaction to update booking, vehicle, and create audit log
     const result = await prisma.$transaction(async (tx) => {
       try {
         // Update booking
@@ -1435,6 +1433,26 @@ export const checkInBooking = async (req, res, next) => {
           data: vehicleUpdateData,
         });
 
+        if (inspectionImages.length === 0) {
+          throw new Error(
+            'At least one inspection image is required for vehicle check-in'
+          );
+        }
+
+        const vehicleInspection = await tx.vehicleInspection.create({
+          data: {
+            vehicleId: booking.vehicleId,
+            staffId: req.user.id,
+            bookingId: booking.id,
+            inspectionType: 'CHECK_IN',
+            batteryLevel: batteryLevel || booking.vehicle.batteryLevel || 0,
+            exteriorCondition,
+            interiorCondition,
+            notes: vehicleConditionNotes || null,
+            images: inspectionImages, // Always store images (required)
+          },
+        });
+
         // Create audit log for check-in
         await tx.auditLog.create({
           data: {
@@ -1448,13 +1466,13 @@ export const checkInBooking = async (req, res, next) => {
               actualStartTime: actualStartDate,
               actualPickupLocation,
               pickupOdometer,
-              vehicleConditionNotes,
               batteryLevel,
+              inspectionCreated: vehicleInspection.id, // Always created now
             },
           },
         });
 
-        return updatedBooking;
+        return { updatedBooking, vehicleInspection };
       } catch (txError) {
         console.error('Transaction failed in checkInBooking:', txError);
         throw txError; // Ensures rollback
@@ -1465,7 +1483,8 @@ export const checkInBooking = async (req, res, next) => {
       success: true,
       message: 'Booking checked in successfully. Vehicle rental has started.',
       data: {
-        booking: result,
+        booking: result.updatedBooking,
+        inspection: result.vehicleInspection,
         checkInSummary: {
           actualStartTime: actualStartDate.toISOString(),
           scheduledStartTime: booking.startTime,
@@ -1473,7 +1492,12 @@ export const checkInBooking = async (req, res, next) => {
           pickupOdometer: pickupOdometer || 'Not recorded',
           batteryLevel:
             batteryLevel !== undefined ? `${batteryLevel}%` : 'Not updated',
-          vehicleCondition: vehicleConditionNotes || 'No notes',
+          vehicleCondition: {
+            exterior: exteriorCondition,
+            interior: interiorCondition,
+            notes: vehicleConditionNotes || 'No additional notes',
+            inspectionId: result.vehicleInspection.id, // Always present now
+          },
           handledBy: `${req.user.role}: ${req.user.id}`,
           staffAssigned: true, // Indicates staff has been assigned to this booking
           staffInfo: {
@@ -1500,6 +1524,9 @@ export const completeBooking = async (req, res, next) => {
       damageReport,
       batteryLevel, // Changed from fuelLevel to batteryLevel for EVs
       rating, // Add rating for rental history
+      exteriorCondition = 'GOOD', // Vehicle condition at return
+      interiorCondition = 'GOOD', // Vehicle condition at return
+      inspectionImages = [], // Array of image URLs for checkout inspection
     } = req.body;
 
     // Find the booking
@@ -1674,6 +1701,29 @@ export const completeBooking = async (req, res, next) => {
           },
         });
 
+        // Create vehicle inspection record for check-out
+        let checkoutInspection = null;
+        if (
+          damageReport ||
+          exteriorCondition !== 'GOOD' ||
+          interiorCondition !== 'GOOD' ||
+          inspectionImages.length > 0
+        ) {
+          checkoutInspection = await tx.vehicleInspection.create({
+            data: {
+              vehicleId: booking.vehicleId,
+              staffId: req.user.id,
+              bookingId: booking.id,
+              inspectionType: 'CHECK_OUT',
+              batteryLevel: batteryLevel || booking.vehicle.batteryLevel || 0,
+              exteriorCondition,
+              interiorCondition,
+              notes: damageReport || notes || null,
+              images: inspectionImages.length > 0 ? inspectionImages : null,
+            },
+          });
+        }
+
         // Create rental history record
         await tx.rentalHistory.create({
           data: {
@@ -1688,7 +1738,7 @@ export const completeBooking = async (req, res, next) => {
           },
         });
 
-        return updated;
+        return { updated, checkoutInspection };
       } catch (txError) {
         console.error('Transaction failed in completeBooking:', txError);
         throw txError; // Ensures rollback
@@ -1719,7 +1769,8 @@ export const completeBooking = async (req, res, next) => {
       success: true,
       message: 'Booking completed successfully',
       data: {
-        booking: updatedBooking,
+        booking: updatedBooking.updated,
+        checkoutInspection: updatedBooking.checkoutInspection,
         summary: {
           duration: `${actualDurationHours} hours`,
           distance:
@@ -1728,6 +1779,12 @@ export const completeBooking = async (req, res, next) => {
               : 'Not recorded',
           startTime: actualStartDate.toISOString(),
           endTime: actualEndDate.toISOString(),
+          vehicleCondition: {
+            exterior: exteriorCondition,
+            interior: interiorCondition,
+            damageReport: damageReport || null,
+            inspectionId: updatedBooking.checkoutInspection?.id || null,
+          },
           overtime: {
             hours: overtimeHours,
             amount: overtimeAmount,

@@ -581,6 +581,52 @@ export const completeBookingValidator = checkSchema({
     toFloat: true,
     errorMessage: 'Battery level must be between 0 and 100',
   },
+  rating: {
+    in: ['body'],
+    optional: true,
+    isInt: { options: { min: 1, max: 5 } },
+    errorMessage: 'Rating must be between 1 and 5',
+  },
+  exteriorCondition: {
+    in: ['body'],
+    optional: true,
+    isIn: {
+      options: [['GOOD', 'FAIR', 'POOR']],
+    },
+    errorMessage: 'Exterior condition must be GOOD, FAIR, or POOR',
+  },
+  interiorCondition: {
+    in: ['body'],
+    optional: true,
+    isIn: {
+      options: [['GOOD', 'FAIR', 'POOR']],
+    },
+    errorMessage: 'Interior condition must be GOOD, FAIR, or POOR',
+  },
+  inspectionImages: {
+    in: ['body'],
+    optional: true,
+    isArray: true,
+    errorMessage: 'Inspection images must be an array',
+    custom: {
+      options: (images) => {
+        if (images && images.length > 10) {
+          throw new Error('Maximum 10 inspection images allowed');
+        }
+        if (
+          images &&
+          images.some(
+            (img) => typeof img !== 'string' || img.trim().length === 0
+          )
+        ) {
+          throw new Error(
+            'All inspection images must be valid non-empty strings'
+          );
+        }
+        return true;
+      },
+    },
+  },
 });
 
 // Check-in booking validation
@@ -630,6 +676,50 @@ export const checkInBookingValidator = checkSchema({
     trim: true,
     isLength: { options: { max: 1000 } },
     errorMessage: 'Vehicle condition notes must not exceed 1000 characters',
+  },
+  exteriorCondition: {
+    in: ['body'],
+    optional: true,
+    isIn: {
+      options: [['GOOD', 'FAIR', 'POOR']],
+    },
+    errorMessage: 'Exterior condition must be GOOD, FAIR, or POOR',
+  },
+  interiorCondition: {
+    in: ['body'],
+    optional: true,
+    isIn: {
+      options: [['GOOD', 'FAIR', 'POOR']],
+    },
+    errorMessage: 'Interior condition must be GOOD, FAIR, or POOR',
+  },
+  inspectionImages: {
+    in: ['body'],
+    notEmpty: true,
+    isArray: true,
+    errorMessage: 'Inspection images are required and must be an array',
+    custom: {
+      options: (images) => {
+        if (!images || images.length === 0) {
+          throw new Error(
+            'At least one inspection image is required for check-in'
+          );
+        }
+        if (images.length > 10) {
+          throw new Error('Maximum 10 inspection images allowed');
+        }
+        if (
+          images.some(
+            (img) => typeof img !== 'string' || img.trim().length === 0
+          )
+        ) {
+          throw new Error(
+            'All inspection images must be valid non-empty strings'
+          );
+        }
+        return true;
+      },
+    },
   },
   batteryLevel: {
     in: ['body'],
