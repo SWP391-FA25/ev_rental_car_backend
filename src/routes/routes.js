@@ -13,6 +13,7 @@ import rentalHistoryRouter from './modules/rental.history.route.js';
 import emailRouter from './modules/email.route.js';
 import notificationRouter from './modules/notification.route.js';
 import payosRouter from './modules/payos.route.js';
+import inspectionRouter from './modules/inspection.route.js';
 
 const router = Router();
 
@@ -30,5 +31,6 @@ router.use('/rental-histories', rentalHistoryRouter);
 router.use('/emails', emailRouter);
 router.use('/notifications', notificationRouter);
 router.use('/payos', payosRouter);
+router.use('/inspections', inspectionRouter);
 
 export default router;
