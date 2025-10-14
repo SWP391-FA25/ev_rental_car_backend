@@ -7,6 +7,7 @@ import {
   getBookingAnalytics,
   getBookingById,
   getBookings,
+  getMyManagedBookings,
   getUserBookings,
   updateBooking,
   updateBookingStatus,
@@ -46,38 +47,47 @@ router.get(
   getBookingAnalytics
 );
 
-// Get user's bookings
+// Get my managed bookings (Staff/Admin only)
+router.get(
+  '/my-managed',
+  authenticate,
+  authorize('ADMIN', 'STAFF'),
+  getBookingsValidation, // Reuse the same validation as getBookings
+  getMyManagedBookings
+);
+
+// Get user's bookings (Admin/Staff only)
 router.get(
   '/user/:userId',
   authenticate,
-  authorize('ADMIN', 'STAFF', 'RENTER'),
+  authorize('ADMIN', 'STAFF'),
   getUserBookingsValidation,
   getUserBookings
 );
 
-// Get booking by ID
+// Get booking by ID (Admin/Staff only)
 router.get(
   '/:id',
   authenticate,
-  authorize('ADMIN', 'STAFF', 'RENTER'),
+  authorize('ADMIN', 'STAFF'),
   getBookingByIdValidation,
   getBookingById
 );
 
-// Create new booking
+// Create new booking (Renter, Staff, Admin can create)
 router.post(
   '/',
   authenticate,
-  authorize('RENTER'),
+  authorize('RENTER', 'STAFF', 'ADMIN'),
   createBookingValidation,
   createBooking
 );
 
-// Update booking
+// Update booking (Admin/Staff only)
 router.put(
   '/:id',
   authenticate,
-  authorize('ADMIN', 'STAFF', 'RENTER'),
+  authorize('ADMIN', 'STAFF'),
   updateBookingValidation,
   updateBooking
 );
@@ -91,16 +101,16 @@ router.patch(
   updateBookingStatus
 );
 
-// Cancel booking
+// Cancel booking (Admin/Staff only)
 router.patch(
   '/:id/cancel',
   authenticate,
-  authorize('ADMIN', 'STAFF', 'RENTER'),
+  authorize('ADMIN', 'STAFF'),
   cancelBookingValidation,
   cancelBooking
 );
 
-// Check-in booking (start rental)
+// Check-in booking (start rental) (Admin/Staff only)
 router.post(
   '/:id/checkin',
   authenticate,
@@ -109,11 +119,11 @@ router.post(
   checkInBooking
 );
 
-// Complete booking
+// Complete booking (Admin/Staff only)
 router.post(
   '/:id/complete',
   authenticate,
-  authorize('ADMIN', 'STAFF', 'RENTER'),
+  authorize('ADMIN', 'STAFF'),
   completeBookingValidation,
   completeBooking
 );
