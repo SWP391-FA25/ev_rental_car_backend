@@ -122,6 +122,7 @@ model User {
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
   bookings      Booking[]
+  managedBookings Booking[] @relation("BookingStaff") // Bookings managed by this staff member
   payments      Payment[]
   rentalHistory RentalHistory[]
   stationStaff  StationStaff[]
@@ -191,6 +192,7 @@ model Booking {
   userId               String             @db.ObjectId
   vehicleId            String             @db.ObjectId
   stationId            String             @db.ObjectId
+  staffId              String?            @db.ObjectId // Staff member responsible for this booking
   startTime            DateTime
   endTime              DateTime?
   actualStartTime      DateTime? // Added actual start time
@@ -215,6 +217,7 @@ model Booking {
   user                 User               @relation(fields: [userId], references: [id])
   vehicle              Vehicle            @relation(fields: [vehicleId], references: [id])
   station              Station            @relation(fields: [stationId], references: [id])
+  staff                User?              @relation("BookingStaff", fields: [staffId], references: [id])
   payments             Payment[]
   rentalHistories      RentalHistory[]
   promotionBookings    PromotionBooking[]
@@ -224,6 +227,7 @@ model Booking {
   @@index([userId, status, startTime])
   @@index([vehicleId, status, startTime])
   @@index([stationId, status, startTime])
+  @@index([staffId, status, startTime]) // Index for staff-managed bookings
 }
 
 model Payment {
@@ -293,7 +297,7 @@ model PromotionBooking {
   @@index([bookingId])
 }
 
-model Pricing { 
+model Pricing {
   id           String     @id @default(auto()) @map("_id") @db.ObjectId
   name         String     // Pricing plan name (e.g., "Standard", "Premium")
   baseRate     Float      // Base daily rate

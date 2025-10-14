@@ -18,6 +18,7 @@ export const getBookings = async (req, res, next) => {
       userId,
       vehicleId,
       stationId,
+      staffId,
       startDate,
       endDate,
       page = 1,
@@ -32,6 +33,7 @@ export const getBookings = async (req, res, next) => {
     if (userId) where.userId = userId;
     if (vehicleId) where.vehicleId = vehicleId;
     if (stationId) where.stationId = stationId;
+    if (staffId) where.staffId = staffId;
 
     if (startDate || endDate) {
       where.startTime = {};
@@ -54,6 +56,7 @@ export const getBookings = async (req, res, next) => {
             },
           },
           station: { select: { id: true, name: true, address: true } },
+          staff: { select: { id: true, name: true, email: true, role: true } },
           payments: true,
         },
         orderBy: { createdAt: 'desc' },
@@ -94,6 +97,7 @@ export const getBookingById = async (req, res, next) => {
           },
         },
         station: { select: { id: true, name: true, address: true } },
+        staff: { select: { id: true, name: true, email: true, role: true } },
         payments: true,
         rentalHistories: true,
         promotionBookings: {
@@ -183,6 +187,7 @@ export const getUserBookings = async (req, res, next) => {
             },
           },
           station: { select: { id: true, name: true, address: true } },
+          staff: { select: { id: true, name: true, email: true, role: true } },
           payments: { select: { id: true, amount: true, status: true } },
         },
         orderBy: { createdAt: 'desc' },
@@ -245,6 +250,7 @@ export const updateBooking = async (req, res, next) => {
         user: { select: { id: true, name: true, email: true } },
         vehicle: { select: { id: true, model: true, licensePlate: true } },
         station: { select: { id: true, name: true, address: true } },
+        staff: { select: { id: true, name: true, email: true, role: true } },
       },
     });
 
@@ -310,6 +316,7 @@ export const updateBookingStatus = async (req, res, next) => {
             select: { id: true, model: true, licensePlate: true, status: true },
           },
           station: { select: { id: true, name: true, address: true } },
+          staff: { select: { id: true, name: true, email: true, role: true } },
         },
       });
 
@@ -414,6 +421,7 @@ export const cancelBooking = async (req, res, next) => {
           user: { select: { id: true, name: true, email: true } },
           vehicle: { select: { id: true, model: true, licensePlate: true } },
           station: { select: { id: true, name: true, address: true } },
+          staff: { select: { id: true, name: true, email: true, role: true } },
         },
       });
 
@@ -539,6 +547,68 @@ export const getBookingAnalytics = async (req, res, next) => {
     return next(error);
   }
 };
+
+// Get bookings managed by the authenticated staff member
+export const getMyManagedBookings = async (req, res, next) => {
+  try {
+    const staffId = req.user.id; // Get authenticated staff member's ID
+    const { status, page = 1, limit = 20 } = req.query;
+
+    // Verify the user is staff or admin
+    if (!['STAFF', 'ADMIN'].includes(req.user.role)) {
+      return res.status(403).json({
+        success: false,
+        message: 'Only staff and admin can access managed bookings',
+      });
+    }
+
+    const where = { staffId };
+    if (status) where.status = status;
+
+    const skip = (page - 1) * limit;
+
+    const [bookings, total] = await Promise.all([
+      prisma.booking.findMany({
+        where,
+        skip: parseInt(skip),
+        take: parseInt(limit),
+        include: {
+          user: { select: { id: true, name: true, email: true, phone: true } },
+          vehicle: {
+            include: {
+              pricing: true,
+            },
+          },
+          station: { select: { id: true, name: true, address: true } },
+          payments: { select: { id: true, amount: true, status: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+      }),
+      prisma.booking.count({ where }),
+    ]);
+
+    return res.json({
+      success: true,
+      data: {
+        bookings,
+        pagination: {
+          currentPage: parseInt(page),
+          totalPages: Math.ceil(total / limit),
+          totalItems: total,
+          itemsPerPage: parseInt(limit),
+        },
+        staffInfo: {
+          id: req.user.id,
+          name: req.user.name,
+          role: req.user.role,
+        },
+      },
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
 /**
  *
  * id                   String             @id @default(auto()) @map("_id") @db.ObjectId
@@ -703,6 +773,7 @@ export const createBooking = async (req, res, next) => {
           userId,
           vehicleId,
           stationId,
+          staffId: user.role !== 'RENTER' ? user.id : null, // Only assign staff if staff/admin creates the booking
           startTime: startDate,
           endTime: endDate,
           pickupLocation,
@@ -719,6 +790,7 @@ export const createBooking = async (req, res, next) => {
           user: { select: { id: true, name: true, email: true } },
           vehicle: { select: { id: true, model: true, licensePlate: true } },
           station: { select: { id: true, name: true, address: true } },
+          staff: { select: { id: true, name: true, email: true, role: true } },
         },
       });
 
@@ -790,6 +862,7 @@ export const createBooking = async (req, res, next) => {
           user: { select: { id: true, name: true, email: true } },
           vehicle: { select: { id: true, model: true, licensePlate: true } },
           station: { select: { id: true, name: true, address: true } },
+          staff: { select: { id: true, name: true, email: true, role: true } },
         },
       });
 
@@ -856,7 +929,6 @@ export const checkInBooking = async (req, res, next) => {
       pickupOdometer,
       vehicleConditionNotes,
       batteryLevel,
-      staffId, // Staff member handling the check-in
     } = req.body;
 
     // Find the booking
@@ -912,42 +984,23 @@ export const checkInBooking = async (req, res, next) => {
     const timeDiffHours =
       Math.abs(actualStartDate.getTime() - scheduledStartDate.getTime()) /
       (1000 * 60 * 60);
-    if (timeDiffHours > 24) {
+    if (timeDiffHours > process.env.OVERDUE_CHECK_IN_INTERVAL) {
       return res.status(400).json({
         success: false,
         message:
-          'Check-in time is too far from scheduled start time (max 24 hours difference)',
+          'Check-in time is too far from scheduled start time (max ' +
+          process.env.OVERDUE_CHECK_IN_INTERVAL +
+          ' hours difference)',
       });
     }
 
     // Note: Future time validation is handled by middleware
 
-    // Validate staff exists if provided
-    if (staffId) {
-      const staff = await prisma.user.findUnique({
-        where: { id: staffId },
-        select: { id: true, role: true, accountStatus: true },
-      });
-
-      if (!staff || !['ADMIN', 'STAFF'].includes(staff.role)) {
-        return res.status(400).json({
-          success: false,
-          message: 'Invalid staff member',
-        });
-      }
-
-      if (staff.accountStatus !== 'ACTIVE') {
-        return res.status(400).json({
-          success: false,
-          message: 'Staff account is not active',
-        });
-      }
-    }
-
     // Prepare update data
     const updateData = {
       status: 'IN_PROGRESS',
       actualStartTime: actualStartDate,
+      staffId: req.user.id, // Assign current staff member as responsible for this booking
       updatedAt: new Date(),
     };
 
@@ -975,6 +1028,7 @@ export const checkInBooking = async (req, res, next) => {
             },
           },
           station: { select: { id: true, name: true, address: true } },
+          staff: { select: { id: true, name: true, email: true, role: true } },
         },
       });
 
@@ -996,7 +1050,7 @@ export const checkInBooking = async (req, res, next) => {
       // Create audit log for check-in
       await tx.auditLog.create({
         data: {
-          userId: staffId || req.user?.id || null,
+          userId: req.user.id, // Use authenticated user directly
           action: 'CHECK_IN',
           tableName: 'Booking',
           recordId: booking.id,
@@ -1028,7 +1082,12 @@ export const checkInBooking = async (req, res, next) => {
           batteryLevel:
             batteryLevel !== undefined ? `${batteryLevel}%` : 'Not updated',
           vehicleCondition: vehicleConditionNotes || 'No notes',
-          handledBy: staffId ? 'Staff member' : 'System',
+          handledBy: `${req.user.role}: ${req.user.id}`,
+          staffAssigned: true, // Indicates staff has been assigned to this booking
+          staffInfo: {
+            id: req.user.id,
+            name: req.user.name,
+          },
         },
       },
     });
@@ -1163,6 +1222,7 @@ export const completeBooking = async (req, res, next) => {
             },
           },
           station: { select: { id: true, name: true, address: true } },
+          staff: { select: { id: true, name: true, email: true, role: true } },
           payments: { select: { id: true, amount: true, status: true } },
         },
       }),
