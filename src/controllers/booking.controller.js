@@ -1327,7 +1327,6 @@ export const checkInBooking = async (req, res, next) => {
       actualStartTime,
       actualPickupLocation,
       pickupOdometer,
-      vehicleConditionNotes,
       batteryLevel,
     } = req.body;
 
@@ -1394,9 +1393,6 @@ export const checkInBooking = async (req, res, next) => {
       });
     }
 
-    // Note: Future time validation is handled by middleware
-
-    // Prepare update data
     const updateData = {
       status: 'IN_PROGRESS',
       actualStartTime: actualStartDate,
@@ -1408,9 +1404,7 @@ export const checkInBooking = async (req, res, next) => {
       updateData.actualPickupLocation = actualPickupLocation;
     if (pickupOdometer !== undefined)
       updateData.pickupOdometer = pickupOdometer;
-    if (vehicleConditionNotes) updateData.notes = vehicleConditionNotes;
 
-    // Use transaction to update booking, vehicle, and create audit log
     const result = await prisma.$transaction(async (tx) => {
       try {
         // Update booking
@@ -1438,7 +1432,7 @@ export const checkInBooking = async (req, res, next) => {
         // Create audit log for check-in
         await tx.auditLog.create({
           data: {
-            userId: req.user.id, // Use authenticated user directly
+            userId: req.user.id,
             action: 'CHECK_IN',
             tableName: 'Booking',
             recordId: booking.id,
@@ -1448,16 +1442,15 @@ export const checkInBooking = async (req, res, next) => {
               actualStartTime: actualStartDate,
               actualPickupLocation,
               pickupOdometer,
-              vehicleConditionNotes,
               batteryLevel,
             },
           },
         });
 
-        return updatedBooking;
+        return { updatedBooking };
       } catch (txError) {
         console.error('Transaction failed in checkInBooking:', txError);
-        throw txError; // Ensures rollback
+        throw txError;
       }
     });
 
@@ -1465,7 +1458,7 @@ export const checkInBooking = async (req, res, next) => {
       success: true,
       message: 'Booking checked in successfully. Vehicle rental has started.',
       data: {
-        booking: result,
+        booking: result.updatedBooking,
         checkInSummary: {
           actualStartTime: actualStartDate.toISOString(),
           scheduledStartTime: booking.startTime,
@@ -1473,13 +1466,13 @@ export const checkInBooking = async (req, res, next) => {
           pickupOdometer: pickupOdometer || 'Not recorded',
           batteryLevel:
             batteryLevel !== undefined ? `${batteryLevel}%` : 'Not updated',
-          vehicleCondition: vehicleConditionNotes || 'No notes',
           handledBy: `${req.user.role}: ${req.user.id}`,
-          staffAssigned: true, // Indicates staff has been assigned to this booking
+          staffAssigned: true,
           staffInfo: {
             id: req.user.id,
             name: req.user.name,
           },
+          note: 'Vehicle inspection should be created separately via /api/inspections endpoint',
         },
       },
     });
@@ -1688,7 +1681,7 @@ export const completeBooking = async (req, res, next) => {
           },
         });
 
-        return updated;
+        return { updated };
       } catch (txError) {
         console.error('Transaction failed in completeBooking:', txError);
         throw txError; // Ensures rollback
@@ -1719,7 +1712,7 @@ export const completeBooking = async (req, res, next) => {
       success: true,
       message: 'Booking completed successfully',
       data: {
-        booking: updatedBooking,
+        booking: updatedBooking.updated,
         summary: {
           duration: `${actualDurationHours} hours`,
           distance:
@@ -1728,20 +1721,22 @@ export const completeBooking = async (req, res, next) => {
               : 'Not recorded',
           startTime: actualStartDate.toISOString(),
           endTime: actualEndDate.toISOString(),
+          damageReport: damageReport || null,
           overtime: {
             hours: overtimeHours,
             amount: overtimeAmount,
           },
           pricing: {
-            basePrice: updatedBooking.basePrice,
-            insuranceAmount: updatedBooking.insuranceAmount,
-            taxAmount: updatedBooking.taxAmount,
-            discountAmount: updatedBooking.discountAmount,
+            basePrice: updatedBooking.updated.basePrice,
+            insuranceAmount: updatedBooking.updated.insuranceAmount,
+            taxAmount: updatedBooking.updated.taxAmount,
+            discountAmount: updatedBooking.updated.discountAmount,
             overtimeAmount,
-            totalAmount: updatedBooking.totalAmount,
-            depositAmount: updatedBooking.depositAmount,
-            depositStatus: updatedBooking.depositStatus,
+            totalAmount: updatedBooking.updated.totalAmount,
+            depositAmount: updatedBooking.updated.depositAmount,
+            depositStatus: updatedBooking.updated.depositStatus,
           },
+          note: 'Vehicle checkout inspection should be created separately via /api/inspections endpoint',
         },
       },
     });

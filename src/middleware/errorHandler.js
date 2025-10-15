@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 export class ApiError extends Error {
   constructor(status, message, details) {
     super(message);
@@ -12,7 +13,6 @@ export function notFoundHandler(req, res, next) {
 }
 
 export function errorHandler(err, req, res, next) {
-  // eslint-disable-next-line no-console
   console.error(err);
 
   // Zod validation

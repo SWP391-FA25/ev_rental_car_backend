@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import { PayOS } from '@payos/node';
 import { prisma } from '../lib/prisma.js';
 import {
