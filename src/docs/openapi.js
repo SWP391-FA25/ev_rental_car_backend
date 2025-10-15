@@ -6010,6 +6010,520 @@ export const openapiSpec = {
         },
       },
     },
+    // Inspection endpoints
+    '/api/inspections': {
+      post: {
+        summary: 'Create a new vehicle inspection',
+        tags: ['Inspections'],
+        security: [{ cookieAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['vehicleId', 'staffId', 'inspectionType'],
+                properties: {
+                  vehicleId: { type: 'string', description: 'Vehicle ID' },
+                  staffId: { type: 'string', description: 'Staff ID' },
+                  bookingId: { type: 'string', description: 'Booking ID (optional)' },
+                  inspectionType: { 
+                    type: 'string', 
+                    enum: ['CHECK_IN', 'CHECK_OUT'],
+                    description: 'Type of inspection' 
+                  },
+                  batteryLevel: { 
+                    type: 'number', 
+                    minimum: 0,
+                    maximum: 100,
+                    description: 'Battery level percentage (0-100)' 
+                  },
+                  exteriorCondition: { 
+                    type: 'string', 
+                    enum: ['GOOD', 'FAIR', 'POOR'],
+                    description: 'Exterior condition' 
+                  },
+                  interiorCondition: { 
+                    type: 'string', 
+                    enum: ['GOOD', 'FAIR', 'POOR'],
+                    description: 'Interior condition' 
+                  },
+                  mileage: { 
+                    type: 'number', 
+                    description: 'Vehicle mileage (required for check-out)' 
+                  },
+                  tireCondition: { 
+                    type: 'string', 
+                    enum: ['GOOD', 'FAIR', 'POOR'],
+                    description: 'Tire condition' 
+                  },
+                  accessories: { 
+                    type: 'array',
+                    items: {
+                      type: 'object',
+                      properties: {
+                        name: { type: 'string' },
+                        present: { type: 'boolean' }
+                      }
+                    },
+                    description: 'List of accessories and their status' 
+                  },
+                  damageNotes: { 
+                    type: 'string', 
+                    description: 'Notes about vehicle damage' 
+                  },
+                  notes: { 
+                    type: 'string', 
+                    description: 'General inspection notes' 
+                  },
+                  images: { 
+                    type: 'array',
+                    items: { type: 'string' },
+                    description: 'Array of image URLs' 
+                  },
+                  documentVerified: { 
+                    type: 'boolean', 
+                    description: 'Whether customer documents were verified' 
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          201: {
+            description: 'Inspection created successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    message: { type: 'string', example: 'Inspection created successfully' },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        inspection: { $ref: '#/components/schemas/VehicleInspection' },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          400: { description: 'Bad request - missing required fields or invalid data' },
+          401: { description: 'Unauthorized' },
+          403: { description: 'Forbidden - Insufficient permissions' },
+        },
+      },
+    },
+    '/api/inspections/{id}': {
+      get: {
+        summary: 'Get inspection by ID',
+        tags: ['Inspections'],
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Inspection ID',
+          },
+        ],
+        responses: {
+          200: {
+            description: 'Inspection details',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        inspection: { $ref: '#/components/schemas/VehicleInspection' },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          404: { description: 'Inspection not found' },
+          401: { description: 'Unauthorized' },
+          403: { description: 'Forbidden - Insufficient permissions' },
+        },
+      },
+      put: {
+        summary: 'Update inspection record',
+        tags: ['Inspections'],
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Inspection ID',
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  batteryLevel: { 
+                    type: 'number', 
+                    minimum: 0,
+                    maximum: 100,
+                    description: 'Battery level percentage (0-100)' 
+                  },
+                  exteriorCondition: { 
+                    type: 'string', 
+                    enum: ['GOOD', 'FAIR', 'POOR'],
+                    description: 'Exterior condition' 
+                  },
+                  interiorCondition: { 
+                    type: 'string', 
+                    enum: ['GOOD', 'FAIR', 'POOR'],
+                    description: 'Interior condition' 
+                  },
+                  mileage: { 
+                    type: 'number', 
+                    description: 'Vehicle mileage' 
+                  },
+                  tireCondition: { 
+                    type: 'string', 
+                    enum: ['GOOD', 'FAIR', 'POOR'],
+                    description: 'Tire condition' 
+                  },
+                  accessories: { 
+                    type: 'array',
+                    items: {
+                      type: 'object',
+                      properties: {
+                        name: { type: 'string' },
+                        present: { type: 'boolean' }
+                      }
+                    },
+                    description: 'List of accessories and their status' 
+                  },
+                  damageNotes: { 
+                    type: 'string', 
+                    description: 'Notes about vehicle damage' 
+                  },
+                  notes: { 
+                    type: 'string', 
+                    description: 'General inspection notes' 
+                  },
+                  images: { 
+                    type: 'array',
+                    items: { type: 'string' },
+                    description: 'Array of image URLs' 
+                  },
+                  documentVerified: { 
+                    type: 'boolean', 
+                    description: 'Whether customer documents were verified' 
+                  },
+                  isCompleted: { 
+                    type: 'boolean', 
+                    description: 'Whether inspection is finalized' 
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          200: {
+            description: 'Inspection updated successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    message: { type: 'string', example: 'Inspection updated successfully' },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        inspection: { $ref: '#/components/schemas/VehicleInspection' },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          400: { description: 'Bad request - invalid data' },
+          404: { description: 'Inspection not found' },
+          401: { description: 'Unauthorized' },
+          403: { description: 'Forbidden - Insufficient permissions' },
+        },
+      },
+      delete: {
+        summary: 'Delete inspection record',
+        tags: ['Inspections'],
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Inspection ID',
+          },
+        ],
+        responses: {
+          200: {
+            description: 'Inspection deleted successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    message: { type: 'string', example: 'Inspection deleted successfully' },
+                  },
+                },
+              },
+            },
+          },
+          404: { description: 'Inspection not found' },
+          401: { description: 'Unauthorized' },
+          403: { description: 'Forbidden - Admin only' },
+        },
+      },
+    },
+    '/api/inspections/booking/{bookingId}': {
+      get: {
+        summary: 'Get inspections for a specific booking (Staff/Admin)',
+        tags: ['Inspections'],
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          {
+            name: 'bookingId',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Booking ID',
+          },
+        ],
+        responses: {
+          200: {
+            description: 'List of inspections for the booking',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        inspections: {
+                          type: 'array',
+                          items: { $ref: '#/components/schemas/VehicleInspection' },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          404: { description: 'Booking not found' },
+          401: { description: 'Unauthorized' },
+          403: { description: 'Forbidden - Insufficient permissions' },
+        },
+      },
+    },
+    '/api/inspections/booking/{bookingId}/renter': {
+      get: {
+        summary: 'Get inspections for a specific booking (Renter)',
+        tags: ['Inspections'],
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          {
+            name: 'bookingId',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Booking ID',
+          },
+        ],
+        responses: {
+          200: {
+            description: 'List of inspections for the booking',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        inspections: {
+                          type: 'array',
+                          items: { $ref: '#/components/schemas/VehicleInspection' },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          404: { description: 'Booking not found' },
+          401: { description: 'Unauthorized' },
+          403: { description: 'Forbidden - Insufficient permissions' },
+        },
+      },
+    },
+    '/api/inspections/vehicle/{vehicleId}': {
+      get: {
+        summary: 'Get inspections for a specific vehicle',
+        tags: ['Inspections'],
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          {
+            name: 'vehicleId',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Vehicle ID',
+          },
+        ],
+        responses: {
+          200: {
+            description: 'List of inspections for the vehicle',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        inspections: {
+                          type: 'array',
+                          items: { $ref: '#/components/schemas/VehicleInspection' },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          404: { description: 'Vehicle not found' },
+          401: { description: 'Unauthorized' },
+          403: { description: 'Forbidden - Insufficient permissions' },
+        },
+      },
+    },
+    '/api/inspections/staff/{staffId}': {
+      get: {
+        summary: 'Get inspections conducted by a specific staff member',
+        tags: ['Inspections'],
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          {
+            name: 'staffId',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Staff ID',
+          },
+        ],
+        responses: {
+          200: {
+            description: 'List of inspections conducted by staff member',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        inspections: {
+                          type: 'array',
+                          items: { $ref: '#/components/schemas/VehicleInspection' },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          404: { description: 'Staff member not found' },
+          401: { description: 'Unauthorized' },
+          403: { description: 'Forbidden - Insufficient permissions' },
+        },
+      },
+    },
+    '/api/inspections/stats': {
+      get: {
+        summary: 'Get inspection statistics',
+        tags: ['Inspections'],
+        security: [{ cookieAuth: [] }],
+        responses: {
+          200: {
+            description: 'Inspection statistics',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        conditionStats: {
+                          type: 'array',
+                          items: {
+                            type: 'object',
+                            properties: {
+                              exteriorCondition: { type: 'string' },
+                              _count: { type: 'integer' },
+                            },
+                          },
+                        },
+                        typeStats: {
+                          type: 'array',
+                          items: {
+                            type: 'object',
+                            properties: {
+                              inspectionType: { type: 'string' },
+                              _count: { type: 'integer' },
+                            },
+                          },
+                        },
+                        recentInspections: {
+                          type: 'array',
+                          items: { $ref: '#/components/schemas/VehicleInspection' },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          401: { description: 'Unauthorized' },
+          403: { description: 'Forbidden - Admin only' },
+        },
+      },
+    },
   },
   components: {
     securitySchemes: {
@@ -6166,6 +6680,131 @@ export const openapiSpec = {
             },
           },
         ],
+      },
+      VehicleInspection: {
+        type: 'object',
+        properties: {
+          id: { type: 'string', description: 'Inspection ID' },
+          vehicleId: { type: 'string', description: 'Vehicle ID' },
+          staffId: { type: 'string', description: 'Staff ID' },
+          bookingId: { type: 'string', nullable: true, description: 'Booking ID' },
+          inspectionType: { 
+            type: 'string', 
+            enum: ['CHECK_IN', 'CHECK_OUT'],
+            description: 'Type of inspection' 
+          },
+          batteryLevel: { 
+            type: 'number', 
+            description: 'Battery level percentage (0-100)' 
+          },
+          exteriorCondition: { 
+            type: 'string', 
+            enum: ['GOOD', 'FAIR', 'POOR'],
+            description: 'Exterior condition' 
+          },
+          interiorCondition: { 
+            type: 'string', 
+            enum: ['GOOD', 'FAIR', 'POOR'],
+            description: 'Interior condition' 
+          },
+          mileage: { 
+            type: 'number', 
+            nullable: true,
+            description: 'Vehicle mileage' 
+          },
+          tireCondition: { 
+            type: 'string', 
+            enum: ['GOOD', 'FAIR', 'POOR'],
+            nullable: true,
+            description: 'Tire condition' 
+          },
+          accessories: { 
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                name: { type: 'string' },
+                present: { type: 'boolean' }
+              }
+            },
+            description: 'List of accessories and their status' 
+          },
+          damageNotes: { 
+            type: 'string', 
+            nullable: true,
+            description: 'Notes about vehicle damage' 
+          },
+          notes: { 
+            type: 'string', 
+            nullable: true,
+            description: 'General inspection notes' 
+          },
+          images: { 
+            type: 'array',
+            items: { type: 'string' },
+            nullable: true,
+            description: 'Array of image URLs' 
+          },
+          documentVerified: { 
+            type: 'boolean', 
+            description: 'Whether customer documents were verified' 
+          },
+          isCompleted: { 
+            type: 'boolean', 
+            description: 'Whether inspection is finalized' 
+          },
+          createdAt: { 
+            type: 'string', 
+            format: 'date-time',
+            description: 'Creation timestamp' 
+          },
+          updatedAt: { 
+            type: 'string', 
+            format: 'date-time',
+            description: 'Last update timestamp' 
+          },
+          vehicle: { $ref: '#/components/schemas/Vehicle' },
+          staff: { 
+            type: 'object',
+            properties: {
+              id: { type: 'string' },
+              name: { type: 'string' },
+              email: { type: 'string' },
+            },
+          },
+          booking: { $ref: '#/components/schemas/Booking' },
+        },
+      },
+      Vehicle: {
+        type: 'object',
+        properties: {
+          id: { type: 'string', description: 'Vehicle ID' },
+          stationId: { type: 'string', description: 'Station ID' },
+          type: { 
+            type: 'string', 
+            enum: ['SEDAN', 'SUV', 'HATCHBACK', 'COUPE', 'CONVERTIBLE', 'TRUCK', 'VAN'],
+            description: 'Vehicle type' 
+          },
+          brand: { type: 'string', description: 'Vehicle brand' },
+          model: { type: 'string', description: 'Vehicle model' },
+          year: { type: 'integer', description: 'Vehicle year' },
+          color: { type: 'string', description: 'Vehicle color' },
+          seats: { type: 'integer', description: 'Number of seats' },
+          licensePlate: { type: 'string', nullable: true, description: 'License plate' },
+          batteryLevel: { type: 'number', description: 'Battery level percentage (0-100)' },
+          fuelType: { 
+            type: 'string', 
+            enum: ['ELECTRIC', 'HYBRID', 'GASOLINE'],
+            description: 'Fuel type' 
+          },
+          status: { 
+            type: 'string', 
+            enum: ['AVAILABLE', 'RENTED', 'MAINTENANCE', 'RESERVED', 'OUT_OF_SERVICE'],
+            description: 'Vehicle status' 
+          },
+          createdAt: { type: 'string', format: 'date-time', description: 'Creation timestamp' },
+          updatedAt: { type: 'string', format: 'date-time', description: 'Last update timestamp' },
+        },
       },
     },
   },
