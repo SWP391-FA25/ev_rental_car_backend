@@ -42,6 +42,7 @@ export const createNotificationForUser = async (
  * @param {Object} booking - Booking object with user, vehicle, station info
  * @param {string} createdByRole - Role of user who created booking (STAFF/ADMIN)
  */
+// eslint-disable-next-line no-unused-vars
 export const notifyBookingCreated = async (booking, createdByRole) => {
   const vehicleName = booking.vehicle?.model || 'vehicle';
   const startTime = new Date(booking.startTime).toLocaleDateString('vi-VN');

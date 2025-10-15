@@ -1327,11 +1327,7 @@ export const checkInBooking = async (req, res, next) => {
       actualStartTime,
       actualPickupLocation,
       pickupOdometer,
-      vehicleConditionNotes,
       batteryLevel,
-      exteriorCondition = 'GOOD', // Default to GOOD if not provided
-      interiorCondition = 'GOOD', // Default to GOOD if not provided
-      inspectionImages = [], // Array of image URLs
     } = req.body;
 
     // Find the booking
@@ -1433,30 +1429,10 @@ export const checkInBooking = async (req, res, next) => {
           data: vehicleUpdateData,
         });
 
-        if (inspectionImages.length === 0) {
-          throw new Error(
-            'At least one inspection image is required for vehicle check-in'
-          );
-        }
-
-        const vehicleInspection = await tx.vehicleInspection.create({
-          data: {
-            vehicleId: booking.vehicleId,
-            staffId: req.user.id,
-            bookingId: booking.id,
-            inspectionType: 'CHECK_IN',
-            batteryLevel: batteryLevel || booking.vehicle.batteryLevel || 0,
-            exteriorCondition,
-            interiorCondition,
-            notes: vehicleConditionNotes || null,
-            images: inspectionImages, // Always store images (required)
-          },
-        });
-
         // Create audit log for check-in
         await tx.auditLog.create({
           data: {
-            userId: req.user.id, // Use authenticated user directly
+            userId: req.user.id,
             action: 'CHECK_IN',
             tableName: 'Booking',
             recordId: booking.id,
@@ -1467,15 +1443,14 @@ export const checkInBooking = async (req, res, next) => {
               actualPickupLocation,
               pickupOdometer,
               batteryLevel,
-              inspectionCreated: vehicleInspection.id, // Always created now
             },
           },
         });
 
-        return { updatedBooking, vehicleInspection };
+        return { updatedBooking };
       } catch (txError) {
         console.error('Transaction failed in checkInBooking:', txError);
-        throw txError; // Ensures rollback
+        throw txError;
       }
     });
 
@@ -1484,7 +1459,6 @@ export const checkInBooking = async (req, res, next) => {
       message: 'Booking checked in successfully. Vehicle rental has started.',
       data: {
         booking: result.updatedBooking,
-        inspection: result.vehicleInspection,
         checkInSummary: {
           actualStartTime: actualStartDate.toISOString(),
           scheduledStartTime: booking.startTime,
@@ -1492,18 +1466,13 @@ export const checkInBooking = async (req, res, next) => {
           pickupOdometer: pickupOdometer || 'Not recorded',
           batteryLevel:
             batteryLevel !== undefined ? `${batteryLevel}%` : 'Not updated',
-          vehicleCondition: {
-            exterior: exteriorCondition,
-            interior: interiorCondition,
-            notes: vehicleConditionNotes || 'No additional notes',
-            inspectionId: result.vehicleInspection.id, // Always present now
-          },
           handledBy: `${req.user.role}: ${req.user.id}`,
-          staffAssigned: true, // Indicates staff has been assigned to this booking
+          staffAssigned: true,
           staffInfo: {
             id: req.user.id,
             name: req.user.name,
           },
+          note: 'Vehicle inspection should be created separately via /api/inspections endpoint',
         },
       },
     });
@@ -1524,9 +1493,6 @@ export const completeBooking = async (req, res, next) => {
       damageReport,
       batteryLevel, // Changed from fuelLevel to batteryLevel for EVs
       rating, // Add rating for rental history
-      exteriorCondition = 'GOOD', // Vehicle condition at return
-      interiorCondition = 'GOOD', // Vehicle condition at return
-      inspectionImages = [], // Array of image URLs for checkout inspection
     } = req.body;
 
     // Find the booking
@@ -1701,29 +1667,6 @@ export const completeBooking = async (req, res, next) => {
           },
         });
 
-        // Create vehicle inspection record for check-out
-        let checkoutInspection = null;
-        if (
-          damageReport ||
-          exteriorCondition !== 'GOOD' ||
-          interiorCondition !== 'GOOD' ||
-          inspectionImages.length > 0
-        ) {
-          checkoutInspection = await tx.vehicleInspection.create({
-            data: {
-              vehicleId: booking.vehicleId,
-              staffId: req.user.id,
-              bookingId: booking.id,
-              inspectionType: 'CHECK_OUT',
-              batteryLevel: batteryLevel || booking.vehicle.batteryLevel || 0,
-              exteriorCondition,
-              interiorCondition,
-              notes: damageReport || notes || null,
-              images: inspectionImages.length > 0 ? inspectionImages : null,
-            },
-          });
-        }
-
         // Create rental history record
         await tx.rentalHistory.create({
           data: {
@@ -1738,7 +1681,7 @@ export const completeBooking = async (req, res, next) => {
           },
         });
 
-        return { updated, checkoutInspection };
+        return { updated };
       } catch (txError) {
         console.error('Transaction failed in completeBooking:', txError);
         throw txError; // Ensures rollback
@@ -1770,7 +1713,6 @@ export const completeBooking = async (req, res, next) => {
       message: 'Booking completed successfully',
       data: {
         booking: updatedBooking.updated,
-        checkoutInspection: updatedBooking.checkoutInspection,
         summary: {
           duration: `${actualDurationHours} hours`,
           distance:
@@ -1779,26 +1721,22 @@ export const completeBooking = async (req, res, next) => {
               : 'Not recorded',
           startTime: actualStartDate.toISOString(),
           endTime: actualEndDate.toISOString(),
-          vehicleCondition: {
-            exterior: exteriorCondition,
-            interior: interiorCondition,
-            damageReport: damageReport || null,
-            inspectionId: updatedBooking.checkoutInspection?.id || null,
-          },
+          damageReport: damageReport || null,
           overtime: {
             hours: overtimeHours,
             amount: overtimeAmount,
           },
           pricing: {
-            basePrice: updatedBooking.basePrice,
-            insuranceAmount: updatedBooking.insuranceAmount,
-            taxAmount: updatedBooking.taxAmount,
-            discountAmount: updatedBooking.discountAmount,
+            basePrice: updatedBooking.updated.basePrice,
+            insuranceAmount: updatedBooking.updated.insuranceAmount,
+            taxAmount: updatedBooking.updated.taxAmount,
+            discountAmount: updatedBooking.updated.discountAmount,
             overtimeAmount,
-            totalAmount: updatedBooking.totalAmount,
-            depositAmount: updatedBooking.depositAmount,
-            depositStatus: updatedBooking.depositStatus,
+            totalAmount: updatedBooking.updated.totalAmount,
+            depositAmount: updatedBooking.updated.depositAmount,
+            depositStatus: updatedBooking.updated.depositStatus,
           },
+          note: 'Vehicle checkout inspection should be created separately via /api/inspections endpoint',
         },
       },
     });

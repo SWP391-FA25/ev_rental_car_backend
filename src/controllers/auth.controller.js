@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import bcrypt from 'bcrypt';
 import Joi from 'joi';
 import jwt from 'jsonwebtoken';

@@ -1,0 +1,149 @@
+{
+  "separated_architecture_examples": {
+    "description": "Examples showing the separated booking and inspection controllers approach"
+  },
+
+  "1_checkin_booking": {
+    "description": "Step 1: Check-in booking (only handles booking status change)",
+    "method": "POST",
+    "url": "{{base_url}}/api/bookings/{{booking_id}}/check-in",
+    "headers": {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer {{staff_token}}"
+    },
+    "body": {
+      "actualStartTime": "2025-10-15T09:15:00.000Z",
+      "actualPickupLocation": "Station Bay 3",
+      "pickupOdometer": 15420.5,
+      "batteryLevel": 85,
+      "vehicleConditionNotes": "Vehicle ready for rental"
+    }
+  },
+
+  "2_create_checkin_inspection": {
+    "description": "Step 2: Create check-in inspection (separate API call)",
+    "method": "POST",
+    "url": "{{base_url}}/api/inspections",
+    "headers": {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer {{staff_token}}"
+    },
+    "body": {
+      "vehicleId": "{{vehicle_id}}",
+      "staffId": "{{staff_id}}",
+      "bookingId": "{{booking_id}}",
+      "inspectionType": "CHECK_IN",
+      "batteryLevel": 85,
+      "exteriorCondition": "GOOD",
+      "interiorCondition": "GOOD",
+      "mileage": 15420.5,
+      "notes": "Vehicle is in excellent condition. All lights working properly.",
+      "images": [
+        "https://example.com/inspection-front.jpg",
+        "https://example.com/inspection-rear.jpg",
+        "https://example.com/inspection-interior.jpg"
+      ],
+      "documentVerified": true
+    }
+  },
+
+  "3_complete_booking": {
+    "description": "Step 3: Complete booking (only handles booking completion)",
+    "method": "POST",
+    "url": "{{base_url}}/api/bookings/{{booking_id}}/complete",
+    "headers": {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer {{staff_token}}"
+    },
+    "body": {
+      "actualEndTime": "2025-10-15T17:30:00.000Z",
+      "actualReturnLocation": "Station Bay 1",
+      "returnOdometer": 15489.2,
+      "batteryLevel": 45,
+      "notes": "Customer returned vehicle on time",
+      "damageReport": "No new damage observed",
+      "rating": 5
+    }
+  },
+
+  "4_create_checkout_inspection": {
+    "description": "Step 4: Create check-out inspection (separate API call)",
+    "method": "POST",
+    "url": "{{base_url}}/api/inspections",
+    "headers": {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer {{staff_token}}"
+    },
+    "body": {
+      "vehicleId": "{{vehicle_id}}",
+      "staffId": "{{staff_id}}",
+      "bookingId": "{{booking_id}}",
+      "inspectionType": "CHECK_OUT",
+      "batteryLevel": 45,
+      "exteriorCondition": "GOOD",
+      "interiorCondition": "GOOD",
+      "mileage": 15489.2,
+      "damageNotes": "No new damage observed",
+      "notes": "Customer returned vehicle on time",
+      "images": [
+        "https://example.com/checkout-front.jpg",
+        "https://example.com/checkout-rear.jpg",
+        "https://example.com/checkout-interior.jpg"
+      ],
+      "documentVerified": false
+    }
+  },
+
+  "frontend_workflow": {
+    "checkin_process": [
+      "1. Call POST /api/bookings/:id/check-in",
+      "2. If successful, call POST /api/inspections with CHECK_IN type",
+      "3. Handle any errors from either step"
+    ],
+    "checkout_process": [
+      "1. Call POST /api/bookings/:id/complete",
+      "2. If successful, call POST /api/inspections with CHECK_OUT type",
+      "3. Handle any errors from either step"
+    ]
+  },
+
+  "additional_inspection_endpoints": {
+    "get_inspections_by_booking": {
+      "method": "GET",
+      "url": "{{base_url}}/api/inspections?bookingId={{booking_id}}",
+      "description": "Get all inspections for a specific booking"
+    },
+    "get_inspection_by_id": {
+      "method": "GET",
+      "url": "{{base_url}}/api/inspections/{{inspection_id}}",
+      "description": "Get specific inspection details"
+    },
+    "update_inspection": {
+      "method": "PUT",
+      "url": "{{base_url}}/api/inspections/{{inspection_id}}",
+      "description": "Update inspection (e.g., mark as completed)"
+    },
+    "get_vehicle_inspections": {
+      "method": "GET",
+      "url": "{{base_url}}/api/inspections?vehicleId={{vehicle_id}}",
+      "description": "Get all inspections for a specific vehicle"
+    }
+  },
+
+  "benefits_of_separation": {
+    "pros": [
+      "✅ Single responsibility principle",
+      "✅ Reusable inspection endpoints",
+      "✅ Frontend can choose when to create inspections",
+      "✅ Easier testing and debugging",
+      "✅ Cleaner, more focused controllers",
+      "✅ Can create inspections outside booking flow (maintenance, etc.)"
+    ],
+    "considerations": [
+      "⚠️ Frontend needs to handle multiple API calls",
+      "⚠️ Need to handle partial failures (booking succeeds, inspection fails)",
+      "⚠️ More complex error handling",
+      "⚠️ Risk of data inconsistency if not handled properly"
+    ]
+  }
+}

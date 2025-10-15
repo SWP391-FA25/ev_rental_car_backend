@@ -16,6 +16,7 @@ export function authenticate(req, res, next) {
     const payload = jwt.verify(token, process.env.JWT_SECRET);
     req.user = { id: payload.sub, role: payload.role };
     return next();
+    // eslint-disable-next-line no-unused-vars
   } catch (err) {
     return res.status(401).json({ success: false, message: 'Unauthorized' });
   }
