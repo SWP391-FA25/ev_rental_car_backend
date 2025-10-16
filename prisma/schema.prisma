@@ -96,6 +96,15 @@ enum PaymentMethod {
   PAYOS
 }
 
+enum PaymentType {
+  DEPOSIT
+  RENTAL_FEE
+  LATE_FEE
+  DAMAGE_FEE
+  EXTENSION_FEE
+  OTHER
+}
+
 enum VerifyStatus {
   UNVERIFIED
   PENDING
@@ -250,6 +259,7 @@ model Payment {
   isDeposit       Boolean       @default(false) // Indicates if this is a security deposit
   depositStatus   PaymentStatus? // Status of deposit (PENDING, AUTHORIZED, CAPTURED, REFUNDED)
   depositRefundDate DateTime?   // When deposit was refunded
+  paymentType     PaymentType   @default(DEPOSIT) // Type of payment
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
   user            User          @relation(fields: [userId], references: [id])
