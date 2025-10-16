@@ -14,15 +14,74 @@ const payos = new PayOS({
 });
 
 /**
- * Create a payment link for a booking
+ * Create a deposit payment link for a booking
  * @param {import('express').Request} req
  * @param {import('express').Response} res
  * @param {import('express').NextFunction} next
  */
+export async function createDepositPayment(req, res, next) {
+  // Set payment type to DEPOSIT and call the main function
+  req.body.paymentType = 'DEPOSIT';
+  return createPayOSPayment(req, res, next);
+}
+
+/**
+ * Create a rental fee payment link for a booking
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} next
+ */
+export async function createRentalFeePayment(req, res, next) {
+  // Set payment type to RENTAL_FEE and call the main function
+  req.body.paymentType = 'RENTAL_FEE';
+  return createPayOSPayment(req, res, next);
+}
+
+/**
+ * Create a late fee payment link for a booking
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} next
+ */
+export async function createLateFeePayment(req, res, next) {
+  // Set payment type to LATE_FEE and call the main function
+  req.body.paymentType = 'LATE_FEE';
+  return createPayOSPayment(req, res, next);
+}
+
+/**
+ * Create a damage fee payment link for a booking
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} next
+ */
+export async function createDamageFeePayment(req, res, next) {
+  // Set payment type to DAMAGE_FEE and call the main function
+  req.body.paymentType = 'DAMAGE_FEE';
+  return createPayOSPayment(req, res, next);
+}
+
+/**
+ * Create an extension fee payment link for a booking
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} next
+ */
+export async function createExtensionFeePayment(req, res, next) {
+  // Set payment type to EXTENSION_FEE and call the main function
+  req.body.paymentType = 'EXTENSION_FEE';
+  return createPayOSPayment(req, res, next);
+}
+
 export async function createPayOSPayment(req, res, next) {
   try {
     const userId = req.user?.id;
-    const { bookingId, amount, description } = req.body || {};
+    const {
+      bookingId,
+      amount,
+      description,
+      paymentType = 'DEPOSIT',
+    } = req.body || {};
 
     if (!userId) {
       return res.status(401).json({ success: false, message: 'Unauthorized' });
@@ -80,8 +139,8 @@ export async function createPayOSPayment(req, res, next) {
       orderCode: orderCode,
       amount: amount,
       description: paymentDescription,
-      returnUrl: `${process.env.FRONTEND_URL || 'http://localhost:5173'}/payment/success?bookingId=${bookingId}`,
-      cancelUrl: `${process.env.FRONTEND_URL || 'http://localhost:5173'}/payment/cancel?bookingId=${bookingId}`,
+      returnUrl: `http://localhost:${process.env.PORT || 5000}/api/payos/success?bookingId=${bookingId}`,
+      cancelUrl: `http://localhost:${process.env.PORT || 5000}/api/payos/failure?bookingId=${bookingId}`,
     });
 
     // Save payment reference to database
@@ -91,6 +150,7 @@ export async function createPayOSPayment(req, res, next) {
         bookingId: bookingId,
         amount: amount,
         paymentMethod: 'PAYOS',
+        paymentType: paymentType, // Add payment type
         transactionId: orderCode.toString(),
         status: 'PENDING',
         paymentDate: new Date(),
@@ -112,12 +172,6 @@ export async function createPayOSPayment(req, res, next) {
   }
 }
 
-/**
- * Handle PayOS webhook callback
- * @param {import('express').Request} req
- * @param {import('express').Response} res
- * @param {import('express').NextFunction} next
- */
 export async function handlePayOSWebhook(req, res, next) {
   try {
     // Verify webhook signature
@@ -233,12 +287,171 @@ export async function handlePayOSWebhook(req, res, next) {
   }
 }
 
-/**
- * Get payment status
- * @param {import('express').Request} req
- * @param {import('express').Response} res
- * @param {import('express').NextFunction} next
- */
+export async function handlePayOSSuccess(req, res, next) {
+  try {
+    const { bookingId, orderCode, status } = req.query;
+
+    if (!bookingId || !orderCode || status !== 'PAID') {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid payment parameters',
+      });
+    }
+
+    // Find payment by orderCode
+    const payment = await prisma.payment.findFirst({
+      where: { transactionId: orderCode.toString() },
+    });
+
+    if (!payment) {
+      return res.status(404).json({
+        success: false,
+        message: 'Payment not found',
+      });
+    }
+
+    // Update payment status to PAID
+    const updatedPayment = await prisma.payment.update({
+      where: { id: payment.id },
+      data: {
+        status: 'PAID',
+        paymentDate: new Date(),
+      },
+    });
+
+    // Handle different payment types
+    if (payment.paymentType === 'DEPOSIT') {
+      // Handle deposit payment logic (current behavior)
+      // Update booking status to COMPLETED
+      const booking = await prisma.booking.findUnique({
+        where: { id: bookingId },
+        include: {
+          user: { select: { id: true, name: true } },
+          vehicle: { select: { id: true, model: true } },
+        },
+      });
+
+      if (
+        booking &&
+        (booking.status === 'PENDING' || booking.status === 'CONFIRMED')
+      ) {
+        await prisma.$transaction(async (tx) => {
+          // Update booking status
+          await tx.booking.update({
+            where: { id: bookingId },
+            data: { status: 'COMPLETED' },
+          });
+
+          // Update vehicle status
+          await tx.vehicle.update({
+            where: { id: booking.vehicleId },
+            data: { status: 'AVAILABLE' },
+          });
+        });
+
+        // Send notification about successful payment
+        try {
+          await notifyPaymentReceived(updatedPayment, booking);
+        } catch (notificationError) {
+          console.error(
+            'Error sending payment notification:',
+            notificationError
+          );
+        }
+      }
+    } else if (payment.paymentType === 'RENTAL_FEE') {
+      // Handle rental fee payment logic
+      // Update booking payment status or other relevant logic
+      console.log('Processing rental fee payment');
+    } else if (payment.paymentType === 'LATE_FEE') {
+      // Handle late fee payment logic
+      console.log('Processing late fee payment');
+    } else if (payment.paymentType === 'DAMAGE_FEE') {
+      // Handle damage fee payment logic
+      console.log('Processing damage fee payment');
+    } else if (payment.paymentType === 'EXTENSION_FEE') {
+      // Handle extension fee payment logic
+      console.log('Processing extension fee payment');
+    } else {
+      // Handle other payment types
+      console.log('Processing other payment type');
+    }
+
+    // Redirect to frontend success page
+    const redirectUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/payment/success?bookingId=${bookingId}&paymentId=${payment.id}`;
+    return res.redirect(redirectUrl);
+  } catch (error) {
+    console.error('PayOS Success Handler Error:', error);
+    return next(error);
+  }
+}
+
+export async function handlePayOSFailure(req, res, next) {
+  try {
+    const { bookingId, orderCode, status } = req.query;
+
+    if (!bookingId || !orderCode) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid payment parameters',
+      });
+    }
+
+    // Find payment by orderCode
+    const payment = await prisma.payment.findFirst({
+      where: { transactionId: orderCode.toString() },
+    });
+
+    if (!payment) {
+      return res.status(404).json({
+        success: false,
+        message: 'Payment not found',
+      });
+    }
+
+    // Update payment status to FAILED
+    const updatedPayment = await prisma.payment.update({
+      where: { id: payment.id },
+      data: { status: 'FAILED' },
+    });
+
+    // Handle different payment types for failure
+    if (payment.paymentType === 'DEPOSIT') {
+      // Get booking info for notification
+      const booking = await prisma.booking.findUnique({
+        where: { id: bookingId },
+        include: {
+          user: { select: { id: true, name: true } },
+          vehicle: { select: { id: true, model: true } },
+        },
+      });
+
+      // Send notification about failed payment
+      try {
+        if (booking) {
+          await notifyPaymentFailed(updatedPayment, booking);
+        }
+      } catch (notificationError) {
+        console.error(
+          'Error sending payment failure notification:',
+          notificationError
+        );
+        // Don't fail the payment update if notifications fail
+      }
+    } else {
+      // Handle other payment types failure
+      console.log(`Payment failed for type: ${payment.paymentType}`);
+    }
+
+    // Redirect to frontend failure page
+    const redirectUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/payment/failure?bookingId=${bookingId}&paymentId=${payment.id}`;
+    return res.redirect(redirectUrl);
+  } catch (error) {
+    console.error('PayOS Failure Handler Error:', error);
+    return next(error);
+  }
+}
+
 export async function getPayOSPaymentStatus(req, res, next) {
   try {
     const userId = req.user?.id;
@@ -274,6 +487,7 @@ export async function getPayOSPaymentStatus(req, res, next) {
         status: payment.status,
         amount: payment.amount,
         paymentMethod: payment.paymentMethod,
+        paymentType: payment.paymentType,
         transactionId: payment.transactionId,
         paymentDate: payment.paymentDate,
       },
