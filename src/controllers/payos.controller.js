@@ -13,12 +13,6 @@ const payos = new PayOS({
   checksumKey: process.env.PAYOS_PRIVATE_KEY,
 });
 
-/**
- * Create a payment link for a booking
- * @param {import('express').Request} req
- * @param {import('express').Response} res
- * @param {import('express').NextFunction} next
- */
 export async function createPayOSPayment(req, res, next) {
   try {
     const userId = req.user?.id;
@@ -80,8 +74,8 @@ export async function createPayOSPayment(req, res, next) {
       orderCode: orderCode,
       amount: amount,
       description: paymentDescription,
-      returnUrl: `${process.env.FRONTEND_URL || 'http://localhost:5173'}/payment/success?bookingId=${bookingId}`,
-      cancelUrl: `${process.env.FRONTEND_URL || 'http://localhost:5173'}/payment/cancel?bookingId=${bookingId}`,
+      returnUrl: `${process.env.BACKEND_URL || 'http://localhost:5000'}/api/payos/success?bookingId=${bookingId}`,
+      cancelUrl: `${process.env.BACKEND_URL || 'http://localhost:5000'}/api/payos/failure?bookingId=${bookingId}`,
     });
 
     // Save payment reference to database
@@ -112,12 +106,6 @@ export async function createPayOSPayment(req, res, next) {
   }
 }
 
-/**
- * Handle PayOS webhook callback
- * @param {import('express').Request} req
- * @param {import('express').Response} res
- * @param {import('express').NextFunction} next
- */
 export async function handlePayOSWebhook(req, res, next) {
   try {
     // Verify webhook signature
@@ -233,12 +221,142 @@ export async function handlePayOSWebhook(req, res, next) {
   }
 }
 
-/**
- * Get payment status
- * @param {import('express').Request} req
- * @param {import('express').Response} res
- * @param {import('express').NextFunction} next
- */
+export async function handlePayOSSuccess(req, res, next) {
+  try {
+    const { bookingId, orderCode, status } = req.query;
+
+    if (!bookingId || !orderCode || status !== 'PAID') {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid payment parameters',
+      });
+    }
+
+    // Find payment by orderCode
+    const payment = await prisma.payment.findFirst({
+      where: { transactionId: orderCode.toString() },
+    });
+
+    if (!payment) {
+      return res.status(404).json({
+        success: false,
+        message: 'Payment not found',
+      });
+    }
+
+    // Update payment status to PAID
+    const updatedPayment = await prisma.payment.update({
+      where: { id: payment.id },
+      data: {
+        status: 'PAID',
+        paymentDate: new Date(),
+      },
+    });
+
+    // Update booking status to COMPLETED
+    const booking = await prisma.booking.findUnique({
+      where: { id: bookingId },
+      include: {
+        user: { select: { id: true, name: true } },
+        vehicle: { select: { id: true, model: true } },
+      },
+    });
+
+    if (
+      booking &&
+      (booking.status === 'PENDING' || booking.status === 'CONFIRMED')
+    ) {
+      await prisma.$transaction(async (tx) => {
+        // Update booking status
+        await tx.booking.update({
+          where: { id: bookingId },
+          data: { status: 'COMPLETED' },
+        });
+
+        // Update vehicle status
+        await tx.vehicle.update({
+          where: { id: booking.vehicleId },
+          data: { status: 'AVAILABLE' },
+        });
+      });
+
+      // Send notification about successful payment
+      try {
+        await notifyPaymentReceived(updatedPayment, booking);
+      } catch (notificationError) {
+        console.error('Error sending payment notification:', notificationError);
+      }
+    }
+
+    // Redirect to frontend success page
+    const redirectUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/payment/success?bookingId=${bookingId}&paymentId=${payment.id}`;
+    return res.redirect(redirectUrl);
+  } catch (error) {
+    console.error('PayOS Success Handler Error:', error);
+    return next(error);
+  }
+}
+
+export async function handlePayOSFailure(req, res, next) {
+  try {
+    const { bookingId, orderCode, status } = req.query;
+
+    if (!bookingId || !orderCode) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid payment parameters',
+      });
+    }
+
+    // Find payment by orderCode
+    const payment = await prisma.payment.findFirst({
+      where: { transactionId: orderCode.toString() },
+    });
+
+    if (!payment) {
+      return res.status(404).json({
+        success: false,
+        message: 'Payment not found',
+      });
+    }
+
+    // Update payment status to FAILED
+    const updatedPayment = await prisma.payment.update({
+      where: { id: payment.id },
+      data: { status: 'FAILED' },
+    });
+
+    // Get booking info for notification
+    const booking = await prisma.booking.findUnique({
+      where: { id: bookingId },
+      include: {
+        user: { select: { id: true, name: true } },
+        vehicle: { select: { id: true, model: true } },
+      },
+    });
+
+    // Send notification about failed payment
+    try {
+      if (booking) {
+        await notifyPaymentFailed(updatedPayment, booking);
+      }
+    } catch (notificationError) {
+      console.error(
+        'Error sending payment failure notification:',
+        notificationError
+      );
+      // Don't fail the payment update if notifications fail
+    }
+
+    // Redirect to frontend failure page
+    const redirectUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/payment/failure?bookingId=${bookingId}&paymentId=${payment.id}`;
+    return res.redirect(redirectUrl);
+  } catch (error) {
+    console.error('PayOS Failure Handler Error:', error);
+    return next(error);
+  }
+}
+
 export async function getPayOSPaymentStatus(req, res, next) {
   try {
     const userId = req.user?.id;
