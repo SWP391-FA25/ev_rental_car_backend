@@ -8,6 +8,7 @@ import {
   notifyBookingStarted,
   notifyStaffNewBooking,
 } from '../utils/notificationHelper.js';
+import { skip } from '@prisma/client/runtime/library';
 
 // Constants for magic numbers (with environment variable fallbacks)
 const PRICING_RATES = {
@@ -451,9 +452,6 @@ export const updateBookingStatus = async (req, res, next) => {
 
     let vehicleStatus;
     switch (status) {
-      case 'CONFIRMED':
-        vehicleStatus = 'RESERVED';
-        break;
       case 'IN_PROGRESS':
         // Note: IN_PROGRESS should be set through checkInBooking function
         // But keeping this for backward compatibility
@@ -513,9 +511,6 @@ export const updateBookingStatus = async (req, res, next) => {
     // Send notifications based on status change
     try {
       switch (status) {
-        case 'CONFIRMED':
-          await notifyBookingConfirmed(result);
-          break;
         case 'IN_PROGRESS':
           await notifyBookingStarted(result);
           break;
@@ -1737,6 +1732,133 @@ export const completeBooking = async (req, res, next) => {
             depositStatus: updatedBooking.updated.depositStatus,
           },
           note: 'Vehicle checkout inspection should be created separately via /api/inspections endpoint',
+        },
+      },
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+export const getDepositStatus = async (req, res, next) => {
+  const { id } = req.params;
+  try {
+    const existingBooking = await prisma.booking.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        status: true,
+        depositStatus: true,
+        depositAmount: true,
+        userId: true,
+      },
+    });
+
+    if (!existingBooking) {
+      return res.status(404).json({
+        success: false,
+        message: 'Booking not found',
+      });
+    }
+
+    if (existingBooking.depositStatus === 'PAID') {
+      return res.json({
+        success: true,
+        message: 'Deposit is already confirmed for this booking',
+        data: { booking: existingBooking },
+      });
+    }
+
+    const payment = await prisma.payment.findFirst({
+      where: {
+        bookingId: id,
+        paymentType: 'DEPOSIT',
+        status: 'PAID',
+      },
+      orderBy: { paymentDate: 'desc' },
+    });
+
+    if (!payment) {
+      return res.status(404).json({
+        success: false,
+        message: 'No paid deposit payment found for this booking',
+        code: 'DEPOSIT_PAYMENT_NOT_FOUND',
+      });
+    }
+
+    const result = await prisma.$transaction(async (tx) => {
+      const booking = await tx.booking.update({
+        where: { id },
+        data: {
+          status: existingBooking.status === 'PENDING' ? 'CONFIRMED' : skip,
+          depositStatus: 'PAID',
+          depositAmount: payment.amount,
+          updatedAt: new Date(),
+        },
+        include: BOOKING_INCLUDES,
+      });
+
+      // Update vehicle status to RESERVED when booking is confirmed
+      if (
+        existingBooking.status === 'PENDING' &&
+        booking.status === 'CONFIRMED'
+      ) {
+        await tx.vehicle.update({
+          where: { id: booking.vehicleId },
+          data: {
+            status: 'RESERVED',
+            updatedAt: new Date(),
+          },
+        });
+      }
+
+      await tx.auditLog.create({
+        data: {
+          userId: req.user?.id || existingBooking.userId,
+          action: 'DEPOSIT_CONFIRMED',
+          tableName: 'Booking',
+          recordId: id,
+          oldData: {
+            depositStatus: existingBooking.depositStatus,
+            status: existingBooking.status,
+          },
+          newData: {
+            depositStatus: 'PAID',
+            status: booking.status,
+            paymentId: payment.id,
+          },
+        },
+      });
+
+      return { booking };
+    });
+
+    // Send booking confirmation notification if status changed to CONFIRMED
+    try {
+      if (
+        existingBooking.status === 'PENDING' &&
+        result.booking.status === 'CONFIRMED'
+      ) {
+        await notifyBookingConfirmed(result.booking);
+      }
+    } catch (notificationError) {
+      console.error(
+        'Error sending booking confirmation notification:',
+        notificationError
+      );
+      // Don't fail the deposit confirmation if notifications fail
+    }
+
+    return res.json({
+      success: true,
+      message: 'Deposit confirmed and booking status updated successfully',
+      data: {
+        booking: result.booking,
+        payment: {
+          id: payment.id,
+          amount: payment.amount,
+          paymentDate: payment.paymentDate,
+          transactionId: payment.transactionId,
         },
       },
     });

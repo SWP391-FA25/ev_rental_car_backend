@@ -7,6 +7,7 @@ import {
   getBookingAnalytics,
   getBookingById,
   getBookings,
+  getDepositStatus,
   getMyManagedBookings,
   getUserBookings,
   updateBooking,
@@ -126,6 +127,15 @@ router.post(
   authorize('ADMIN', 'STAFF'),
   completeBookingValidation,
   completeBooking
+);
+
+// Get deposit status and confirm booking (Admin/Staff only)
+router.get(
+  '/:id/deposit-status',
+  authenticate,
+  authorize('ADMIN', 'STAFF'),
+  getBookingByIdValidation, // Reuse the same validation as getBookingById
+  getDepositStatus
 );
 
 export default router;
