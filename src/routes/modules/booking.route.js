@@ -69,7 +69,7 @@ router.get(
 router.get(
   '/:id',
   authenticate,
-  authorize('ADMIN', 'STAFF'),
+  authorize('ADMIN', 'STAFF', 'RENTER'),
   getBookingByIdValidation,
   getBookingById
 );
