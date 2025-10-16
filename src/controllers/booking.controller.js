@@ -1744,3 +1744,106 @@ export const completeBooking = async (req, res, next) => {
     return next(error);
   }
 };
+
+export const getDepositStatus = async (req, res, next) => {
+  const { id } = req.params;
+  try {
+    const existingBooking = await prisma.booking.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        status: true,
+        depositStatus: true,
+        depositAmount: true,
+        userId: true,
+      },
+    });
+
+    if (!existingBooking) {
+      return res.status(404).json({
+        success: false,
+        message: 'Booking not found',
+      });
+    }
+
+    if (existingBooking.depositStatus === 'PAID') {
+      return res.json({
+        success: true,
+        message: 'Deposit is already confirmed for this booking',
+        data: { booking: existingBooking },
+      });
+    }
+
+    const payment = await prisma.payment.findFirst({
+      where: {
+        bookingId: id,
+        paymentType: 'DEPOSIT',
+        status: 'PAID',
+      },
+      orderBy: { paymentDate: 'desc' },
+    });
+
+    if (!payment) {
+      return res.status(404).json({
+        success: false,
+        message: 'No paid deposit payment found for this booking',
+        code: 'DEPOSIT_PAYMENT_NOT_FOUND',
+      });
+    }
+
+    const booking = await prisma.booking.update({
+      where: { id },
+      data: {
+        status:
+          existingBooking.status === 'PENDING'
+            ? 'CONFIRMED'
+            : existingBooking.status,
+        depositStatus: 'PAID',
+        depositAmount: payment.amount,
+        updatedAt: new Date(),
+      },
+      include: BOOKING_INCLUDES,
+    });
+
+    try {
+      await prisma.auditLog.create({
+        data: {
+          userId: req.user?.id || existingBooking.userId,
+          action: 'DEPOSIT_CONFIRMED',
+          tableName: 'Booking',
+          recordId: id,
+          oldData: {
+            depositStatus: existingBooking.depositStatus,
+            status: existingBooking.status,
+          },
+          newData: {
+            depositStatus: 'PAID',
+            status: booking.status,
+            paymentId: payment.id,
+          },
+        },
+      });
+    } catch (auditError) {
+      console.error(
+        'Failed to create audit log for deposit confirmation:',
+        auditError
+      );
+    }
+
+    return res.json({
+      success: true,
+      message: 'Deposit confirmed and booking status updated successfully',
+      data: {
+        booking,
+        payment: {
+          id: payment.id,
+          amount: payment.amount,
+          paymentDate: payment.paymentDate,
+          transactionId: payment.transactionId,
+        },
+      },
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
