@@ -8,6 +8,7 @@ import {
   notifyBookingStarted,
   notifyStaffNewBooking,
 } from '../utils/notificationHelper.js';
+import { skip } from '@prisma/client/runtime/library';
 
 // Constants for magic numbers (with environment variable fallbacks)
 const PRICING_RATES = {
@@ -451,9 +452,6 @@ export const updateBookingStatus = async (req, res, next) => {
 
     let vehicleStatus;
     switch (status) {
-      case 'CONFIRMED':
-        vehicleStatus = 'RESERVED';
-        break;
       case 'IN_PROGRESS':
         // Note: IN_PROGRESS should be set through checkInBooking function
         // But keeping this for backward compatibility
@@ -513,9 +511,6 @@ export const updateBookingStatus = async (req, res, next) => {
     // Send notifications based on status change
     try {
       switch (status) {
-        case 'CONFIRMED':
-          await notifyBookingConfirmed(result);
-          break;
         case 'IN_PROGRESS':
           await notifyBookingStarted(result);
           break;
@@ -1791,22 +1786,33 @@ export const getDepositStatus = async (req, res, next) => {
       });
     }
 
-    const booking = await prisma.booking.update({
-      where: { id },
-      data: {
-        status:
-          existingBooking.status === 'PENDING'
-            ? 'CONFIRMED'
-            : existingBooking.status,
-        depositStatus: 'PAID',
-        depositAmount: payment.amount,
-        updatedAt: new Date(),
-      },
-      include: BOOKING_INCLUDES,
-    });
+    const result = await prisma.$transaction(async (tx) => {
+      const booking = await tx.booking.update({
+        where: { id },
+        data: {
+          status: existingBooking.status === 'PENDING' ? 'CONFIRMED' : skip,
+          depositStatus: 'PAID',
+          depositAmount: payment.amount,
+          updatedAt: new Date(),
+        },
+        include: BOOKING_INCLUDES,
+      });
 
-    try {
-      await prisma.auditLog.create({
+      // Update vehicle status to RESERVED when booking is confirmed
+      if (
+        existingBooking.status === 'PENDING' &&
+        booking.status === 'CONFIRMED'
+      ) {
+        await tx.vehicle.update({
+          where: { id: booking.vehicleId },
+          data: {
+            status: 'RESERVED',
+            updatedAt: new Date(),
+          },
+        });
+      }
+
+      await tx.auditLog.create({
         data: {
           userId: req.user?.id || existingBooking.userId,
           action: 'DEPOSIT_CONFIRMED',
@@ -1823,18 +1829,31 @@ export const getDepositStatus = async (req, res, next) => {
           },
         },
       });
-    } catch (auditError) {
+
+      return { booking };
+    });
+
+    // Send booking confirmation notification if status changed to CONFIRMED
+    try {
+      if (
+        existingBooking.status === 'PENDING' &&
+        result.booking.status === 'CONFIRMED'
+      ) {
+        await notifyBookingConfirmed(result.booking);
+      }
+    } catch (notificationError) {
       console.error(
-        'Failed to create audit log for deposit confirmation:',
-        auditError
+        'Error sending booking confirmation notification:',
+        notificationError
       );
+      // Don't fail the deposit confirmation if notifications fail
     }
 
     return res.json({
       success: true,
       message: 'Deposit confirmed and booking status updated successfully',
       data: {
-        booking,
+        booking: result.booking,
         payment: {
           id: payment.id,
           amount: payment.amount,
