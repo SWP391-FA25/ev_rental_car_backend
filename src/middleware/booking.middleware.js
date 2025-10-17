@@ -652,6 +652,210 @@ export const checkInBookingValidator = checkSchema({
   },
 });
 
+// Renter verification validator for booking creation
+export const renterVerificationValidator = checkSchema({
+  renterId: {
+    in: ['body'],
+    optional: true,
+    isMongoId: true,
+    errorMessage: 'Invalid renter ID',
+    custom: {
+      options: async (renterId, { req }) => {
+        const user = req.user;
+
+        if (user.role !== 'RENTER') {
+          // Staff/Admin creating booking for renter
+          if (!renterId) {
+            throw new Error(
+              'renterId is required when staff/admin creates booking for a renter'
+            );
+          }
+
+          const renter = await prisma.user.findUnique({
+            where: { id: renterId },
+            select: {
+              id: true,
+              role: true,
+              accountStatus: true,
+              verifyStatus: true,
+            },
+          });
+
+          if (!renter) {
+            throw new Error('Renter not found');
+          }
+
+          if (renter.role !== 'RENTER') {
+            throw new Error('Specified user is not a renter');
+          }
+
+          if (renter.accountStatus !== 'ACTIVE') {
+            throw new Error('Renter account is not active');
+          }
+
+          if (renter.verifyStatus !== 'VERIFIED') {
+            throw new Error('Renter must be verified to create bookings');
+          }
+        } else {
+          // Renter creating their own booking
+          if (user.verifyStatus !== 'VERIFIED') {
+            throw new Error('Your account must be verified to create bookings');
+          }
+        }
+
+        return true;
+      },
+    },
+  },
+});
+
+// Vehicle validation for booking creation
+export const vehicleValidationValidator = checkSchema({
+  vehicleId: {
+    in: ['body'],
+    custom: {
+      options: async (vehicleId) => {
+        const vehicle = await prisma.vehicle.findUnique({
+          where: { id: vehicleId },
+          include: {
+            pricing: true,
+            station: { select: { id: true, name: true, status: true } },
+          },
+        });
+
+        if (!vehicle) {
+          throw new Error('Vehicle not found');
+        }
+
+        if (vehicle.softDeleted) {
+          throw new Error('Vehicle has been deleted from the system');
+        }
+
+        if (vehicle.status !== 'AVAILABLE') {
+          const statusMessages = {
+            RENTED: 'Vehicle is currently rented',
+            MAINTENANCE: 'Vehicle is under maintenance',
+            RESERVED: 'Vehicle is already reserved',
+            OUT_OF_SERVICE: 'Vehicle is temporarily out of service',
+          };
+          throw new Error(
+            `Cannot book vehicle: ${statusMessages[vehicle.status] || 'Invalid vehicle status'}`
+          );
+        }
+
+        if (!vehicle.pricing) {
+          throw new Error('Vehicle pricing information not configured');
+        }
+
+        if (!vehicle.pricing.isActive) {
+          throw new Error('Vehicle pricing plan is currently inactive');
+        }
+
+        const { hourlyRate, baseRate, weeklyRate, monthlyRate } =
+          vehicle.pricing;
+        if (!hourlyRate && !baseRate && !weeklyRate && !monthlyRate) {
+          throw new Error('Vehicle pricing rates are not properly configured');
+        }
+
+        return true;
+      },
+    },
+  },
+});
+
+// Station validation for booking creation
+export const stationValidationValidator = checkSchema({
+  stationId: {
+    in: ['body'],
+    custom: {
+      options: async (stationId, { req }) => {
+        const { vehicleId } = req.body;
+
+        const station = await prisma.station.findUnique({
+          where: { id: stationId },
+          select: {
+            id: true,
+            name: true,
+            status: true,
+            capacity: true,
+            softDeleted: true,
+          },
+        });
+
+        if (!station) {
+          throw new Error('Station not found');
+        }
+
+        if (station.softDeleted) {
+          throw new Error('Station has been deleted from the system');
+        }
+
+        if (station.status !== 'ACTIVE') {
+          const statusMessages = {
+            MAINTENANCE: 'Station is under maintenance',
+            INACTIVE: 'Station is temporarily inactive',
+          };
+          throw new Error(
+            `Station is not active: ${statusMessages[station.status] || 'Invalid station status'}`
+          );
+        }
+
+        // Validate vehicle is at the correct station
+        if (vehicleId) {
+          const vehicle = await prisma.vehicle.findUnique({
+            where: { id: vehicleId },
+            select: { stationId: true },
+          });
+
+          if (vehicle && vehicle.stationId !== stationId) {
+            throw new Error('Vehicle is not available at the selected station');
+          }
+        }
+
+        return true;
+      },
+    },
+  },
+});
+
+// Booking conflict validation
+export const bookingConflictValidator = checkSchema({
+  startTime: {
+    in: ['body'],
+    custom: {
+      options: async (startTime, { req }) => {
+        const { vehicleId, endTime } = req.body;
+
+        if (!vehicleId) return true; // Skip if vehicleId validation will catch this
+
+        const startDate = new Date(startTime);
+        const endDate = endTime
+          ? new Date(endTime)
+          : new Date(startDate.getTime() + 24 * 60 * 60 * 1000);
+
+        const conflictingBooking = await prisma.booking.findFirst({
+          where: {
+            vehicleId,
+            OR: [
+              {
+                startTime: { lte: endDate },
+                endTime: { gte: startDate },
+              },
+            ],
+            status: { not: 'CANCELLED' },
+          },
+        });
+
+        if (conflictingBooking) {
+          throw new Error('Vehicle is already booked for the requested time');
+        }
+
+        return true;
+      },
+    },
+  },
+});
+
 // Middleware array exports for easy use
 export const getBookingsValidation = validate([getBookingsValidator]);
 export const getBookingByIdValidation = validate([getBookingByIdValidator]);
@@ -664,6 +868,12 @@ export const cancelBookingValidation = validate([cancelBookingValidator]);
 export const getBookingAnalyticsValidation = validate([
   getBookingAnalyticsValidator,
 ]);
-export const createBookingValidation = validate([createBookingValidator]);
+export const createBookingValidation = validate([
+  createBookingValidator,
+  renterVerificationValidator,
+  vehicleValidationValidator,
+  stationValidationValidator,
+  bookingConflictValidator,
+]);
 export const checkInBookingValidation = validate([checkInBookingValidator]);
 export const completeBookingValidation = validate([completeBookingValidator]);

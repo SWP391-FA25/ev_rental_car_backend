@@ -1,5 +1,5 @@
-import { skip } from '@prisma/client/runtime/library';
 import { prisma } from '../lib/prisma.js';
+import { Prisma } from '@prisma/client';
 
 // Create a new assignment
 const createAssignment = async (req, res, next) => {
@@ -135,8 +135,8 @@ const updateAssignment = async (req, res, next) => {
       prisma.stationStaff.update({
         where: { id },
         data: {
-          stationId: stationId || skip,
-          userId: staffId || skip,
+          stationId: stationId || Prisma.skip,
+          userId: staffId || Prisma.skip,
         },
       }),
       prisma.auditLog.create({
