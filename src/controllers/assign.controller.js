@@ -1,4 +1,3 @@
-import { skip } from '@prisma/client/runtime/library';
 import { prisma } from '../lib/prisma.js';
 import { Prisma } from '@prisma/client';
 
