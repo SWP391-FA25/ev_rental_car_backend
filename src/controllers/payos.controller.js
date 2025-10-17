@@ -110,7 +110,8 @@ export async function createPayOSPayment(req, res, next) {
       });
     }
 
-    if (booking.userId !== userId) {
+    // Check authorization - allow staff/admin to create payment for any booking
+    if (booking.userId !== userId && req.user.role === 'RENTER') {
       return res.status(403).json({
         success: false,
         message: 'Forbidden: You do not have access to this booking',
@@ -485,8 +486,8 @@ export async function getPayOSPaymentStatus(req, res, next) {
       });
     }
 
-    // Check if user owns this payment
-    if (payment.userId !== userId) {
+    // Check if user owns this payment or is staff/admin
+    if (payment.userId !== userId && req.user.role === 'RENTER') {
       return res.status(403).json({
         success: false,
         message: 'Forbidden: You do not have access to this payment',
