@@ -106,7 +106,7 @@ router.patch(
 router.patch(
   '/:id/cancel',
   authenticate,
-  authorize('ADMIN', 'STAFF'),
+  authorize('ADMIN', 'STAFF', 'RENTER'),
   cancelBookingValidation,
   cancelBooking
 );
