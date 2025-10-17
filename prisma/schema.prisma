@@ -260,6 +260,7 @@ model Payment {
   depositStatus   PaymentStatus? // Status of deposit (PENDING, AUTHORIZED, CAPTURED, REFUNDED)
   depositRefundDate DateTime?   // When deposit was refunded
   paymentType     PaymentType   @default(DEPOSIT) // Type of payment
+  evidenceUrl     String?       // URL for payment evidence (images, receipts, etc.)
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
   user            User          @relation(fields: [userId], references: [id])

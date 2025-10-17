@@ -2576,6 +2576,265 @@ export const openapiSpec = {
       },
     },
 
+    // Cash Payment endpoints
+    '/api/payments/cash-payment': {
+      post: {
+        summary: 'Create a cash payment with evidence',
+        tags: ['Payments'],
+        security: [{ cookieAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'multipart/form-data': {
+              schema: {
+                type: 'object',
+                required: ['bookingId', 'amount'],
+                properties: {
+                  bookingId: {
+                    type: 'string',
+                    description: 'ID of the booking to pay for',
+                  },
+                  amount: {
+                    type: 'number',
+                    description: 'Payment amount in VND',
+                  },
+                  paymentType: {
+                    type: 'string',
+                    enum: ['DEPOSIT', 'RENTAL_FEE', 'LATE_FEE', 'DAMAGE_FEE', 'EXTENSION_FEE', 'OTHER'],
+                    description: 'Type of payment (optional, defaults to RENTAL_FEE)',
+                  },
+                  description: {
+                    type: 'string',
+                    description: 'Payment description (optional)',
+                  },
+                  evidence: {
+                    type: 'string',
+                    format: 'binary',
+                    description: 'Payment evidence image (optional)',
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          201: {
+            description: 'Cash payment processed successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        paymentId: { type: 'string' },
+                        transactionId: { type: 'string' },
+                        amount: { type: 'number' },
+                        paymentMethod: { type: 'string', example: 'CASH' },
+                        paymentType: { type: 'string' },
+                        status: { type: 'string', example: 'PAID' },
+                        evidenceUrl: { type: 'string', nullable: true },
+                        message: { type: 'string' },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          400: { description: 'Bad request - missing required fields' },
+          401: { description: 'Unauthorized' },
+          403: { description: 'Forbidden - access to booking denied' },
+          404: { description: 'Booking not found' },
+        },
+      },
+    },
+    '/api/payments/cash-refund': {
+      post: {
+        summary: 'Process a cash refund (Staff/Admin only)',
+        tags: ['Payments'],
+        security: [{ cookieAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['paymentId', 'refundAmount'],
+                properties: {
+                  paymentId: {
+                    type: 'string',
+                    description: 'ID of the payment to refund',
+                  },
+                  refundAmount: {
+                    type: 'number',
+                    description: 'Refund amount in VND',
+                  },
+                  reason: {
+                    type: 'string',
+                    description: 'Reason for refund (optional)',
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          200: {
+            description: 'Cash refund processed successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        paymentId: { type: 'string' },
+                        refundAmount: { type: 'number' },
+                        status: { type: 'string' },
+                        message: { type: 'string' },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          400: { description: 'Bad request - missing required fields or invalid refund amount' },
+          401: { description: 'Unauthorized' },
+          403: { description: 'Forbidden - Staff/Admin access required' },
+          404: { description: 'Payment not found' },
+        },
+      },
+    },
+    '/api/payments/details/{paymentId}': {
+      get: {
+        summary: 'Get payment details',
+        tags: ['Payments'],
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          {
+            name: 'paymentId',
+            in: 'path',
+            required: true,
+            schema: {
+              type: 'string',
+            },
+            description: 'ID of the payment',
+          },
+        ],
+        responses: {
+          200: {
+            description: 'Payment details retrieved successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        payment: {
+                          type: 'object',
+                          properties: {
+                            id: { type: 'string' },
+                            amount: { type: 'number' },
+                            currency: { type: 'string' },
+                            paymentMethod: { type: 'string' },
+                            paymentType: { type: 'string' },
+                            transactionId: { type: 'string' },
+                            status: { type: 'string' },
+                            paymentDate: {
+                              type: 'string',
+                              format: 'date-time',
+                            },
+                            refundAmount: { type: 'number', nullable: true },
+                            refundDate: {
+                              type: 'string',
+                              format: 'date-time',
+                              nullable: true,
+                            },
+                            evidenceUrl: { type: 'string', nullable: true },
+                            booking: {
+                              type: 'object',
+                              properties: {
+                                id: { type: 'string' },
+                                startTime: {
+                                  type: 'string',
+                                  format: 'date-time',
+                                },
+                                endTime: {
+                                  type: 'string',
+                                  format: 'date-time',
+                                  nullable: true,
+                                },
+                                status: { type: 'string' },
+                                user: {
+                                  type: 'object',
+                                  properties: {
+                                    id: { type: 'string' },
+                                    name: { type: 'string' },
+                                    email: { type: 'string' },
+                                  },
+                                },
+                                vehicle: {
+                                  type: 'object',
+                                  properties: {
+                                    id: { type: 'string' },
+                                    brand: { type: 'string' },
+                                    model: { type: 'string' },
+                                    licensePlate: { type: 'string' },
+                                  },
+                                },
+                              },
+                            },
+                            refunds: {
+                              type: 'array',
+                              items: {
+                                type: 'object',
+                                properties: {
+                                  id: { type: 'string' },
+                                  amount: { type: 'number' },
+                                  reason: { type: 'string', nullable: true },
+                                  refundedBy: { type: 'string' },
+                                  refundMethod: { type: 'string' },
+                                  status: { type: 'string' },
+                                  processedAt: {
+                                    type: 'string',
+                                    format: 'date-time',
+                                  },
+                                  createdAt: {
+                                    type: 'string',
+                                    format: 'date-time',
+                                  },
+                                  updatedAt: {
+                                    type: 'string',
+                                    format: 'date-time',
+                                  },
+                                },
+                              },
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          401: { description: 'Unauthorized' },
+          403: { description: 'Forbidden - access to payment denied' },
+          404: { description: 'Payment not found' },
+        },
+      },
+    },
+
     // Payment endpoints
     '/api/payments': {
       post: {
