@@ -8,7 +8,6 @@ import {
   notifyBookingStarted,
   notifyStaffNewBooking,
 } from '../utils/notificationHelper.js';
-import { skip } from '@prisma/client/runtime/library';
 
 // Constants for magic numbers (with environment variable fallbacks)
 const PRICING_RATES = {
@@ -1790,7 +1789,10 @@ export const getDepositStatus = async (req, res, next) => {
       const booking = await tx.booking.update({
         where: { id },
         data: {
-          status: existingBooking.status === 'PENDING' ? 'CONFIRMED' : skip,
+          status:
+            existingBooking.status === 'PENDING'
+              ? 'CONFIRMED'
+              : existingBooking.status,
           depositStatus: 'PAID',
           depositAmount: payment.amount,
           updatedAt: new Date(),
