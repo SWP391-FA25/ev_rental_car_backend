@@ -2,8 +2,8 @@ import { Router } from 'express';
 import {
   createRenter,
   deleteRenter,
-  getRenters,
   getRenterById,
+  getRenters,
   softDeleteRenter,
   updateRenter,
   updateRenterPassword,
@@ -16,7 +16,12 @@ const router = Router();
 router.post('/', authenticate, authorize('ADMIN'), createRenter);
 router.get('/', authenticate, authorize('ADMIN', 'STAFF'), getRenters);
 router.get('/:id', authenticate, authorize('ADMIN', 'STAFF'), getRenterById);
-router.put('/:id', authenticate, authorize('ADMIN', 'STAFF'), updateRenter);
+router.put(
+  '/:id',
+  authenticate,
+  authorize('ADMIN', 'STAFF', 'RENTER'),
+  updateRenter
+);
 router.patch(
   '/:id/password',
   authenticate,
