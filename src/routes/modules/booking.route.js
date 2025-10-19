@@ -70,7 +70,7 @@ router.get(
 router.get(
   '/:id',
   authenticate,
-  authorize('ADMIN', 'STAFF'),
+  authorize('ADMIN', 'STAFF', 'RENTER'),
   getBookingByIdValidation,
   getBookingById
 );
@@ -106,7 +106,7 @@ router.patch(
 router.patch(
   '/:id/cancel',
   authenticate,
-  authorize('ADMIN', 'STAFF'),
+  authorize('ADMIN', 'STAFF', 'RENTER'),
   cancelBookingValidation,
   cancelBooking
 );

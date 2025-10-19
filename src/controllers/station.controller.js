@@ -420,7 +420,7 @@ const getStaffAtStation = async (req, res, next) => {
 // Get nearby stations based on user location
 const getNearbyStations = async (req, res, next) => {
   try {
-    const { lat, lng, radius = 10 } = req.query; // radius in km, default 10km
+    const { lat, lng, radius = 30 } = req.query; // radius in km, default 10km
 
     // Validate required parameters
     if (!lat || !lng) {
@@ -529,6 +529,7 @@ const getVehiclesAtStationDuringPeriod = async (req, res, next) => {
         },
         include: {
           images: true,
+          pricing: true,
           station: {
             select: {
               id: true,
@@ -655,22 +656,24 @@ const getVehiclesAtStationDuringPeriod = async (req, res, next) => {
       (vehicle) => !vehicle.availability.isAvailableDuringPeriod
     );
 
-    const formatAvailableVehicle = (vehicle) => ({
-      id: vehicle.id,
-      type: vehicle.type,
-      brand: vehicle.brand,
-      model: vehicle.model,
-      year: vehicle.year,
-      color: vehicle.color,
-      seats: vehicle.seats,
-      licensePlate: vehicle.licensePlate,
-      batteryLevel: vehicle.batteryLevel,
-      fuelType: vehicle.fuelType,
-      currentStatus: vehicle.availability.currentStatus,
-      availableFrom: vehicle.availability.availableFrom,
-      images: vehicle.images,
-      pricing: vehicle.pricing,
-    });
+    const formatAvailableVehicle = (vehicle) => {
+      return {
+        id: vehicle.id,
+        type: vehicle.type,
+        brand: vehicle.brand,
+        model: vehicle.model,
+        year: vehicle.year,
+        color: vehicle.color,
+        seats: vehicle.seats,
+        licensePlate: vehicle.licensePlate,
+        batteryLevel: vehicle.batteryLevel,
+        fuelType: vehicle.fuelType,
+        currentStatus: vehicle.availability.currentStatus,
+        availableFrom: vehicle.availability.availableFrom,
+        images: vehicle.images,
+        pricing: vehicle.pricing,
+      };
+    };
 
     const formatUnavailableVehicle = (vehicle) => ({
       id: vehicle.id,
