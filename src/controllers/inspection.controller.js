@@ -1,12 +1,112 @@
 import { PrismaClient } from '@prisma/client';
+import multer from 'multer';
+import ImageKitService from '../lib/imagekit.js';
 
 const prisma = new PrismaClient();
 
-/**
- * Create a new vehicle inspection record
- * @param {Object} req - Express request object
- * @param {Object} res - Express response object
- */
+// Configure multer for file uploads
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB limit
+  },
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only image files are allowed'));
+    }
+  },
+});
+
+// Export multer upload middleware
+export const uploadInspectionImage = upload.single('image');
+
+export const uploadInspectionImageHandler = async (req, res) => {
+  try {
+    const { inspectionId } = req.params;
+    const file = req.file;
+
+    if (!file) {
+      return res.status(400).json({
+        success: false,
+        message: 'No file uploaded',
+      });
+    }
+
+    // Validate file type
+    if (!file.mimetype.startsWith('image/')) {
+      return res.status(400).json({
+        success: false,
+        message: 'Only image files are allowed',
+      });
+    }
+
+    // Check if inspection exists
+    const inspection = await prisma.vehicleInspection.findUnique({
+      where: { id: inspectionId },
+    });
+
+    if (!inspection) {
+      return res.status(404).json({
+        success: false,
+        message: 'Inspection not found',
+      });
+    }
+
+    // Upload to ImageKit using the specific inspection image method
+    const timestamp = Date.now();
+    const fileExtension = file.originalname.split('.').pop();
+    const fileName = `inspection_${inspectionId}_${timestamp}.${fileExtension}`;
+
+    const uploadResult = await ImageKitService.uploadInspectionImage(
+      file.buffer,
+      fileName,
+      inspectionId
+    );
+
+    if (!uploadResult.success) {
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to upload file to storage',
+        error: uploadResult.error,
+      });
+    }
+
+    // Update inspection with image data
+    const updatedInspection = await prisma.vehicleInspection.update({
+      where: { id: inspectionId },
+      data: {
+        images: {
+          push: {
+            url: uploadResult.data.url,
+            thumbnailUrl: uploadResult.data.thumbnailUrl,
+            fileId: uploadResult.data.fileId,
+            fileName: file.originalname,
+            uploadedAt: new Date().toISOString(),
+          },
+        },
+      },
+    });
+
+    res.status(201).json({
+      success: true,
+      message: 'Image uploaded successfully',
+      data: {
+        url: uploadResult.data.url,
+        thumbnailUrl: uploadResult.data.thumbnailUrl,
+        fileId: uploadResult.data.fileId,
+      },
+    });
+  } catch (error) {
+    console.error('Error uploading inspection image:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+    });
+  }
+};
+
 export const createInspection = async (req, res) => {
   try {
     const {
@@ -22,7 +122,6 @@ export const createInspection = async (req, res) => {
       accessories,
       damageNotes,
       notes,
-      images,
       documentVerified,
     } = req.body;
 
@@ -53,7 +152,7 @@ export const createInspection = async (req, res) => {
       });
     }
 
-    // Create inspection record
+    // Create inspection record (without images initially)
     const inspection = await prisma.vehicleInspection.create({
       data: {
         vehicleId,
@@ -68,7 +167,7 @@ export const createInspection = async (req, res) => {
         accessories,
         damageNotes,
         notes,
-        images,
+        images: [], // Initialize with empty array
         documentVerified: documentVerified || false,
         isCompleted: false,
       },
@@ -96,11 +195,6 @@ export const createInspection = async (req, res) => {
   }
 };
 
-/**
- * Get inspection by ID
- * @param {Object} req - Express request object
- * @param {Object} res - Express response object
- */
 export const getInspectionById = async (req, res) => {
   try {
     const { id } = req.params;
@@ -134,11 +228,6 @@ export const getInspectionById = async (req, res) => {
   }
 };
 
-/**
- * Update inspection record
- * @param {Object} req - Express request object
- * @param {Object} res - Express response object
- */
 export const updateInspection = async (req, res) => {
   try {
     const { id } = req.params;
@@ -199,11 +288,6 @@ export const updateInspection = async (req, res) => {
   }
 };
 
-/**
- * Get inspections for a specific booking
- * @param {Object} req - Express request object
- * @param {Object} res - Express response object
- */
 export const getInspectionsByBooking = async (req, res) => {
   try {
     const { bookingId } = req.params;
@@ -232,11 +316,6 @@ export const getInspectionsByBooking = async (req, res) => {
   }
 };
 
-/**
- * Get inspections for a specific vehicle
- * @param {Object} req - Express request object
- * @param {Object} res - Express response object
- */
 export const getInspectionsByVehicle = async (req, res) => {
   try {
     const { vehicleId } = req.params;
@@ -265,11 +344,6 @@ export const getInspectionsByVehicle = async (req, res) => {
   }
 };
 
-/**
- * Get inspections conducted by a specific staff member
- * @param {Object} req - Express request object
- * @param {Object} res - Express response object
- */
 export const getInspectionsByStaff = async (req, res) => {
   try {
     const { staffId } = req.params;
@@ -298,11 +372,6 @@ export const getInspectionsByStaff = async (req, res) => {
   }
 };
 
-/**
- * Delete an inspection record
- * @param {Object} req - Express request object
- * @param {Object} res - Express response object
- */
 export const deleteInspection = async (req, res) => {
   try {
     const { id } = req.params;
@@ -337,11 +406,6 @@ export const deleteInspection = async (req, res) => {
   }
 };
 
-/**
- * Get inspection statistics for reporting
- * @param {Object} req - Express request object
- * @param {Object} res - Express response object
- */
 export const getInspectionStats = async (req, res) => {
   try {
     // Get counts by condition
@@ -386,11 +450,6 @@ export const getInspectionStats = async (req, res) => {
   }
 };
 
-/**
- * Get inspections for a specific booking (renter version)
- * @param {Object} req - Express request object
- * @param {Object} res - Express response object
- */
 export const getInspectionsByBookingForRenter = async (req, res) => {
   try {
     const { bookingId } = req.params;
@@ -435,6 +494,69 @@ export const getInspectionsByBookingForRenter = async (req, res) => {
     });
   } catch (error) {
     console.error('Error fetching inspections:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+    });
+  }
+};
+
+export const deleteInspectionImage = async (req, res) => {
+  try {
+    const { inspectionId, imageIndex } = req.params;
+
+    // Check if inspection exists
+    const inspection = await prisma.vehicleInspection.findUnique({
+      where: { id: inspectionId },
+    });
+
+    if (!inspection) {
+      return res.status(404).json({
+        success: false,
+        message: 'Inspection not found',
+      });
+    }
+
+    // Check if images array exists and has the specified index
+    if (
+      !inspection.images ||
+      !Array.isArray(inspection.images) ||
+      inspection.images.length <= imageIndex
+    ) {
+      return res.status(404).json({
+        success: false,
+        message: 'Image not found',
+      });
+    }
+
+    const imageToDelete = inspection.images[imageIndex];
+
+    // Delete from ImageKit if fileId exists
+    if (imageToDelete.fileId) {
+      try {
+        await ImageKitService.deleteFile(imageToDelete.fileId);
+      } catch (error) {
+        console.warn('Failed to delete file from ImageKit:', error.message);
+      }
+    }
+
+    // Remove image from inspection record
+    const updatedImages = [...inspection.images];
+    updatedImages.splice(imageIndex, 1);
+
+    const updatedInspection = await prisma.vehicleInspection.update({
+      where: { id: inspectionId },
+      data: {
+        images: updatedImages,
+      },
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'Image deleted successfully',
+    });
+  } catch (error) {
+    console.error('Error deleting inspection image:', error);
     res.status(500).json({
       success: false,
       message: 'Internal server error',

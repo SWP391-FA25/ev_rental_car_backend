@@ -1084,6 +1084,119 @@ export const openapiSpec = {
         },
       },
     },
+    '/api/inspections/{id}/upload-image': {
+      post: {
+        summary: 'Upload inspection image',
+        tags: ['Inspections'],
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Inspection ID',
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            'multipart/form-data': {
+              schema: {
+                type: 'object',
+                properties: {
+                  image: {
+                    type: 'string',
+                    format: 'binary',
+                    description: 'Image file to upload (JPG, PNG, WEBP)',
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          201: {
+            description: 'Image uploaded successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    message: {
+                      type: 'string',
+                      example: 'Image uploaded successfully',
+                    },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        url: { type: 'string' },
+                        thumbnailUrl: { type: 'string' },
+                        fileId: { type: 'string' },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          400: { description: 'Bad request - missing file or invalid format' },
+          401: { description: 'Unauthorized' },
+          403: { description: 'Forbidden - Insufficient permissions' },
+          404: { description: 'Inspection not found' },
+          500: { description: 'Internal server error - upload failed' },
+        },
+      },
+    },
+    
+    '/api/inspections/{id}/image/{imageIndex}': {
+      delete: {
+        summary: 'Delete inspection image',
+        tags: ['Inspections'],
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Inspection ID',
+          },
+          {
+            name: 'imageIndex',
+            in: 'path',
+            required: true,
+            schema: { type: 'integer' },
+            description: 'Index of the image in the inspection images array',
+          },
+        ],
+        responses: {
+          200: {
+            description: 'Image deleted successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    message: {
+                      type: 'string',
+                      example: 'Image deleted successfully',
+                    },
+                  },
+                },
+              },
+            },
+          },
+          401: { description: 'Unauthorized' },
+          403: { description: 'Forbidden - Insufficient permissions' },
+          404: { description: 'Inspection or image not found' },
+          500: { description: 'Internal server error - deletion failed' },
+        },
+      },
+    },
+
     // Assign endpoints
     '/api/assign': {
       post: {
