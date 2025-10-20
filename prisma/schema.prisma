@@ -143,7 +143,7 @@ model User {
   Notification  Notification[]
   auditLogs     AuditLog[] // Add relation to audit logs
   contractTemplates ContractTemplate[] // Add relation to contract templates
-  contractSignatures ContractSignature[] // Add relation to contract signatures
+  uploadedContracts RentalContract[] @relation("ContractUploader") // Contracts uploaded by this staff
   inspections   VehicleInspection[]
 
   @@index([role])
@@ -425,7 +425,6 @@ model ContractTemplate {
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
   creator        User            @relation(fields: [createdBy], references: [id])
-  rentalContracts RentalContract[]
 
   @@index([createdBy], map: "idx_template_created_by")
   @@index([templateType, isActive])
@@ -434,59 +433,31 @@ model ContractTemplate {
 model RentalContract {
   id              String              @id @default(auto()) @map("_id") @db.ObjectId
   bookingId       String              @db.ObjectId
-  templateId      String              @db.ObjectId
   contractNumber  String              @unique
-  content         String // Final contract content
-  status          String              @default("DRAFT") // DRAFT, PENDING_SIGNATURE, SIGNED, EXPIRED, CANCELLED
+  status          String              @default("CREATED") // CREATED, SIGNED, UPLOADED, COMPLETED
+  // ImageKit fields for signed contract photo (matching UserDocument pattern)
+  signedFileName  String? // Original file name of signed contract photo
+  signedFileUrl   String? // ImageKit URL of the signed contract photo
+  signedFileId    String? // ImageKit file ID for deletion
+  signedFilePath  String? // ImageKit file path
+  signedThumbnailUrl String? // ImageKit thumbnail URL
+  signedFileSize  Int? // File size in bytes
+  signedMimeType  String? // File MIME type
+  uploadedBy      String?             @db.ObjectId // Staff who uploaded the signed contract
+  renterName      String? // Name of renter who signed
+  witnessName     String? // Name of witness (staff member)
+  signedAt        DateTime? // When contract was physically signed
+  uploadedAt      DateTime? // When signed contract photo was uploaded
+  notes           String? // Additional notes about the contract
   createdAt       DateTime            @default(now())
   updatedAt       DateTime            @updatedAt
-  expiresAt       DateTime?
-  finalizedAt     DateTime? // When contract was finalized
   booking         Booking             @relation(fields: [bookingId], references: [id])
-  template        ContractTemplate    @relation(fields: [templateId], references: [id])
-  signatures      ContractSignature[]
+  uploader        User?               @relation("ContractUploader", fields: [uploadedBy], references: [id])
 
   @@index([bookingId])
-  @@index([templateId], map: "idx_contract_template")
   @@index([status])
-}
-
-model ContractSignature {
-  id                 String                  @id @default(auto()) @map("_id") @db.ObjectId
-  contractId         String                  @db.ObjectId
-  signerId           String                  @db.ObjectId
-  signerRole         String // RENTER, STAFF, ADMIN
-  signatureType      String // ELECTRONIC, DIGITAL_PAD, PAPER_SCAN, BIOMETRIC
-  signatureData      String? // Base64 signature data or file path
-  ipAddress          String?
-  userAgent          String?
-  gpsLocation        Json? // GPS coordinates if available
-  signedAt           DateTime                @default(now())
-  verificationStatus String                  @default("PENDING") // PENDING, VERIFIED, INVALID
-  verificationData   Json? // Additional verification metadata
-  contract           RentalContract          @relation(fields: [contractId], references: [id])
-  signer             User                    @relation(fields: [signerId], references: [id])
-  verifications      SignatureVerification[]
-
-  @@index([contractId])
-  @@index([signerId])
-  @@index([contractId, signerRole])
+  @@index([uploadedBy])
   @@index([signedAt])
-}
-
-model SignatureVerification {
-  id                 String            @id @default(auto()) @map("_id") @db.ObjectId
-  signatureId        String            @db.ObjectId
-  verificationType   String // TIMESTAMP, BIOMETRIC, IP_VALIDATION, etc.
-  verificationResult String // PASSED, FAILED, PENDING
-  verificationData   Json? // Detailed verification results
-  verifiedAt         DateTime          @default(now())
-  verifiedBy         String? // System or user who performed verification
-  signature          ContractSignature @relation(fields: [signatureId], references: [id])
-
-  @@index([signatureId])
-  @@index([verificationResult])
-  @@index([verifiedAt])
 }
 
 // Vehicle Image model for storing vehicle photos in ImageKit
