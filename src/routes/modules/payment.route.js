@@ -4,6 +4,7 @@ import {
   createCashPayment,
   processCashRefund,
   getPaymentDetails,
+  uploadCashPaymentEvidence,
 } from '../../controllers/payment.controller.js';
 import multer from 'multer';
 
@@ -28,11 +29,14 @@ const router = Router();
 
 // Create a cash payment for a booking (requires authentication)
 // Supports file upload for evidence
+router.post('/cash-payment', authenticate, createCashPayment);
+
+// Upload evidence for an existing cash payment (requires authentication)
 router.post(
-  '/cash-payment',
+  '/cash-payment/evidence',
   authenticate,
   upload.single('evidence'),
-  createCashPayment
+  uploadCashPaymentEvidence
 );
 
 // Process a cash refund for a booking (requires authentication, staff/admin only)

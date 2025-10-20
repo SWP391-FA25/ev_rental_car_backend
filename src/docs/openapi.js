@@ -2999,13 +2999,13 @@ export const openapiSpec = {
     // Cash Payment endpoints
     '/api/payments/cash-payment': {
       post: {
-        summary: 'Create a cash payment with evidence',
+        summary: 'Create a cash payment',
         tags: ['Payments'],
         security: [{ cookieAuth: [] }],
         requestBody: {
           required: true,
           content: {
-            'multipart/form-data': {
+            'application/json': {
               schema: {
                 type: 'object',
                 required: ['bookingId', 'amount'],
@@ -3026,20 +3026,15 @@ export const openapiSpec = {
                   description: {
                     type: 'string',
                     description: 'Payment description (optional)',
-                  },
-                  evidence: {
-                    type: 'string',
-                    format: 'binary',
-                    description: 'Payment evidence image (optional)',
-                  },
-                },
-              },
-            },
-          },
+                  }
+                }
+              }
+            }
+          }
         },
         responses: {
           201: {
-            description: 'Cash payment processed successfully',
+            description: 'Cash payment created successfully',
             content: {
               'application/json': {
                 schema: {
@@ -3055,7 +3050,6 @@ export const openapiSpec = {
                         paymentMethod: { type: 'string', example: 'CASH' },
                         paymentType: { type: 'string' },
                         status: { type: 'string', example: 'PAID' },
-                        evidenceUrl: { type: 'string', nullable: true },
                         message: { type: 'string' },
                       },
                     },
@@ -3068,6 +3062,62 @@ export const openapiSpec = {
           401: { description: 'Unauthorized' },
           403: { description: 'Forbidden - access to booking denied' },
           404: { description: 'Booking not found' },
+        },
+      },
+    },
+    '/api/payments/cash-payment/evidence': {
+      post: {
+        summary: 'Upload evidence for an existing cash payment',
+        tags: ['Payments'],
+        security: [{ cookieAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'multipart/form-data': {
+              schema: {
+                type: 'object',
+                required: ['paymentId', 'evidence'],
+                properties: {
+                  paymentId: {
+                    type: 'string',
+                    description: 'ID of the payment to upload evidence for',
+                  },
+                  evidence: {
+                    type: 'string',
+                    format: 'binary',
+                    description: 'Payment evidence image',
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          200: {
+            description: 'Cash payment evidence uploaded successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        paymentId: { type: 'string' },
+                        evidenceUrl: { type: 'string' },
+                        message: { type: 'string' },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          400: { description: 'Bad request - missing required fields or invalid payment' },
+          401: { description: 'Unauthorized' },
+          403: { description: 'Forbidden - access to payment denied' },
+          404: { description: 'Payment not found' },
         },
       },
     },
