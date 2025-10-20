@@ -7,6 +7,7 @@ import {
   getBookingAnalytics,
   getBookingById,
   getBookings,
+  getDepositStatus,
   getMyManagedBookings,
   getUserBookings,
   updateBooking,
@@ -60,7 +61,7 @@ router.get(
 router.get(
   '/user/:userId',
   authenticate,
-  authorize('ADMIN', 'STAFF'),
+  authorize('ADMIN', 'STAFF', 'RENTER'),
   getUserBookingsValidation,
   getUserBookings
 );
@@ -69,7 +70,7 @@ router.get(
 router.get(
   '/:id',
   authenticate,
-  authorize('ADMIN', 'STAFF'),
+  authorize('ADMIN', 'STAFF', 'RENTER'),
   getBookingByIdValidation,
   getBookingById
 );
@@ -105,7 +106,7 @@ router.patch(
 router.patch(
   '/:id/cancel',
   authenticate,
-  authorize('ADMIN', 'STAFF'),
+  authorize('ADMIN', 'STAFF', 'RENTER'),
   cancelBookingValidation,
   cancelBooking
 );
@@ -126,6 +127,15 @@ router.post(
   authorize('ADMIN', 'STAFF'),
   completeBookingValidation,
   completeBooking
+);
+
+// Get deposit status and confirm booking (Admin/Staff only)
+router.get(
+  '/:id/deposit-status',
+  authenticate,
+  authorize('ADMIN', 'STAFF'),
+  getBookingByIdValidation, // Reuse the same validation as getBookingById
+  getDepositStatus
 );
 
 export default router;

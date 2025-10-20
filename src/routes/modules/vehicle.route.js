@@ -47,12 +47,7 @@ router.post(
 );
 
 // Get vehicle images
-router.get(
-  '/:vehicleId/images',
-  authenticate,
-  authorize('ADMIN', 'STAFF'),
-  getVehicleImages
-);
+router.get('/:vehicleId/images', getVehicleImages);
 
 // Delete vehicle image
 router.delete(

@@ -110,7 +110,8 @@ export async function createPayOSPayment(req, res, next) {
       });
     }
 
-    if (booking.userId !== userId) {
+    // Check authorization - allow staff/admin to create payment for any booking
+    if (booking.userId !== userId && req.user.role === 'RENTER') {
       return res.status(403).json({
         success: false,
         message: 'Forbidden: You do not have access to this booking',
@@ -205,7 +206,7 @@ export async function handlePayOSWebhook(req, res, next) {
           },
         });
 
-        // Update booking status
+        // Update booking status based on payment type
         const booking = await tx.booking.findUnique({
           where: { id: payment.bookingId },
           include: {
@@ -214,20 +215,33 @@ export async function handlePayOSWebhook(req, res, next) {
           },
         });
 
-        if (
-          booking &&
-          (booking.status === 'PENDING' || booking.status === 'CONFIRMED')
-        ) {
-          await tx.booking.update({
-            where: { id: payment.bookingId },
-            data: { status: 'COMPLETED' },
-          });
+        if (booking) {
+          // Handle different payment types
+          if (payment.paymentType === 'DEPOSIT') {
+            // For deposit payments, confirm the booking and update deposit status
+            if (booking.status === 'PENDING') {
+              await tx.booking.update({
+                where: { id: payment.bookingId },
+                data: {
+                  status: 'CONFIRMED',
+                  depositStatus: 'PAID',
+                  depositAmount: payment.amount,
+                },
+              });
 
-          // Update vehicle status to AVAILABLE
-          await tx.vehicle.update({
-            where: { id: booking.vehicleId },
-            data: { status: 'AVAILABLE' },
-          });
+              // Update vehicle status to RESERVED (not AVAILABLE)
+              await tx.vehicle.update({
+                where: { id: booking.vehicleId },
+                data: { status: 'RESERVED' },
+              });
+            }
+          } else {
+            // For other payment types (rental fees, late fees, etc.), handle accordingly
+            // Don't change booking status to COMPLETED unless it's the final payment
+            console.log(
+              `Processing ${payment.paymentType} payment for booking ${booking.id}`
+            );
+          }
         }
 
         return { updatedPayment, booking };
@@ -321,8 +335,7 @@ export async function handlePayOSSuccess(req, res, next) {
 
     // Handle different payment types
     if (payment.paymentType === 'DEPOSIT') {
-      // Handle deposit payment logic (current behavior)
-      // Update booking status to COMPLETED
+      // Handle deposit payment logic - confirm booking instead of completing it
       const booking = await prisma.booking.findUnique({
         where: { id: bookingId },
         include: {
@@ -331,21 +344,22 @@ export async function handlePayOSSuccess(req, res, next) {
         },
       });
 
-      if (
-        booking &&
-        (booking.status === 'PENDING' || booking.status === 'CONFIRMED')
-      ) {
+      if (booking && booking.status === 'PENDING') {
         await prisma.$transaction(async (tx) => {
-          // Update booking status
+          // Update booking status to CONFIRMED and set deposit status
           await tx.booking.update({
             where: { id: bookingId },
-            data: { status: 'COMPLETED' },
+            data: {
+              status: 'CONFIRMED',
+              depositStatus: 'PAID',
+              depositAmount: payment.amount,
+            },
           });
 
-          // Update vehicle status
+          // Update vehicle status to RESERVED (not AVAILABLE)
           await tx.vehicle.update({
             where: { id: booking.vehicleId },
-            data: { status: 'AVAILABLE' },
+            data: { status: 'RESERVED' },
           });
         });
 
@@ -472,8 +486,8 @@ export async function getPayOSPaymentStatus(req, res, next) {
       });
     }
 
-    // Check if user owns this payment
-    if (payment.userId !== userId) {
+    // Check if user owns this payment or is staff/admin
+    if (payment.userId !== userId && req.user.role === 'RENTER') {
       return res.status(403).json({
         success: false,
         message: 'Forbidden: You do not have access to this payment',

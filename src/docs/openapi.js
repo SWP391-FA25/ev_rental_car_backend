@@ -1084,6 +1084,119 @@ export const openapiSpec = {
         },
       },
     },
+    '/api/inspections/{id}/upload-image': {
+      post: {
+        summary: 'Upload inspection image',
+        tags: ['Inspections'],
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Inspection ID',
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            'multipart/form-data': {
+              schema: {
+                type: 'object',
+                properties: {
+                  image: {
+                    type: 'string',
+                    format: 'binary',
+                    description: 'Image file to upload (JPG, PNG, WEBP)',
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          201: {
+            description: 'Image uploaded successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    message: {
+                      type: 'string',
+                      example: 'Image uploaded successfully',
+                    },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        url: { type: 'string' },
+                        thumbnailUrl: { type: 'string' },
+                        fileId: { type: 'string' },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          400: { description: 'Bad request - missing file or invalid format' },
+          401: { description: 'Unauthorized' },
+          403: { description: 'Forbidden - Insufficient permissions' },
+          404: { description: 'Inspection not found' },
+          500: { description: 'Internal server error - upload failed' },
+        },
+      },
+    },
+    
+    '/api/inspections/{id}/image/{imageIndex}': {
+      delete: {
+        summary: 'Delete inspection image',
+        tags: ['Inspections'],
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Inspection ID',
+          },
+          {
+            name: 'imageIndex',
+            in: 'path',
+            required: true,
+            schema: { type: 'integer' },
+            description: 'Index of the image in the inspection images array',
+          },
+        ],
+        responses: {
+          200: {
+            description: 'Image deleted successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    message: {
+                      type: 'string',
+                      example: 'Image deleted successfully',
+                    },
+                  },
+                },
+              },
+            },
+          },
+          401: { description: 'Unauthorized' },
+          403: { description: 'Forbidden - Insufficient permissions' },
+          404: { description: 'Inspection or image not found' },
+          500: { description: 'Internal server error - deletion failed' },
+        },
+      },
+    },
+
     // Assign endpoints
     '/api/assign': {
       post: {
@@ -2433,6 +2546,12 @@ export const openapiSpec = {
                     type: 'string',
                     description: 'Payment description (optional)',
                   },
+                  paymentType: {
+                    type: 'string',
+                    enum: ['DEPOSIT', 'RENTAL_FEE', 'LATE_FEE', 'DAMAGE_FEE', 'EXTENSION_FEE', 'OTHER'],
+                    default: 'DEPOSIT',
+                    description: 'Type of payment',
+                  },
                 },
               },
             },
@@ -2500,6 +2619,7 @@ export const openapiSpec = {
                         status: { type: 'string' },
                         amount: { type: 'number' },
                         paymentMethod: { type: 'string' },
+                        paymentType: { type: 'string' },
                         transactionId: { type: 'string' },
                         paymentDate: {
                           type: 'string',
@@ -2572,6 +2692,306 @@ export const openapiSpec = {
               },
             },
           },
+        },
+      },
+    },
+    '/api/payos/create-deposit': {
+      post: {
+        summary: 'Create PayOS deposit payment link',
+        tags: ['PayOS'],
+        security: [{ cookieAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['bookingId', 'amount'],
+                properties: {
+                  bookingId: {
+                    type: 'string',
+                    description: 'ID of the booking to pay deposit for',
+                  },
+                  amount: {
+                    type: 'number',
+                    description: 'Deposit amount in VND',
+                  },
+                  description: {
+                    type: 'string',
+                    description: 'Payment description (optional)',
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          201: {
+            description: 'Deposit payment link created successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        paymentId: { type: 'string' },
+                        orderCode: { type: 'number' },
+                        paymentUrl: { type: 'string' },
+                        message: { type: 'string' },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          400: { description: 'Bad request - missing required fields' },
+          401: { description: 'Unauthorized' },
+          403: { description: 'Forbidden - access to booking denied' },
+          404: { description: 'Booking not found' },
+        },
+      },
+    },
+    '/api/payos/create-rental-fee': {
+      post: {
+        summary: 'Create PayOS rental fee payment link',
+        tags: ['PayOS'],
+        security: [{ cookieAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['bookingId', 'amount'],
+                properties: {
+                  bookingId: {
+                    type: 'string',
+                    description: 'ID of the booking to pay rental fee for',
+                  },
+                  amount: {
+                    type: 'number',
+                    description: 'Rental fee amount in VND',
+                  },
+                  description: {
+                    type: 'string',
+                    description: 'Payment description (optional)',
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          201: {
+            description: 'Rental fee payment link created successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        paymentId: { type: 'string' },
+                        orderCode: { type: 'number' },
+                        paymentUrl: { type: 'string' },
+                        message: { type: 'string' },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          400: { description: 'Bad request - missing required fields' },
+          401: { description: 'Unauthorized' },
+          403: { description: 'Forbidden - access to booking denied' },
+          404: { description: 'Booking not found' },
+        },
+      },
+    },
+    '/api/payos/create-late-fee': {
+      post: {
+        summary: 'Create PayOS late fee payment link',
+        tags: ['PayOS'],
+        security: [{ cookieAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['bookingId', 'amount'],
+                properties: {
+                  bookingId: {
+                    type: 'string',
+                    description: 'ID of the booking to pay late fee for',
+                  },
+                  amount: {
+                    type: 'number',
+                    description: 'Late fee amount in VND',
+                  },
+                  description: {
+                    type: 'string',
+                    description: 'Payment description (optional)',
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          201: {
+            description: 'Late fee payment link created successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        paymentId: { type: 'string' },
+                        orderCode: { type: 'number' },
+                        paymentUrl: { type: 'string' },
+                        message: { type: 'string' },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          400: { description: 'Bad request - missing required fields' },
+          401: { description: 'Unauthorized' },
+          403: { description: 'Forbidden - access to booking denied' },
+          404: { description: 'Booking not found' },
+        },
+      },
+    },
+    '/api/payos/create-damage-fee': {
+      post: {
+        summary: 'Create PayOS damage fee payment link',
+        tags: ['PayOS'],
+        security: [{ cookieAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['bookingId', 'amount'],
+                properties: {
+                  bookingId: {
+                    type: 'string',
+                    description: 'ID of the booking to pay damage fee for',
+                  },
+                  amount: {
+                    type: 'number',
+                    description: 'Damage fee amount in VND',
+                  },
+                  description: {
+                    type: 'string',
+                    description: 'Payment description (optional)',
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          201: {
+            description: 'Damage fee payment link created successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        paymentId: { type: 'string' },
+                        orderCode: { type: 'number' },
+                        paymentUrl: { type: 'string' },
+                        message: { type: 'string' },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          400: { description: 'Bad request - missing required fields' },
+          401: { description: 'Unauthorized' },
+          403: { description: 'Forbidden - access to booking denied' },
+          404: { description: 'Booking not found' },
+        },
+      },
+    },
+    '/api/payos/create-extension-fee': {
+      post: {
+        summary: 'Create PayOS extension fee payment link',
+        tags: ['PayOS'],
+        security: [{ cookieAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['bookingId', 'amount'],
+                properties: {
+                  bookingId: {
+                    type: 'string',
+                    description: 'ID of the booking to pay extension fee for',
+                  },
+                  amount: {
+                    type: 'number',
+                    description: 'Extension fee amount in VND',
+                  },
+                  description: {
+                    type: 'string',
+                    description: 'Payment description (optional)',
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          201: {
+            description: 'Extension fee payment link created successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        paymentId: { type: 'string' },
+                        orderCode: { type: 'number' },
+                        paymentUrl: { type: 'string' },
+                        message: { type: 'string' },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          400: { description: 'Bad request - missing required fields' },
+          401: { description: 'Unauthorized' },
+          403: { description: 'Forbidden - access to booking denied' },
+          404: { description: 'Booking not found' },
         },
       },
     },
@@ -6930,6 +7350,11 @@ export const openapiSpec = {
             description: 'Last update timestamp',
           },
         },
+      },
+      PaymentType: {
+        type: 'string',
+        enum: ['DEPOSIT', 'RENTAL_FEE', 'LATE_FEE', 'DAMAGE_FEE', 'EXTENSION_FEE', 'OTHER'],
+        description: 'Type of payment',
       },
       BookingWithRelations: {
         allOf: [

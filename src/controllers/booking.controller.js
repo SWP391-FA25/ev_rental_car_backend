@@ -451,9 +451,6 @@ export const updateBookingStatus = async (req, res, next) => {
 
     let vehicleStatus;
     switch (status) {
-      case 'CONFIRMED':
-        vehicleStatus = 'RESERVED';
-        break;
       case 'IN_PROGRESS':
         // Note: IN_PROGRESS should be set through checkInBooking function
         // But keeping this for backward compatibility
@@ -513,9 +510,6 @@ export const updateBookingStatus = async (req, res, next) => {
     // Send notifications based on status change
     try {
       switch (status) {
-        case 'CONFIRMED':
-          await notifyBookingConfirmed(result);
-          break;
         case 'IN_PROGRESS':
           await notifyBookingStarted(result);
           break;
@@ -864,189 +858,17 @@ export const createBooking = async (req, res, next) => {
       userId = user.id;
     }
 
-    // Validate that the renter exists if staff/admin is creating booking
-    if (user.role !== 'RENTER') {
-      const renter = await prisma.user.findUnique({
-        where: { id: renterId },
-        select: { id: true, role: true, accountStatus: true },
-      });
-
-      if (!renter) {
-        return res.status(404).json({
-          success: false,
-          message: 'Renter not found',
-        });
-      }
-
-      if (renter.role !== 'RENTER') {
-        return res.status(400).json({
-          success: false,
-          message: 'Specified user is not a renter',
-        });
-      }
-
-      if (renter.accountStatus !== 'ACTIVE') {
-        return res.status(400).json({
-          success: false,
-          message: 'Renter account is not active',
-        });
-      }
-    }
-
-    // Enhanced vehicle validation with better error messages
+    // Get vehicle data for pricing calculation (validation already done in middleware)
     const vehicle = await prisma.vehicle.findUnique({
       where: { id: vehicleId },
-      include: {
-        pricing: true,
-        station: { select: { id: true, name: true, status: true } },
-      },
+      include: { pricing: true },
     });
-
-    if (!vehicle) {
-      return res.status(404).json({
-        success: false,
-        message: 'Vehicle not found',
-        code: 'VEHICLE_NOT_FOUND',
-      });
-    }
-
-    if (vehicle.softDeleted) {
-      return res.status(400).json({
-        success: false,
-        message: 'Vehicle has been deleted from the system',
-        code: 'VEHICLE_DELETED',
-      });
-    }
-
-    if (vehicle.status !== 'AVAILABLE') {
-      const statusMessages = {
-        RENTED: 'Vehicle is currently rented',
-        MAINTENANCE: 'Vehicle is under maintenance',
-        RESERVED: 'Vehicle is already reserved',
-        OUT_OF_SERVICE: 'Vehicle is temporarily out of service',
-      };
-
-      return res.status(400).json({
-        success: false,
-        message: `Cannot book vehicle: ${statusMessages[vehicle.status] || 'Invalid vehicle status'}`,
-        code: 'VEHICLE_NOT_AVAILABLE',
-        vehicleStatus: vehicle.status,
-      });
-    }
-
-    if (!vehicle.pricing) {
-      return res.status(400).json({
-        success: false,
-        message: 'Vehicle pricing information not configured',
-        code: 'PRICING_NOT_FOUND',
-      });
-    }
-
-    if (!vehicle.pricing.isActive) {
-      return res.status(400).json({
-        success: false,
-        message: 'Vehicle pricing plan is currently inactive',
-        code: 'PRICING_INACTIVE',
-      });
-    }
-
-    // Validate pricing rates
-    const { hourlyRate, baseRate, weeklyRate, monthlyRate } = vehicle.pricing;
-    if (!hourlyRate && !baseRate && !weeklyRate && !monthlyRate) {
-      return res.status(400).json({
-        success: false,
-        message: 'Vehicle pricing rates are not properly configured',
-        code: 'INVALID_PRICING',
-      });
-    }
-
-    // Enhanced station validation
-    const station = await prisma.station.findUnique({
-      where: { id: stationId },
-      select: {
-        id: true,
-        name: true,
-        status: true,
-        capacity: true,
-        softDeleted: true,
-      },
-    });
-
-    if (!station) {
-      return res.status(404).json({
-        success: false,
-        message: 'Station not found',
-        code: 'STATION_NOT_FOUND',
-      });
-    }
-
-    if (station.softDeleted) {
-      return res.status(400).json({
-        success: false,
-        message: 'Station has been deleted from the system',
-        code: 'STATION_DELETED',
-      });
-    }
-
-    if (station.status !== 'ACTIVE') {
-      const statusMessages = {
-        MAINTENANCE: 'Station is under maintenance',
-        INACTIVE: 'Station is temporarily inactive',
-      };
-
-      return res.status(400).json({
-        success: false,
-        message: `Station is not active: ${statusMessages[station.status] || 'Invalid station status'}`,
-        code: 'STATION_NOT_ACTIVE',
-        stationStatus: station.status,
-      });
-    }
-
-    // Validate vehicle is at the correct station
-    if (vehicle.stationId !== stationId) {
-      return res.status(400).json({
-        success: false,
-        message: 'Vehicle is not available at the selected station',
-        code: 'VEHICLE_NOT_AT_STATION',
-        vehicleStation: vehicle.stationId,
-        requestedStation: stationId,
-      });
-    }
 
     // Calculate booking duration and pricing
     const startDate = new Date(startTime);
     const endDate = endTime
       ? new Date(endTime)
-      : new Date(startDate.getTime() + 24 * 60 * 60 * 1000); // Default 24 hours if no end time
-
-    // Validate booking duration
-    if (endDate <= startDate) {
-      return res.status(400).json({
-        success: false,
-        message: 'End time must be after start time',
-      });
-    }
-
-    // Check for conflicting bookings - improved with transaction-level checking
-    const conflictingBooking = await prisma.booking.findFirst({
-      where: {
-        vehicleId,
-        OR: [
-          {
-            startTime: { lte: endDate },
-            endTime: { gte: startDate },
-          },
-        ],
-        status: { not: 'CANCELLED' },
-      },
-    });
-
-    if (conflictingBooking) {
-      return res.status(400).json({
-        success: false,
-        message: 'Vehicle is already booked for the requested time',
-      });
-    }
+      : new Date(startDate.getTime() + 24 * 60 * 60 * 1000);
 
     const durationMs = endDate.getTime() - startDate.getTime();
     const durationHours = Math.ceil(durationMs / (1000 * 60 * 60));
@@ -1737,6 +1559,136 @@ export const completeBooking = async (req, res, next) => {
             depositStatus: updatedBooking.updated.depositStatus,
           },
           note: 'Vehicle checkout inspection should be created separately via /api/inspections endpoint',
+        },
+      },
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+export const getDepositStatus = async (req, res, next) => {
+  const { id } = req.params;
+  try {
+    const existingBooking = await prisma.booking.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        status: true,
+        depositStatus: true,
+        depositAmount: true,
+        userId: true,
+      },
+    });
+
+    if (!existingBooking) {
+      return res.status(404).json({
+        success: false,
+        message: 'Booking not found',
+      });
+    }
+
+    if (existingBooking.depositStatus === 'PAID') {
+      return res.json({
+        success: true,
+        message: 'Deposit is already confirmed for this booking',
+        data: { booking: existingBooking },
+      });
+    }
+
+    const payment = await prisma.payment.findFirst({
+      where: {
+        bookingId: id,
+        paymentType: 'DEPOSIT',
+        status: 'PAID',
+      },
+      orderBy: { paymentDate: 'desc' },
+    });
+
+    if (!payment) {
+      return res.status(404).json({
+        success: false,
+        message: 'No paid deposit payment found for this booking',
+        code: 'DEPOSIT_PAYMENT_NOT_FOUND',
+      });
+    }
+
+    const result = await prisma.$transaction(async (tx) => {
+      const booking = await tx.booking.update({
+        where: { id },
+        data: {
+          status:
+            existingBooking.status === 'PENDING'
+              ? 'CONFIRMED'
+              : existingBooking.status,
+          depositStatus: 'PAID',
+          depositAmount: payment.amount,
+          updatedAt: new Date(),
+        },
+        include: BOOKING_INCLUDES,
+      });
+
+      // Update vehicle status to RESERVED when booking is confirmed
+      if (
+        existingBooking.status === 'PENDING' &&
+        booking.status === 'CONFIRMED'
+      ) {
+        await tx.vehicle.update({
+          where: { id: booking.vehicleId },
+          data: {
+            status: 'RESERVED',
+            updatedAt: new Date(),
+          },
+        });
+      }
+
+      await tx.auditLog.create({
+        data: {
+          userId: req.user?.id || existingBooking.userId,
+          action: 'DEPOSIT_CONFIRMED',
+          tableName: 'Booking',
+          recordId: id,
+          oldData: {
+            depositStatus: existingBooking.depositStatus,
+            status: existingBooking.status,
+          },
+          newData: {
+            depositStatus: 'PAID',
+            status: booking.status,
+            paymentId: payment.id,
+          },
+        },
+      });
+
+      return { booking };
+    });
+
+    // Send booking confirmation notification if status changed to CONFIRMED
+    try {
+      if (
+        existingBooking.status === 'PENDING' &&
+        result.booking.status === 'CONFIRMED'
+      ) {
+        await notifyBookingConfirmed(result.booking);
+      }
+    } catch (notificationError) {
+      console.error(
+        'Error sending booking confirmation notification:',
+        notificationError
+      );
+      // Don't fail the deposit confirmation if notifications fail
+    }
+
+    return res.json({
+      success: true,
+      message: 'Deposit confirmed and booking status updated successfully',
+      data: {
+        booking: result.booking,
+        payment: {
+          id: payment.id,
+          amount: payment.amount,
+          paymentDate: payment.paymentDate,
+          transactionId: payment.transactionId,
         },
       },
     });
