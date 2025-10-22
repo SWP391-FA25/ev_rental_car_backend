@@ -15,11 +15,13 @@ import notificationRouter from './modules/notification.route.js';
 import payosRouter from './modules/payos.route.js';
 import paymentRouter from './modules/payment.route.js';
 import inspectionRouter from './modules/inspection.route.js';
+import contractRouter from './modules/contract.route.js';
 
 const router = Router();
 
 router.use('/auth', authRouter);
 router.use('/bookings', bookingRouter);
+router.use('/contracts', contractRouter);
 router.use('/documents', documentRouter);
 router.use('/test', testRouter);
 router.use('/staffs', staffRouter);
