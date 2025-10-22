@@ -355,6 +355,58 @@ class DocumentController {
       });
     }
   }
+
+  // Staff/Admin: Get documents by user ID
+  async getDocumentsByUserId(req, res) {
+    try {
+      const { userId } = req.params;
+      const { status, documentType, page = 1, limit = 20 } = req.query;
+      const skip = (page - 1) * limit;
+
+      // Build where clause
+      const where = { userId };
+      if (status) where.status = status;
+      if (documentType) where.documentType = documentType;
+
+      const documents = await prisma.userDocument.findMany({
+        where,
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              phone: true,
+            },
+          },
+        },
+        skip: parseInt(skip),
+        take: parseInt(limit),
+        orderBy: { uploadedAt: 'desc' },
+      });
+
+      const total = await prisma.userDocument.count({ where });
+
+      res.json({
+        success: true,
+        data: {
+          documents,
+          pagination: {
+            page: parseInt(page),
+            limit: parseInt(limit),
+            total,
+            totalPages: Math.ceil(total / limit),
+          },
+        },
+      });
+    } catch (error) {
+      console.error('Get documents by user ID error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Internal server error',
+      });
+    }
+  }
 }
 
 export default new DocumentController();

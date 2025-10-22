@@ -44,6 +44,12 @@ router.get(
   authorize('STAFF', 'ADMIN'),
   DocumentController.getAllDocuments
 );
+router.get(
+  '/user/:userId',
+  authenticate,
+  authorize('STAFF', 'ADMIN'),
+  DocumentController.getDocumentsByUserId
+);
 router.patch(
   '/:documentId/verify',
   authenticate,
