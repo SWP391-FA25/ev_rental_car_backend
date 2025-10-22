@@ -1,83 +1,13 @@
 import { PrismaClient } from '@prisma/client';
-import { z } from 'zod';
 import ImageKitService from '../lib/imagekit.js';
 
 const prisma = new PrismaClient();
-
-// Validation schemas
-const createContractSchema = z.object({
-  bookingId: z.string().min(1, 'Booking ID is required'),
-  renterName: z.string().optional(),
-  witnessName: z.string().optional(),
-  notes: z.string().optional(),
-});
-
-const uploadSignedContractSchema = z.object({
-  renterName: z.string().min(1, 'Renter name is required'),
-  witnessName: z.string().min(1, 'Witness name is required'),
-  notes: z.string().optional(),
-});
-
-const ALLOWED_MIME_TYPES = [
-  'image/jpeg',
-  'image/png',
-  'image/jpg',
-  'application/pdf',
-];
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
 class ContractController {
   // Create contract record (simple tracking)
   async createContract(req, res) {
     try {
-      const { role } = req.user;
-
-      // Only STAFF and ADMIN can create contracts
-      if (!['STAFF', 'ADMIN'].includes(role)) {
-        return res.status(403).json({
-          success: false,
-          message: 'Only staff and admin can create contracts',
-        });
-      }
-
-      // Validate request body
-      const validatedData = createContractSchema.parse(req.body);
-
-      // Verify booking exists and is confirmed
-      const booking = await prisma.booking.findUnique({
-        where: { id: validatedData.bookingId },
-        include: {
-          user: true,
-          vehicle: true,
-          station: true,
-        },
-      });
-
-      if (!booking) {
-        return res.status(404).json({
-          success: false,
-          message: 'Booking not found',
-        });
-      }
-
-      if (booking.status !== 'CONFIRMED') {
-        return res.status(400).json({
-          success: false,
-          message: 'Contract can only be created for confirmed bookings',
-        });
-      }
-
-      // Check if contract already exists for this booking
-      const existingContract = await prisma.rentalContract.findFirst({
-        where: { bookingId: validatedData.bookingId },
-      });
-
-      if (existingContract) {
-        return res.status(400).json({
-          success: false,
-          message: 'Contract already exists for this booking',
-        });
-      }
+      const { bookingId, renterName, witnessName, notes } = req.body;
 
       // Generate contract number
       const currentYear = new Date().getFullYear();
@@ -94,12 +24,12 @@ class ContractController {
       // Create contract record (just tracking, no content generation)
       const contract = await prisma.rentalContract.create({
         data: {
-          bookingId: validatedData.bookingId,
+          bookingId,
           contractNumber,
           status: 'CREATED',
-          renterName: validatedData.renterName,
-          witnessName: validatedData.witnessName,
-          notes: validatedData.notes,
+          renterName,
+          witnessName,
+          notes,
         },
         include: {
           booking: {
@@ -119,15 +49,6 @@ class ContractController {
       });
     } catch (error) {
       console.error('Create contract error:', error);
-
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({
-          success: false,
-          message: 'Invalid request data',
-          errors: error.errors,
-        });
-      }
-
       res.status(500).json({
         success: false,
         message: 'Internal server error',
@@ -139,7 +60,6 @@ class ContractController {
   async getContract(req, res) {
     try {
       const { contractId } = req.params;
-      const { userId, role } = req.user;
 
       const contract = await prisma.rentalContract.findUnique({
         where: { id: contractId },
@@ -151,7 +71,6 @@ class ContractController {
               station: true,
             },
           },
-          template: true,
           uploader: {
             select: {
               id: true,
@@ -166,14 +85,6 @@ class ContractController {
         return res.status(404).json({
           success: false,
           message: 'Contract not found',
-        });
-      }
-
-      // Authorization check
-      if (role === 'RENTER' && contract.booking.userId !== userId) {
-        return res.status(403).json({
-          success: false,
-          message: 'Access denied',
         });
       }
 
@@ -194,21 +105,6 @@ class ContractController {
   async getContractsByBooking(req, res) {
     try {
       const { bookingId } = req.params;
-      const { userId, role } = req.user;
-
-      // Check if user has access to this booking
-      if (role === 'RENTER') {
-        const booking = await prisma.booking.findUnique({
-          where: { id: bookingId },
-        });
-
-        if (!booking || booking.userId !== userId) {
-          return res.status(403).json({
-            success: false,
-            message: 'Access denied',
-          });
-        }
-      }
 
       const contracts = await prisma.rentalContract.findMany({
         where: { bookingId },
@@ -241,60 +137,15 @@ class ContractController {
   async uploadSignedContract(req, res) {
     try {
       const { contractId } = req.params;
-      const { userId, role } = req.user;
+      const { userId } = req.user;
+      const { renterName, witnessName, notes } = req.body;
       const file = req.file;
 
-      // Only STAFF and ADMIN can upload signed contracts
-      if (!['STAFF', 'ADMIN'].includes(role)) {
-        return res.status(403).json({
-          success: false,
-          message: 'Only staff and admin can upload signed contracts',
-        });
-      }
-
-      if (!file) {
-        return res.status(400).json({
-          success: false,
-          message: 'No file uploaded',
-        });
-      }
-
-      // Validate file
-      if (!ALLOWED_MIME_TYPES.includes(file.mimetype)) {
-        return res.status(400).json({
-          success: false,
-          message:
-            'Invalid file type. Only JPEG, PNG, JPG, and PDF are allowed.',
-        });
-      }
-
-      if (file.size > MAX_FILE_SIZE) {
-        return res.status(400).json({
-          success: false,
-          message: 'File size too large. Maximum size is 10MB.',
-        });
-      }
-
-      // Validate request body for renter and witness information
-      const validatedData = uploadSignedContractSchema.parse(req.body);
-
+      // Get contract details (validation already done in middleware)
       const contract = await prisma.rentalContract.findUnique({
         where: { id: contractId },
+        select: { contractNumber: true },
       });
-
-      if (!contract) {
-        return res.status(404).json({
-          success: false,
-          message: 'Contract not found',
-        });
-      }
-
-      if (contract.status !== 'CREATED') {
-        return res.status(400).json({
-          success: false,
-          message: 'Contract has already been uploaded',
-        });
-      }
 
       // Upload to ImageKit
       const timestamp = Date.now();
@@ -320,9 +171,9 @@ class ContractController {
         where: { id: contractId },
         data: {
           status: 'COMPLETED',
-          renterName: validatedData.renterName,
-          witnessName: validatedData.witnessName,
-          notes: validatedData.notes,
+          renterName,
+          witnessName,
+          notes,
           signedAt: new Date(),
           signedFileName: file.originalname,
           signedFileUrl: uploadResult.data.url,
@@ -358,15 +209,6 @@ class ContractController {
       });
     } catch (error) {
       console.error('Upload signed contract error:', error);
-
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({
-          success: false,
-          message: 'Invalid request data',
-          errors: error.errors,
-        });
-      }
-
       res.status(500).json({
         success: false,
         message: 'Internal server error',
@@ -377,7 +219,6 @@ class ContractController {
   // Get all contracts with filtering (for staff/admin)
   async getAllContracts(req, res) {
     try {
-      const { role } = req.user;
       const {
         status,
         bookingId,
@@ -387,14 +228,6 @@ class ContractController {
         startDate,
         endDate,
       } = req.query;
-
-      // Only STAFF and ADMIN can get all contracts
-      if (!['STAFF', 'ADMIN'].includes(role)) {
-        return res.status(403).json({
-          success: false,
-          message: 'Access denied',
-        });
-      }
 
       const skip = (page - 1) * limit;
       const where = {};
@@ -426,7 +259,6 @@ class ContractController {
               station: true,
             },
           },
-          template: true,
           uploader: {
             select: {
               id: true,
@@ -466,37 +298,18 @@ class ContractController {
   // Get contract statistics
   async getContractStats(req, res) {
     try {
-      const { role } = req.user;
-
-      // Only STAFF and ADMIN can get contract stats
-      if (!['STAFF', 'ADMIN'].includes(role)) {
-        return res.status(403).json({
-          success: false,
-          message: 'Access denied',
-        });
-      }
-
-      const [
-        totalContracts,
-        createdContracts,
-        signedContracts,
-        uploadedContracts,
-        completedContracts,
-      ] = await Promise.all([
-        prisma.rentalContract.count(),
-        prisma.rentalContract.count({ where: { status: 'CREATED' } }),
-        prisma.rentalContract.count({ where: { status: 'SIGNED' } }),
-        prisma.rentalContract.count({ where: { status: 'UPLOADED' } }),
-        prisma.rentalContract.count({ where: { status: 'COMPLETED' } }),
-      ]);
+      const [totalContracts, createdContracts, completedContracts] =
+        await Promise.all([
+          prisma.rentalContract.count(),
+          prisma.rentalContract.count({ where: { status: 'CREATED' } }),
+          prisma.rentalContract.count({ where: { status: 'COMPLETED' } }),
+        ]);
 
       res.json({
         success: true,
         data: {
           total: totalContracts,
-          created: createdContracts,
-          signed: signedContracts,
-          uploaded: uploadedContracts,
+          pending: createdContracts,
           completed: completedContracts,
         },
       });
