@@ -18,8 +18,6 @@ const uploadSignedContractSchema = z.object({
   notes: z.string().optional(),
 });
 
-
-
 const ALLOWED_MIME_TYPES = [
   'image/jpeg',
   'image/png',
@@ -239,8 +237,6 @@ class ContractController {
     }
   }
 
-
-
   // Upload signed contract photo
   async uploadSignedContract(req, res) {
     try {
@@ -378,10 +374,6 @@ class ContractController {
     }
   }
 
-
-
-
-
   // Get all contracts with filtering (for staff/admin)
   async getAllContracts(req, res) {
     try {
@@ -487,10 +479,14 @@ class ContractController {
       const [
         totalContracts,
         createdContracts,
+        signedContracts,
+        uploadedContracts,
         completedContracts,
       ] = await Promise.all([
         prisma.rentalContract.count(),
         prisma.rentalContract.count({ where: { status: 'CREATED' } }),
+        prisma.rentalContract.count({ where: { status: 'SIGNED' } }),
+        prisma.rentalContract.count({ where: { status: 'UPLOADED' } }),
         prisma.rentalContract.count({ where: { status: 'COMPLETED' } }),
       ]);
 
@@ -498,7 +494,9 @@ class ContractController {
         success: true,
         data: {
           total: totalContracts,
-          pending: createdContracts,
+          created: createdContracts,
+          signed: signedContracts,
+          uploaded: uploadedContracts,
           completed: completedContracts,
         },
       });
