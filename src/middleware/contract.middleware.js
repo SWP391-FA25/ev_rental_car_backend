@@ -251,20 +251,6 @@ export const validateContractFile = (req, res, next) => {
   next();
 };
 
-// Role-based access control middleware
-export const requireStaffOrAdmin = (req, res, next) => {
-  const { role } = req.user;
-
-  if (!['STAFF', 'ADMIN'].includes(role)) {
-    return res.status(403).json({
-      success: false,
-      message: 'Only staff and admin can access this resource',
-    });
-  }
-
-  next();
-};
-
 // Authorization middleware for contract access
 export const authorizeContractAccess = async (req, res, next) => {
   try {
