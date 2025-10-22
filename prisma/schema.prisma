@@ -525,6 +525,8 @@ model VehicleInspection {
   images            Json?           // Array of image URLs from inspection
   isCompleted       Boolean         @default(false) // Whether inspection is finalized
   documentVerified  Boolean         @default(false) // Whether customer documents were verified
+  imageUrl          String?         // Added field for storing ImageKit URL
+  thumbnailUrl      String?         // Added field for storing ImageKit thumbnail URL
   createdAt         DateTime        @default(now())
   updatedAt         DateTime        @updatedAt
   vehicle           Vehicle         @relation(fields: [vehicleId], references: [id])

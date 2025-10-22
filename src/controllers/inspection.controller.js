@@ -1,8 +1,6 @@
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../lib/prisma.js';
 import multer from 'multer';
 import ImageKitService from '../lib/imagekit.js';
-
-const prisma = new PrismaClient();
 
 // Configure multer for file uploads
 const upload = multer({
@@ -27,6 +25,15 @@ export const uploadInspectionImageHandler = async (req, res) => {
     const { inspectionId } = req.params;
     const file = req.file;
 
+    // Validate required parameters
+    if (!inspectionId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Inspection ID is required',
+      });
+    }
+
+    // Validate file upload
     if (!file) {
       return res.status(400).json({
         success: false,
@@ -34,11 +41,19 @@ export const uploadInspectionImageHandler = async (req, res) => {
       });
     }
 
-    // Validate file type
+    // Validate file type (image only)
     if (!file.mimetype.startsWith('image/')) {
       return res.status(400).json({
         success: false,
         message: 'Only image files are allowed',
+      });
+    }
+
+    // Validate file size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      return res.status(400).json({
+        success: false,
+        message: 'File size exceeds maximum limit of 10MB',
       });
     }
 
@@ -54,53 +69,75 @@ export const uploadInspectionImageHandler = async (req, res) => {
       });
     }
 
-    // Upload to ImageKit using the specific inspection image method
-    const timestamp = Date.now();
-    const fileExtension = file.originalname.split('.').pop();
-    const fileName = `inspection_${inspectionId}_${timestamp}.${fileExtension}`;
+    // Upload to ImageKit
+    try {
+      const timestamp = Date.now();
+      const fileExtension = file.originalname.split('.').pop();
+      const fileName = `inspection_${inspectionId}_${timestamp}.${fileExtension}`;
 
-    const uploadResult = await ImageKitService.uploadInspectionImage(
-      file.buffer,
-      fileName,
-      inspectionId
-    );
+      const result = await ImageKitService.uploadInspectionImage(
+        file.buffer,
+        fileName,
+        inspectionId
+      );
 
-    if (!uploadResult.success) {
+      if (!result.success) {
+        return res.status(500).json({
+          success: false,
+          message: 'Failed to upload image to ImageKit',
+          error: result.error,
+        });
+      }
+
+      // Update inspection with image URLs
+      const updatedInspection = await prisma.vehicleInspection.update({
+        where: { id: inspectionId },
+        data: {
+          imageUrl: result.data.url,
+          thumbnailUrl: result.data.thumbnailUrl,
+        },
+      });
+
+      res.status(201).json({
+        success: true,
+        data: {
+          imageUrl: result.data.url,
+          thumbnailUrl: result.data.thumbnailUrl,
+          fileId: result.data.fileId,
+        },
+        message: 'Image uploaded successfully',
+      });
+    } catch (imageKitError) {
+      console.error('ImageKit upload error:', imageKitError);
+
+      // Handle specific ImageKit errors
+      if (imageKitError.response && imageKitError.response.data) {
+        return res.status(imageKitError.response.status).json({
+          success: false,
+          message:
+            imageKitError.response.data.message ||
+            'Failed to upload image to ImageKit',
+        });
+      }
+
       return res.status(500).json({
         success: false,
-        message: 'Failed to upload file to storage',
-        error: uploadResult.error,
+        message: 'Failed to upload image to ImageKit',
+      });
+    }
+  } catch (error) {
+    console.error('Error uploading inspection image:', error);
+
+    // Handle database errors
+    if (error.code === 'P2002') {
+      return res.status(409).json({
+        success: false,
+        message: 'Duplicate entry detected',
       });
     }
 
-    // Update inspection with image data
-    const updatedInspection = await prisma.vehicleInspection.update({
-      where: { id: inspectionId },
-      data: {
-        images: {
-          push: {
-            url: uploadResult.data.url,
-            thumbnailUrl: uploadResult.data.thumbnailUrl,
-            fileId: uploadResult.data.fileId,
-            fileName: file.originalname,
-            uploadedAt: new Date().toISOString(),
-          },
-        },
-      },
-    });
-
-    res.status(201).json({
-      success: true,
-      message: 'Image uploaded successfully',
-      data: {
-        url: uploadResult.data.url,
-        thumbnailUrl: uploadResult.data.thumbnailUrl,
-        fileId: uploadResult.data.fileId,
-      },
-    });
-  } catch (error) {
-    console.error('Error uploading inspection image:', error);
-    res.status(500).json({
+    // Handle other general errors
+    return res.status(500).json({
       success: false,
       message: 'Internal server error',
     });
