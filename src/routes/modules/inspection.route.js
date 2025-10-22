@@ -9,6 +9,9 @@ import {
   updateInspection,
   getInspectionStats,
   getInspectionsByBookingForRenter,
+  uploadInspectionImage,
+  uploadInspectionImageHandler,
+  deleteInspectionImage
 } from '../../controllers/inspection.controller.js';
 import { authenticate } from '../../middleware/authenticate.js';
 import { authorize } from '../../middleware/authorize.js';
@@ -17,6 +20,12 @@ const router = Router();
 
 // Create a new inspection record
 router.post('/', authenticate, authorize('STAFF', 'ADMIN'), createInspection);
+
+// Upload inspection image
+router.post('/:id/upload-image', authenticate, authorize('STAFF', 'ADMIN'), uploadInspectionImage, uploadInspectionImageHandler);
+
+// Delete inspection image
+router.delete('/:id/image/:imageIndex', authenticate, authorize('STAFF', 'ADMIN'), deleteInspectionImage);
 
 // Get inspection by ID
 router.get(

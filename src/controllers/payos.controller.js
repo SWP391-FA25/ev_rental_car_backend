@@ -392,7 +392,7 @@ export async function handlePayOSSuccess(req, res, next) {
     }
 
     // Redirect to frontend success page
-    const redirectUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/payment/success?bookingId=${bookingId}&paymentId=${payment.id}`;
+    const redirectUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/payment/success?bookingId=${bookingId}&paymentId=${payment.id}&paymentType=${payment.paymentType}`;
     return res.redirect(redirectUrl);
   } catch (error) {
     console.error('PayOS Success Handler Error:', error);

@@ -201,6 +201,25 @@ class ImageKitService {
       },
     });
   }
+
+  /**
+   * Upload inspection image
+   * @param {Buffer} fileBuffer - File buffer
+   * @param {string} fileName - File name
+   * @param {string} inspectionId - Inspection ID
+   * @returns {Promise<Object>} Upload result
+   */
+  async uploadInspectionImage(fileBuffer, fileName, inspectionId) {
+    const folder = `inspections/${inspectionId}`;
+
+    return await this.uploadFile(fileBuffer, fileName, folder, {
+      tags: ['inspection', inspectionId, 'image'],
+      customMetadata: {
+        inspectionId: inspectionId,
+        uploadDate: new Date().toISOString(),
+      },
+    });
+  }
 }
 
 export default new ImageKitService();

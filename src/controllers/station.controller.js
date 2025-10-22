@@ -420,7 +420,7 @@ const getStaffAtStation = async (req, res, next) => {
 // Get nearby stations based on user location
 const getNearbyStations = async (req, res, next) => {
   try {
-    const { lat, lng, radius = 10 } = req.query; // radius in km, default 10km
+    const { lat, lng, radius = 30 } = req.query; // radius in km, default 10km
 
     // Validate required parameters
     if (!lat || !lng) {
