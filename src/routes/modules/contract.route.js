@@ -2,6 +2,7 @@ import express from 'express';
 import multer from 'multer';
 import ContractController from '../../controllers/contract.controller.js';
 import { authenticate } from '../../middleware/authenticate.js';
+import { authorize } from '../../middleware/authorize.js';
 import {
   createContractValidation,
   uploadSignedContractValidation,
@@ -9,7 +10,6 @@ import {
   getContractsByBookingValidation,
   getAllContractsValidation,
   validateContractFile,
-  requireStaffOrAdmin,
   authorizeContractAccess,
 } from '../../middleware/contract.middleware.js';
 
@@ -40,7 +40,7 @@ const upload = multer({
 router.post(
   '/',
   authenticate,
-  requireStaffOrAdmin,
+  authorize('ADMIN', 'STAFF'),
   createContractValidation,
   ContractController.createContract
 );
@@ -49,7 +49,7 @@ router.post(
 router.post(
   '/:contractId/upload',
   authenticate,
-  requireStaffOrAdmin,
+  authorize('ADMIN', 'STAFF'),
   upload.single('file'),
   validateContractFile,
   uploadSignedContractValidation,
@@ -60,6 +60,7 @@ router.post(
 router.get(
   '/:contractId',
   authenticate,
+  authorize('ADMIN', 'STAFF', 'RENTER'),
   getContractByIdValidation,
   authorizeContractAccess,
   ContractController.getContract
@@ -69,6 +70,7 @@ router.get(
 router.get(
   '/booking/:bookingId',
   authenticate,
+  authorize('ADMIN', 'STAFF', 'RENTER'),
   getContractsByBookingValidation,
   ContractController.getContractsByBooking
 );
@@ -77,7 +79,7 @@ router.get(
 router.get(
   '/',
   authenticate,
-  requireStaffOrAdmin,
+  authorize('ADMIN', 'STAFF'),
   getAllContractsValidation,
   ContractController.getAllContracts
 );
@@ -86,7 +88,7 @@ router.get(
 router.get(
   '/stats/overview',
   authenticate,
-  requireStaffOrAdmin,
+  authorize('ADMIN', 'STAFF'),
   ContractController.getContractStats
 );
 
