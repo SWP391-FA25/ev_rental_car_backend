@@ -1,6 +1,7 @@
 import { prisma } from '../lib/prisma.js';
 import { v4 as uuidv4 } from 'uuid';
-import { saveFileToLocal } from '../utils/fileUpload.js';
+import { saveFile } from '../utils/fileUpload.js';
+import ImageKitService from '../lib/imagekit.js';
 
 /* Create a cash payment for a booking */
 export async function createCashPayment(req, res, next) {
@@ -12,6 +13,29 @@ export async function createCashPayment(req, res, next) {
       description,
       paymentType = 'RENTAL_FEE',
     } = req.body || {};
+
+    // Handle file upload if evidence is provided
+    let evidenceUrl = null;
+    if (req.file) {
+      try {
+        const timestamp = Date.now();
+        const fileExtension = req.file.originalname.split('.').pop();
+        const fileName = `payment_${bookingId}_${timestamp}.${fileExtension}`;
+
+        const result = await ImageKitService.uploadPaymentEvidence(
+          req.file.buffer,
+          fileName,
+          bookingId
+        );
+
+        if (result.success) {
+          evidenceUrl = result.data.url;
+        }
+      } catch (imageKitError) {
+        console.error('ImageKit upload error:', imageKitError);
+        // Continue with payment creation even if image upload fails
+      }
+    }
 
     if (!userId) {
       return res.status(401).json({ success: false, message: 'Unauthorized' });
@@ -67,6 +91,7 @@ export async function createCashPayment(req, res, next) {
         transactionId: transactionId,
         status: 'PAID',
         paymentDate: new Date(),
+        evidenceUrl: evidenceUrl, // Add evidence URL if available
       },
     });
 
@@ -94,6 +119,7 @@ export async function createCashPayment(req, res, next) {
         paymentMethod: payment.paymentMethod,
         paymentType: payment.paymentType,
         status: payment.status,
+        evidenceUrl: evidenceUrl,
         message: 'Cash payment created successfully',
       },
     });

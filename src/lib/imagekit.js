@@ -220,6 +220,25 @@ class ImageKitService {
       },
     });
   }
+
+  /**
+   * Upload payment evidence image
+   * @param {Buffer} fileBuffer - File buffer
+   * @param {string} fileName - File name
+   * @param {string} paymentId - Payment ID
+   * @returns {Promise<Object>} Upload result
+   */
+  async uploadPaymentEvidence(fileBuffer, fileName, paymentId) {
+    const folder = `payments/${paymentId}`;
+
+    return await this.uploadFile(fileBuffer, fileName, folder, {
+      tags: ['payment', paymentId, 'evidence'],
+      customMetadata: {
+        paymentId: paymentId,
+        uploadDate: new Date().toISOString(),
+      },
+    });
+  }
 }
 
 export default new ImageKitService();
