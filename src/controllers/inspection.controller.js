@@ -22,11 +22,12 @@ export const uploadInspectionImage = upload.single('image');
 
 export const uploadInspectionImageHandler = async (req, res) => {
   try {
-    const { inspectionId } = req.params;
+    // Accept both ":inspectionId" and ":id" to match route definitions
+    const inspectionId = req.params.inspectionId || req.params.id;
     const file = req.file;
 
     // Validate required parameters
-    if (!inspectionId) {
+    if (!inspectionId || typeof inspectionId !== 'string' || !inspectionId.trim()) {
       return res.status(400).json({
         success: false,
         message: 'Inspection ID is required',
