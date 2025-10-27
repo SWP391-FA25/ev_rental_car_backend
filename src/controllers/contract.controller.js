@@ -137,7 +137,7 @@ class ContractController {
   async uploadSignedContract(req, res) {
     try {
       const { contractId } = req.params;
-      const { userId } = req.user;
+      const { id: userId } = req.user; // Fix: req.user has 'id', not 'userId'
       const { renterName, witnessName, notes } = req.body;
       const file = req.file;
 
