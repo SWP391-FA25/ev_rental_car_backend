@@ -90,12 +90,31 @@ export const uploadInspectionImageHandler = async (req, res) => {
         });
       }
 
-      // Update inspection with image URLs
+      // Get current inspection to access existing images
+      const currentInspection = await prisma.vehicleInspection.findUnique({
+        where: { id: inspectionId },
+        select: { images: true },
+      });
+
+      // Create new image object
+      const newImage = {
+        url: result.data.url,
+        thumbnailUrl: result.data.thumbnailUrl,
+        fileId: result.data.fileId,
+        fileName: fileName,
+        uploadedAt: new Date().toISOString(),
+      };
+
+      // Append new image to existing images array
+      const updatedImages = [...(currentInspection.images || []), newImage];
+
+      // Update inspection with new images array AND single image fields for backward compatibility
       const updatedInspection = await prisma.vehicleInspection.update({
         where: { id: inspectionId },
         data: {
-          imageUrl: result.data.url,
-          thumbnailUrl: result.data.thumbnailUrl,
+          imageUrl: result.data.url, // Keep for backward compatibility (last uploaded image)
+          thumbnailUrl: result.data.thumbnailUrl, // Keep for backward compatibility
+          images: updatedImages, // Add to images array
         },
       });
 
@@ -105,6 +124,8 @@ export const uploadInspectionImageHandler = async (req, res) => {
           imageUrl: result.data.url,
           thumbnailUrl: result.data.thumbnailUrl,
           fileId: result.data.fileId,
+          totalImages: updatedImages.length,
+          allImages: updatedImages,
         },
         message: 'Image uploaded successfully',
       });
