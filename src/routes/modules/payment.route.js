@@ -29,7 +29,12 @@ const router = Router();
 
 // Create a cash payment for a booking (requires authentication)
 // Supports file upload for evidence
-router.post('/cash-payment', authenticate, upload.single('evidence'), createCashPayment);
+router.post(
+  '/cash-payment',
+  authenticate,
+  upload.single('evidence'),
+  createCashPayment
+);
 
 // Upload evidence for an existing cash payment (requires authentication)
 // This route is kept for backward compatibility but can be deprecated

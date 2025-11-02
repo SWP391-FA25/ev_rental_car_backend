@@ -513,6 +513,20 @@ export const completeBookingValidator = checkSchema({
     isLength: { options: { min: 3, max: 200 } },
     errorMessage:
       'Actual return location is required and must be 3-200 characters',
+    custom: {
+      options: async (location, { req }) => {
+        const station = await prisma.station.findUnique({
+          where: { name: location },
+        });
+
+        if (!station) {
+          throw new Error('Return location must correspond to a valid station');
+        }
+
+        req.station = station; // Lưu trạm để sử dụng sau này nếu cần
+        return true;
+      },
+    },
   },
   returnOdometer: {
     in: ['body'],

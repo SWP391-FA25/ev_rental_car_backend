@@ -1149,7 +1149,7 @@ export const openapiSpec = {
         },
       },
     },
-    
+
     '/api/inspections/{id}/image/{imageIndex}': {
       delete: {
         summary: 'Delete inspection image',
@@ -2548,7 +2548,14 @@ export const openapiSpec = {
                   },
                   paymentType: {
                     type: 'string',
-                    enum: ['DEPOSIT', 'RENTAL_FEE', 'LATE_FEE', 'DAMAGE_FEE', 'EXTENSION_FEE', 'OTHER'],
+                    enum: [
+                      'DEPOSIT',
+                      'RENTAL_FEE',
+                      'LATE_FEE',
+                      'DAMAGE_FEE',
+                      'EXTENSION_FEE',
+                      'OTHER',
+                    ],
                     default: 'DEPOSIT',
                     description: 'Type of payment',
                   },
@@ -3020,17 +3027,25 @@ export const openapiSpec = {
                   },
                   paymentType: {
                     type: 'string',
-                    enum: ['DEPOSIT', 'RENTAL_FEE', 'LATE_FEE', 'DAMAGE_FEE', 'EXTENSION_FEE', 'OTHER'],
-                    description: 'Type of payment (optional, defaults to RENTAL_FEE)',
+                    enum: [
+                      'DEPOSIT',
+                      'RENTAL_FEE',
+                      'LATE_FEE',
+                      'DAMAGE_FEE',
+                      'EXTENSION_FEE',
+                      'OTHER',
+                    ],
+                    description:
+                      'Type of payment (optional, defaults to RENTAL_FEE)',
                   },
                   description: {
                     type: 'string',
                     description: 'Payment description (optional)',
-                  }
-                }
-              }
-            }
-          }
+                  },
+                },
+              },
+            },
+          },
         },
         responses: {
           201: {
@@ -3114,7 +3129,10 @@ export const openapiSpec = {
               },
             },
           },
-          400: { description: 'Bad request - missing required fields or invalid payment' },
+          400: {
+            description:
+              'Bad request - missing required fields or invalid payment',
+          },
           401: { description: 'Unauthorized' },
           403: { description: 'Forbidden - access to payment denied' },
           404: { description: 'Payment not found' },
@@ -3174,7 +3192,10 @@ export const openapiSpec = {
               },
             },
           },
-          400: { description: 'Bad request - missing required fields or invalid refund amount' },
+          400: {
+            description:
+              'Bad request - missing required fields or invalid refund amount',
+          },
           401: { description: 'Unauthorized' },
           403: { description: 'Forbidden - Staff/Admin access required' },
           404: { description: 'Payment not found' },
@@ -6755,64 +6776,67 @@ export const openapiSpec = {
                 properties: {
                   vehicleId: { type: 'string', description: 'Vehicle ID' },
                   staffId: { type: 'string', description: 'Staff ID' },
-                  bookingId: { type: 'string', description: 'Booking ID (optional)' },
-                  inspectionType: { 
-                    type: 'string', 
-                    enum: ['CHECK_IN', 'CHECK_OUT'],
-                    description: 'Type of inspection' 
+                  bookingId: {
+                    type: 'string',
+                    description: 'Booking ID (optional)',
                   },
-                  batteryLevel: { 
-                    type: 'number', 
+                  inspectionType: {
+                    type: 'string',
+                    enum: ['CHECK_IN', 'CHECK_OUT'],
+                    description: 'Type of inspection',
+                  },
+                  batteryLevel: {
+                    type: 'number',
                     minimum: 0,
                     maximum: 100,
-                    description: 'Battery level percentage (0-100)' 
+                    description: 'Battery level percentage (0-100)',
                   },
-                  exteriorCondition: { 
-                    type: 'string', 
+                  exteriorCondition: {
+                    type: 'string',
                     enum: ['GOOD', 'FAIR', 'POOR'],
-                    description: 'Exterior condition' 
+                    description: 'Exterior condition',
                   },
-                  interiorCondition: { 
-                    type: 'string', 
+                  interiorCondition: {
+                    type: 'string',
                     enum: ['GOOD', 'FAIR', 'POOR'],
-                    description: 'Interior condition' 
+                    description: 'Interior condition',
                   },
-                  mileage: { 
-                    type: 'number', 
-                    description: 'Vehicle mileage (required for check-out)' 
+                  mileage: {
+                    type: 'number',
+                    description: 'Vehicle mileage (required for check-out)',
                   },
-                  tireCondition: { 
-                    type: 'string', 
+                  tireCondition: {
+                    type: 'string',
                     enum: ['GOOD', 'FAIR', 'POOR'],
-                    description: 'Tire condition' 
+                    description: 'Tire condition',
                   },
-                  accessories: { 
+                  accessories: {
                     type: 'array',
                     items: {
                       type: 'object',
                       properties: {
                         name: { type: 'string' },
-                        present: { type: 'boolean' }
-                      }
+                        present: { type: 'boolean' },
+                      },
                     },
-                    description: 'List of accessories and their status' 
+                    description: 'List of accessories and their status',
                   },
-                  damageNotes: { 
-                    type: 'string', 
-                    description: 'Notes about vehicle damage' 
+                  damageNotes: {
+                    type: 'string',
+                    description: 'Notes about vehicle damage',
                   },
-                  notes: { 
-                    type: 'string', 
-                    description: 'General inspection notes' 
+                  notes: {
+                    type: 'string',
+                    description: 'General inspection notes',
                   },
-                  images: { 
+                  images: {
                     type: 'array',
                     items: { type: 'string' },
-                    description: 'Array of image URLs' 
+                    description: 'Array of image URLs',
                   },
-                  documentVerified: { 
-                    type: 'boolean', 
-                    description: 'Whether customer documents were verified' 
+                  documentVerified: {
+                    type: 'boolean',
+                    description: 'Whether customer documents were verified',
                   },
                 },
               },
@@ -6828,11 +6852,16 @@ export const openapiSpec = {
                   type: 'object',
                   properties: {
                     success: { type: 'boolean', example: true },
-                    message: { type: 'string', example: 'Inspection created successfully' },
+                    message: {
+                      type: 'string',
+                      example: 'Inspection created successfully',
+                    },
                     data: {
                       type: 'object',
                       properties: {
-                        inspection: { $ref: '#/components/schemas/VehicleInspection' },
+                        inspection: {
+                          $ref: '#/components/schemas/VehicleInspection',
+                        },
                       },
                     },
                   },
@@ -6840,7 +6869,10 @@ export const openapiSpec = {
               },
             },
           },
-          400: { description: 'Bad request - missing required fields or invalid data' },
+          400: {
+            description:
+              'Bad request - missing required fields or invalid data',
+          },
           401: { description: 'Unauthorized' },
           403: { description: 'Forbidden - Insufficient permissions' },
         },
@@ -6872,7 +6904,9 @@ export const openapiSpec = {
                     data: {
                       type: 'object',
                       properties: {
-                        inspection: { $ref: '#/components/schemas/VehicleInspection' },
+                        inspection: {
+                          $ref: '#/components/schemas/VehicleInspection',
+                        },
                       },
                     },
                   },
@@ -6905,62 +6939,62 @@ export const openapiSpec = {
               schema: {
                 type: 'object',
                 properties: {
-                  batteryLevel: { 
-                    type: 'number', 
+                  batteryLevel: {
+                    type: 'number',
                     minimum: 0,
                     maximum: 100,
-                    description: 'Battery level percentage (0-100)' 
+                    description: 'Battery level percentage (0-100)',
                   },
-                  exteriorCondition: { 
-                    type: 'string', 
+                  exteriorCondition: {
+                    type: 'string',
                     enum: ['GOOD', 'FAIR', 'POOR'],
-                    description: 'Exterior condition' 
+                    description: 'Exterior condition',
                   },
-                  interiorCondition: { 
-                    type: 'string', 
+                  interiorCondition: {
+                    type: 'string',
                     enum: ['GOOD', 'FAIR', 'POOR'],
-                    description: 'Interior condition' 
+                    description: 'Interior condition',
                   },
-                  mileage: { 
-                    type: 'number', 
-                    description: 'Vehicle mileage' 
+                  mileage: {
+                    type: 'number',
+                    description: 'Vehicle mileage',
                   },
-                  tireCondition: { 
-                    type: 'string', 
+                  tireCondition: {
+                    type: 'string',
                     enum: ['GOOD', 'FAIR', 'POOR'],
-                    description: 'Tire condition' 
+                    description: 'Tire condition',
                   },
-                  accessories: { 
+                  accessories: {
                     type: 'array',
                     items: {
                       type: 'object',
                       properties: {
                         name: { type: 'string' },
-                        present: { type: 'boolean' }
-                      }
+                        present: { type: 'boolean' },
+                      },
                     },
-                    description: 'List of accessories and their status' 
+                    description: 'List of accessories and their status',
                   },
-                  damageNotes: { 
-                    type: 'string', 
-                    description: 'Notes about vehicle damage' 
+                  damageNotes: {
+                    type: 'string',
+                    description: 'Notes about vehicle damage',
                   },
-                  notes: { 
-                    type: 'string', 
-                    description: 'General inspection notes' 
+                  notes: {
+                    type: 'string',
+                    description: 'General inspection notes',
                   },
-                  images: { 
+                  images: {
                     type: 'array',
                     items: { type: 'string' },
-                    description: 'Array of image URLs' 
+                    description: 'Array of image URLs',
                   },
-                  documentVerified: { 
-                    type: 'boolean', 
-                    description: 'Whether customer documents were verified' 
+                  documentVerified: {
+                    type: 'boolean',
+                    description: 'Whether customer documents were verified',
                   },
-                  isCompleted: { 
-                    type: 'boolean', 
-                    description: 'Whether inspection is finalized' 
+                  isCompleted: {
+                    type: 'boolean',
+                    description: 'Whether inspection is finalized',
                   },
                 },
               },
@@ -6976,11 +7010,16 @@ export const openapiSpec = {
                   type: 'object',
                   properties: {
                     success: { type: 'boolean', example: true },
-                    message: { type: 'string', example: 'Inspection updated successfully' },
+                    message: {
+                      type: 'string',
+                      example: 'Inspection updated successfully',
+                    },
                     data: {
                       type: 'object',
                       properties: {
-                        inspection: { $ref: '#/components/schemas/VehicleInspection' },
+                        inspection: {
+                          $ref: '#/components/schemas/VehicleInspection',
+                        },
                       },
                     },
                   },
@@ -7016,7 +7055,10 @@ export const openapiSpec = {
                   type: 'object',
                   properties: {
                     success: { type: 'boolean', example: true },
-                    message: { type: 'string', example: 'Inspection deleted successfully' },
+                    message: {
+                      type: 'string',
+                      example: 'Inspection deleted successfully',
+                    },
                   },
                 },
               },
@@ -7056,7 +7098,9 @@ export const openapiSpec = {
                       properties: {
                         inspections: {
                           type: 'array',
-                          items: { $ref: '#/components/schemas/VehicleInspection' },
+                          items: {
+                            $ref: '#/components/schemas/VehicleInspection',
+                          },
                         },
                       },
                     },
@@ -7099,7 +7143,9 @@ export const openapiSpec = {
                       properties: {
                         inspections: {
                           type: 'array',
-                          items: { $ref: '#/components/schemas/VehicleInspection' },
+                          items: {
+                            $ref: '#/components/schemas/VehicleInspection',
+                          },
                         },
                       },
                     },
@@ -7142,7 +7188,9 @@ export const openapiSpec = {
                       properties: {
                         inspections: {
                           type: 'array',
-                          items: { $ref: '#/components/schemas/VehicleInspection' },
+                          items: {
+                            $ref: '#/components/schemas/VehicleInspection',
+                          },
                         },
                       },
                     },
@@ -7185,7 +7233,9 @@ export const openapiSpec = {
                       properties: {
                         inspections: {
                           type: 'array',
-                          items: { $ref: '#/components/schemas/VehicleInspection' },
+                          items: {
+                            $ref: '#/components/schemas/VehicleInspection',
+                          },
                         },
                       },
                     },
@@ -7239,7 +7289,9 @@ export const openapiSpec = {
                         },
                         recentInspections: {
                           type: 'array',
-                          items: { $ref: '#/components/schemas/VehicleInspection' },
+                          items: {
+                            $ref: '#/components/schemas/VehicleInspection',
+                          },
                         },
                       },
                     },
@@ -7353,7 +7405,14 @@ export const openapiSpec = {
       },
       PaymentType: {
         type: 'string',
-        enum: ['DEPOSIT', 'RENTAL_FEE', 'LATE_FEE', 'DAMAGE_FEE', 'EXTENSION_FEE', 'OTHER'],
+        enum: [
+          'DEPOSIT',
+          'RENTAL_FEE',
+          'LATE_FEE',
+          'DAMAGE_FEE',
+          'EXTENSION_FEE',
+          'OTHER',
+        ],
         description: 'Type of payment',
       },
       BookingWithRelations: {
@@ -7421,84 +7480,88 @@ export const openapiSpec = {
           id: { type: 'string', description: 'Inspection ID' },
           vehicleId: { type: 'string', description: 'Vehicle ID' },
           staffId: { type: 'string', description: 'Staff ID' },
-          bookingId: { type: 'string', nullable: true, description: 'Booking ID' },
-          inspectionType: { 
-            type: 'string', 
+          bookingId: {
+            type: 'string',
+            nullable: true,
+            description: 'Booking ID',
+          },
+          inspectionType: {
+            type: 'string',
             enum: ['CHECK_IN', 'CHECK_OUT'],
-            description: 'Type of inspection' 
+            description: 'Type of inspection',
           },
-          batteryLevel: { 
-            type: 'number', 
-            description: 'Battery level percentage (0-100)' 
+          batteryLevel: {
+            type: 'number',
+            description: 'Battery level percentage (0-100)',
           },
-          exteriorCondition: { 
-            type: 'string', 
+          exteriorCondition: {
+            type: 'string',
             enum: ['GOOD', 'FAIR', 'POOR'],
-            description: 'Exterior condition' 
+            description: 'Exterior condition',
           },
-          interiorCondition: { 
-            type: 'string', 
+          interiorCondition: {
+            type: 'string',
             enum: ['GOOD', 'FAIR', 'POOR'],
-            description: 'Interior condition' 
+            description: 'Interior condition',
           },
-          mileage: { 
-            type: 'number', 
+          mileage: {
+            type: 'number',
             nullable: true,
-            description: 'Vehicle mileage' 
+            description: 'Vehicle mileage',
           },
-          tireCondition: { 
-            type: 'string', 
+          tireCondition: {
+            type: 'string',
             enum: ['GOOD', 'FAIR', 'POOR'],
             nullable: true,
-            description: 'Tire condition' 
+            description: 'Tire condition',
           },
-          accessories: { 
+          accessories: {
             type: 'array',
             items: {
               type: 'object',
               properties: {
                 name: { type: 'string' },
-                present: { type: 'boolean' }
-              }
+                present: { type: 'boolean' },
+              },
             },
-            description: 'List of accessories and their status' 
+            description: 'List of accessories and their status',
           },
-          damageNotes: { 
-            type: 'string', 
+          damageNotes: {
+            type: 'string',
             nullable: true,
-            description: 'Notes about vehicle damage' 
+            description: 'Notes about vehicle damage',
           },
-          notes: { 
-            type: 'string', 
+          notes: {
+            type: 'string',
             nullable: true,
-            description: 'General inspection notes' 
+            description: 'General inspection notes',
           },
-          images: { 
+          images: {
             type: 'array',
             items: { type: 'string' },
             nullable: true,
-            description: 'Array of image URLs' 
+            description: 'Array of image URLs',
           },
-          documentVerified: { 
-            type: 'boolean', 
-            description: 'Whether customer documents were verified' 
+          documentVerified: {
+            type: 'boolean',
+            description: 'Whether customer documents were verified',
           },
-          isCompleted: { 
-            type: 'boolean', 
-            description: 'Whether inspection is finalized' 
+          isCompleted: {
+            type: 'boolean',
+            description: 'Whether inspection is finalized',
           },
-          createdAt: { 
-            type: 'string', 
+          createdAt: {
+            type: 'string',
             format: 'date-time',
-            description: 'Creation timestamp' 
+            description: 'Creation timestamp',
           },
-          updatedAt: { 
-            type: 'string', 
+          updatedAt: {
+            type: 'string',
             format: 'date-time',
-            description: 'Last update timestamp' 
+            description: 'Last update timestamp',
           },
           vehicle: { $ref: '#/components/schemas/Vehicle' },
-          staff: { 
+          staff: {
             type: 'object',
             properties: {
               id: { type: 'string' },
@@ -7514,30 +7577,59 @@ export const openapiSpec = {
         properties: {
           id: { type: 'string', description: 'Vehicle ID' },
           stationId: { type: 'string', description: 'Station ID' },
-          type: { 
-            type: 'string', 
-            enum: ['SEDAN', 'SUV', 'HATCHBACK', 'COUPE', 'CONVERTIBLE', 'TRUCK', 'VAN'],
-            description: 'Vehicle type' 
+          type: {
+            type: 'string',
+            enum: [
+              'SEDAN',
+              'SUV',
+              'HATCHBACK',
+              'COUPE',
+              'CONVERTIBLE',
+              'TRUCK',
+              'VAN',
+            ],
+            description: 'Vehicle type',
           },
           brand: { type: 'string', description: 'Vehicle brand' },
           model: { type: 'string', description: 'Vehicle model' },
           year: { type: 'integer', description: 'Vehicle year' },
           color: { type: 'string', description: 'Vehicle color' },
           seats: { type: 'integer', description: 'Number of seats' },
-          licensePlate: { type: 'string', nullable: true, description: 'License plate' },
-          batteryLevel: { type: 'number', description: 'Battery level percentage (0-100)' },
-          fuelType: { 
-            type: 'string', 
+          licensePlate: {
+            type: 'string',
+            nullable: true,
+            description: 'License plate',
+          },
+          batteryLevel: {
+            type: 'number',
+            description: 'Battery level percentage (0-100)',
+          },
+          fuelType: {
+            type: 'string',
             enum: ['ELECTRIC', 'HYBRID', 'GASOLINE'],
-            description: 'Fuel type' 
+            description: 'Fuel type',
           },
-          status: { 
-            type: 'string', 
-            enum: ['AVAILABLE', 'RENTED', 'MAINTENANCE', 'RESERVED', 'OUT_OF_SERVICE'],
-            description: 'Vehicle status' 
+          status: {
+            type: 'string',
+            enum: [
+              'AVAILABLE',
+              'RENTED',
+              'MAINTENANCE',
+              'RESERVED',
+              'OUT_OF_SERVICE',
+            ],
+            description: 'Vehicle status',
           },
-          createdAt: { type: 'string', format: 'date-time', description: 'Creation timestamp' },
-          updatedAt: { type: 'string', format: 'date-time', description: 'Last update timestamp' },
+          createdAt: {
+            type: 'string',
+            format: 'date-time',
+            description: 'Creation timestamp',
+          },
+          updatedAt: {
+            type: 'string',
+            format: 'date-time',
+            description: 'Last update timestamp',
+          },
         },
       },
     },

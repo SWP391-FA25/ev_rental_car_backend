@@ -27,7 +27,11 @@ export const uploadInspectionImageHandler = async (req, res) => {
     const file = req.file;
 
     // Validate required parameters
-    if (!inspectionId || typeof inspectionId !== 'string' || !inspectionId.trim()) {
+    if (
+      !inspectionId ||
+      typeof inspectionId !== 'string' ||
+      !inspectionId.trim()
+    ) {
       return res.status(400).json({
         success: false,
         message: 'Inspection ID is required',
@@ -109,7 +113,7 @@ export const uploadInspectionImageHandler = async (req, res) => {
       const updatedImages = [...(currentInspection.images || []), newImage];
 
       // Update inspection with new images array AND single image fields for backward compatibility
-      const updatedInspection = await prisma.vehicleInspection.update({
+      await prisma.vehicleInspection.update({
         where: { id: inspectionId },
         data: {
           imageUrl: result.data.url, // Keep for backward compatibility (last uploaded image)
@@ -603,7 +607,7 @@ export const deleteInspectionImage = async (req, res) => {
     const updatedImages = [...inspection.images];
     updatedImages.splice(imageIndex, 1);
 
-    const updatedInspection = await prisma.vehicleInspection.update({
+    await prisma.vehicleInspection.update({
       where: { id: inspectionId },
       data: {
         images: updatedImages,

@@ -1317,6 +1317,8 @@ export const completeBooking = async (req, res, next) => {
       rating, // Add rating for rental history
     } = req.body;
 
+    const station = req.station; // Get station from middleware
+
     // Find the booking
     const booking = await prisma.booking.findUnique({
       where: { id },
@@ -1431,9 +1433,6 @@ export const completeBooking = async (req, res, next) => {
       actualEndTime: actualEndDate,
       depositStatus: 'REFUNDED', // Mark deposit as refunded when rental completes successfully
       updatedAt: new Date(),
-      totalAmount: {
-        increment: round(overtimeAmount), // Add rounded overtime to total
-      },
     };
 
     if (actualReturnLocation)
@@ -1445,10 +1444,23 @@ export const completeBooking = async (req, res, next) => {
     // Use sequential transaction to ensure proper order of operations
     const updatedBooking = await prisma.$transaction(async (tx) => {
       try {
-        // Update booking first
+        // Read current booking total inside the transaction to compute new total (avoid unsupported increment for Mongo)
+        const existingBookingForUpdate = await tx.booking.findUnique({
+          where: { id },
+          select: { totalAmount: true },
+        });
+
+        const overtimeRounded = round(overtimeAmount);
+        const baseTotal = existingBookingForUpdate?.totalAmount || 0;
+        const newTotal = baseTotal + overtimeRounded;
+
+        // Update booking first (include computed totalAmount)
         const updated = await tx.booking.update({
           where: { id },
-          data: updateData,
+          data: {
+            ...updateData,
+            totalAmount: newTotal,
+          },
           include: {
             ...BOOKING_INCLUDES,
             payments: { select: { id: true, amount: true, status: true } },
@@ -1486,6 +1498,7 @@ export const completeBooking = async (req, res, next) => {
             batteryLevel:
               batteryLevel !== undefined ? batteryLevel : Prisma.skip,
             updatedAt: new Date(),
+            stationId: station.id, // Update vehicle's current station to the return station
           },
         });
 
