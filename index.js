@@ -13,13 +13,13 @@ const __dirname = path.dirname(__filename);
 async function createUploadsDirectory() {
   const uploadsDir = path.join(__dirname, 'uploads');
   const paymentsDir = path.join(uploadsDir, 'payments');
-  
+
   try {
     await fs.access(uploadsDir);
   } catch {
     await fs.mkdir(uploadsDir, { recursive: true });
   }
-  
+
   try {
     await fs.access(paymentsDir);
   } catch {

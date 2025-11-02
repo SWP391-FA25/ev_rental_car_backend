@@ -51,21 +51,35 @@ export async function deleteFileFromLocal(fileUrl) {
  * @param {Object} metadata - Additional metadata for ImageKit
  * @returns {Promise<Object>} - Result with URL and storage details
  */
-export async function saveFile(fileBuffer, originalName, folder, prefix = '', metadata = {}) {
+export async function saveFile(
+  fileBuffer,
+  originalName,
+  folder,
+  prefix = '',
+  metadata = {}
+) {
   // Check if ImageKit is configured
-  const useImageKit = process.env.IMAGEKIT_PUBLIC_KEY && process.env.IMAGEKIT_PRIVATE_KEY && process.env.IMAGEKIT_URL_ENDPOINT;
-  
+  const useImageKit =
+    process.env.IMAGEKIT_PUBLIC_KEY &&
+    process.env.IMAGEKIT_PRIVATE_KEY &&
+    process.env.IMAGEKIT_URL_ENDPOINT;
+
   if (useImageKit) {
     // Use ImageKit for storage
     try {
       const imageKitService = (await import('../lib/imagekit.js')).default;
       const fileName = `${prefix}${Date.now()}_${Math.random().toString(36).substr(2, 9)}${path.extname(originalName)}`;
       const imageKitFolder = `${folder}`;
-      
-      const result = await imageKitService.uploadFile(fileBuffer, fileName, imageKitFolder, {
-        tags: [folder, ...Object.values(metadata)],
-      });
-      
+
+      const result = await imageKitService.uploadFile(
+        fileBuffer,
+        fileName,
+        imageKitFolder,
+        {
+          tags: [folder, ...Object.values(metadata)],
+        }
+      );
+
       if (result.success) {
         return {
           success: true,
@@ -78,11 +92,14 @@ export async function saveFile(fileBuffer, originalName, folder, prefix = '', me
         throw new Error(result.error);
       }
     } catch (error) {
-      console.error('ImageKit upload failed, falling back to local storage:', error);
+      console.error(
+        'ImageKit upload failed, falling back to local storage:',
+        error
+      );
       // Fall back to local storage if ImageKit fails
     }
   }
-  
+
   // Use local storage as fallback or default
   try {
     const url = await saveFileToLocal(fileBuffer, originalName, folder, prefix);

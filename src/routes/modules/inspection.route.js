@@ -11,7 +11,7 @@ import {
   getInspectionsByBookingForRenter,
   uploadInspectionImage,
   uploadInspectionImageHandler,
-  deleteInspectionImage
+  deleteInspectionImage,
 } from '../../controllers/inspection.controller.js';
 import { authenticate } from '../../middleware/authenticate.js';
 import { authorize } from '../../middleware/authorize.js';
@@ -22,10 +22,21 @@ const router = Router();
 router.post('/', authenticate, authorize('STAFF', 'ADMIN'), createInspection);
 
 // Upload inspection image
-router.post('/:id/upload-image', authenticate, authorize('STAFF', 'ADMIN'), uploadInspectionImage, uploadInspectionImageHandler);
+router.post(
+  '/:id/upload-image',
+  authenticate,
+  authorize('STAFF', 'ADMIN'),
+  uploadInspectionImage,
+  uploadInspectionImageHandler
+);
 
 // Delete inspection image
-router.delete('/:id/image/:imageIndex', authenticate, authorize('STAFF', 'ADMIN'), deleteInspectionImage);
+router.delete(
+  '/:id/image/:imageIndex',
+  authenticate,
+  authorize('STAFF', 'ADMIN'),
+  deleteInspectionImage
+);
 
 // Get inspection by ID
 router.get(

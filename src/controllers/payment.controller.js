@@ -1,5 +1,4 @@
 import { prisma } from '../lib/prisma.js';
-import { v4 as uuidv4 } from 'uuid';
 import { saveFile } from '../utils/fileUpload.js';
 import ImageKitService from '../lib/imagekit.js';
 
@@ -10,6 +9,7 @@ export async function createCashPayment(req, res, next) {
     const {
       bookingId,
       amount,
+      // eslint-disable-next-line no-unused-vars
       description,
       paymentType = 'RENTAL_FEE',
     } = req.body || {};
@@ -241,6 +241,7 @@ export async function uploadCashPaymentEvidence(req, res, next) {
 export async function processCashRefund(req, res, next) {
   try {
     const userId = req.user?.id;
+    // eslint-disable-next-line no-unused-vars
     const { paymentId, refundAmount, reason } = req.body || {};
 
     if (!userId) {
