@@ -515,7 +515,7 @@ export const completeBookingValidator = checkSchema({
       'Actual return location is required and must be 3-200 characters',
     custom: {
       options: async (location, { req }) => {
-        const station = await prisma.station.findUnique({
+        const station = await prisma.station.findFirst({
           where: { name: location },
         });
 
