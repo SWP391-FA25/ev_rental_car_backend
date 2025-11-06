@@ -13,7 +13,7 @@ import { authorize } from '../../middleware/authorize.js';
 
 const router = Router();
 
-router.post('/', authenticate, authorize('ADMIN'), createRenter);
+router.post('/', authenticate, authorize('ADMIN', 'STAFF'), createRenter);
 router.get('/', authenticate, authorize('ADMIN', 'STAFF'), getRenters);
 router.get('/:id', authenticate, authorize('ADMIN', 'STAFF'), getRenterById);
 router.put(
