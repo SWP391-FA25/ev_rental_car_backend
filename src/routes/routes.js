@@ -16,11 +16,12 @@ import payosRouter from './modules/payos.route.js';
 import paymentRouter from './modules/payment.route.js';
 import inspectionRouter from './modules/inspection.route.js';
 import contractRouter from './modules/contract.route.js';
+import { verifyUser } from '../middleware/authorize.js';
 
 const router = Router();
 
 router.use('/auth', authRouter);
-router.use('/bookings', bookingRouter);
+router.use('/bookings', verifyUser, bookingRouter);
 router.use('/contracts', contractRouter);
 router.use('/documents', documentRouter);
 router.use('/test', testRouter);

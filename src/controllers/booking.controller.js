@@ -832,6 +832,7 @@ export const getMyManagedBookings = async (req, res, next) => {
 export const createBooking = async (req, res, next) => {
   try {
     const user = req.user; // Get authenticated user
+    console.log(user);
     const {
       vehicleId,
       stationId,

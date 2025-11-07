@@ -12,3 +12,8 @@ export const authorize = (...roles) => {
     return next();
   };
 };
+
+export const verifyUser = (req, res, next) => {
+  console.log(req.user);
+  return next();
+};
