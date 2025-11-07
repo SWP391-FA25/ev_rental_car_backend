@@ -187,6 +187,7 @@ export const getBookings = async (req, res, next) => {
       userId,
       vehicleId,
       stationId,
+      stationIds,
       staffId,
       startDate,
       endDate,
@@ -202,7 +203,24 @@ export const getBookings = async (req, res, next) => {
     if (status) where.status = status;
     if (userId) where.userId = userId;
     if (vehicleId) where.vehicleId = vehicleId;
-    if (stationId) where.stationId = stationId;
+
+    // Handle station filtering: support both single stationId and multiple stationIds
+    if (stationIds) {
+      // Parse stationIds (can be comma-separated string or array)
+      const stationIdsArray = Array.isArray(stationIds)
+        ? stationIds
+        : stationIds
+            .split(',')
+            .map((id) => id.trim())
+            .filter(Boolean);
+      if (stationIdsArray.length > 0) {
+        where.stationId = { in: stationIdsArray };
+      }
+    } else if (stationId) {
+      // Backward compatibility: single stationId
+      where.stationId = stationId;
+    }
+
     if (staffId) where.staffId = staffId;
 
     if (startDate || endDate) {

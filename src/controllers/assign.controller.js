@@ -1,5 +1,5 @@
-import { prisma } from '../lib/prisma.js';
 import { Prisma } from '@prisma/client';
+import { prisma } from '../lib/prisma.js';
 
 // Create a new assignment
 const createAssignment = async (req, res, next) => {
@@ -231,7 +231,7 @@ const getAssignmentByStaffId = async (req, res, next) => {
   try {
     const { staffId } = req.params;
 
-    const assignment = await prisma.stationStaff.findFirst({
+    const assignments = await prisma.stationStaff.findMany({
       where: { userId: staffId },
       include: {
         station: {
@@ -255,13 +255,10 @@ const getAssignmentByStaffId = async (req, res, next) => {
       },
     });
 
-    if (!assignment) {
-      return res
-        .status(404)
-        .json({ success: false, message: 'Assignment not found' });
-    }
-
-    return res.status(200).json({ assignment });
+    return res.status(200).json({
+      success: true,
+      assignments: assignments || [],
+    });
   } catch (error) {
     next(error);
   }
