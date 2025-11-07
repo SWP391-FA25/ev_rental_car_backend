@@ -831,7 +831,8 @@ export const getMyManagedBookings = async (req, res, next) => {
 // Create booking validation
 export const createBooking = async (req, res, next) => {
   try {
-    const user = req.user; // Get authenticated user
+    const { id } = req.user; // Get authenticated user
+    console.log(req);
     const {
       vehicleId,
       stationId,
@@ -843,6 +844,10 @@ export const createBooking = async (req, res, next) => {
       renterId, // Add renterId for when staff/admin creates booking for renter
     } = req.body;
 
+    const user = await prisma.user.findUnique({
+      where: { id },
+    });
+
     let userId;
 
     if (user.role !== 'RENTER') {
@@ -851,6 +856,18 @@ export const createBooking = async (req, res, next) => {
           success: false,
           message:
             'renterId is required when staff/admin creates booking for a renter',
+        });
+      }
+
+      const user = await prisma.user.findUnique({
+        where: { id: renterId },
+        select: { id: true, role: true },
+      });
+
+      if (user.verifyStatus !== 'VERIFIED') {
+        return res.status(400).json({
+          success: false,
+          message: 'Renter must be verified to create a booking',
         });
       }
       userId = renterId;
