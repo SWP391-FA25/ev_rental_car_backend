@@ -286,3 +286,80 @@ export async function resetPassword(req, res, next) {
     next(error);
   }
 }
+
+export async function changePassword(req, res, next) {
+  try {
+    // Validation schema
+    const schema = Joi.object({
+      currentPassword: Joi.string().required(),
+      newPassword: Joi.string().min(8).required(),
+    });
+
+    const { error, value } = schema.validate(req.body);
+    if (error) {
+      return res
+        .status(400)
+        .json({ success: false, message: error.details[0].message });
+    }
+
+    const { currentPassword, newPassword } = value;
+
+    // Get user from authenticated request
+    if (!req.user?.id) {
+      return res.status(401).json({
+        success: false,
+        message: 'Unauthorized',
+      });
+    }
+
+    // Find user
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.id },
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found',
+      });
+    }
+
+    // Verify current password
+    let passwordOk = false;
+
+    if (isBcryptHash(user.password)) {
+      passwordOk = await bcrypt.compare(currentPassword, user.password);
+    } else {
+      // Legacy plaintext password support: compare directly
+      if (currentPassword === user.password) {
+        passwordOk = true;
+      }
+    }
+
+    if (!passwordOk) {
+      return res.status(401).json({
+        success: false,
+        message: 'Current password is incorrect',
+      });
+    }
+
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // Update password
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        password: hashedPassword,
+      },
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'Password changed successfully',
+    });
+  } catch (error) {
+    console.error('Error changing password:', error);
+    next(error);
+  }
+}
