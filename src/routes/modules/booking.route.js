@@ -13,7 +13,6 @@ import {
   updateBooking,
   updateBookingStatus,
 } from '../../controllers/booking.controller.js';
-import { authenticate } from '../../middleware/authenticate.js';
 import { authorize } from '../../middleware/authorize.js';
 import {
   cancelBookingValidation,
@@ -33,7 +32,6 @@ const router = Router();
 // Get all bookings (Admin/Staff only)
 router.get(
   '/',
-  authenticate,
   authorize('ADMIN', 'STAFF'),
   getBookingsValidation,
   getBookings
@@ -42,7 +40,6 @@ router.get(
 // Get booking analytics (Admin/Staff only)
 router.get(
   '/analytics',
-  authenticate,
   authorize('ADMIN', 'STAFF'),
   getBookingAnalyticsValidation,
   getBookingAnalytics
@@ -51,7 +48,6 @@ router.get(
 // Get my managed bookings (Staff/Admin only)
 router.get(
   '/my-managed',
-  authenticate,
   authorize('ADMIN', 'STAFF'),
   getBookingsValidation, // Reuse the same validation as getBookings
   getMyManagedBookings
@@ -60,7 +56,6 @@ router.get(
 // Get user's bookings (Admin/Staff only)
 router.get(
   '/user/:userId',
-  authenticate,
   authorize('ADMIN', 'STAFF', 'RENTER'),
   getUserBookingsValidation,
   getUserBookings
@@ -69,7 +64,6 @@ router.get(
 // Get booking by ID (Admin/Staff only)
 router.get(
   '/:id',
-  authenticate,
   authorize('ADMIN', 'STAFF', 'RENTER'),
   getBookingByIdValidation,
   getBookingById
@@ -78,7 +72,6 @@ router.get(
 // Create new booking (Renter, Staff, Admin can create)
 router.post(
   '/',
-  authenticate,
   authorize('RENTER', 'STAFF', 'ADMIN'),
   createBookingValidation,
   createBooking
@@ -87,7 +80,6 @@ router.post(
 // Update booking (Admin/Staff only)
 router.put(
   '/:id',
-  authenticate,
   authorize('ADMIN', 'STAFF'),
   updateBookingValidation,
   updateBooking
@@ -96,7 +88,6 @@ router.put(
 // Update booking status (Admin/Staff only)
 router.patch(
   '/:id/status',
-  authenticate,
   authorize('ADMIN', 'STAFF'),
   updateBookingStatusValidation,
   updateBookingStatus
@@ -105,7 +96,6 @@ router.patch(
 // Cancel booking (Admin/Staff only)
 router.patch(
   '/:id/cancel',
-  authenticate,
   authorize('ADMIN', 'STAFF', 'RENTER'),
   cancelBookingValidation,
   cancelBooking
@@ -114,7 +104,6 @@ router.patch(
 // Check-in booking (start rental) (Admin/Staff only)
 router.post(
   '/:id/checkin',
-  authenticate,
   authorize('ADMIN', 'STAFF'),
   checkInBookingValidation,
   checkInBooking
@@ -123,7 +112,6 @@ router.post(
 // Complete booking (Admin/Staff only)
 router.post(
   '/:id/complete',
-  authenticate,
   authorize('ADMIN', 'STAFF'),
   completeBookingValidation,
   completeBooking
@@ -132,7 +120,6 @@ router.post(
 // Get deposit status and confirm booking (Admin/Staff only)
 router.get(
   '/:id/deposit-status',
-  authenticate,
   authorize('ADMIN', 'STAFF'),
   getBookingByIdValidation, // Reuse the same validation as getBookingById
   getDepositStatus
