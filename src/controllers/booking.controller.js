@@ -877,17 +877,6 @@ export const createBooking = async (req, res, next) => {
         });
       }
 
-      const user = await prisma.user.findUnique({
-        where: { id: renterId },
-        select: { id: true, role: true },
-      });
-
-      if (user.verifyStatus !== 'VERIFIED') {
-        return res.status(400).json({
-          success: false,
-          message: 'Renter must be verified to create a booking',
-        });
-      }
       userId = renterId;
     } else {
       userId = user.id;
