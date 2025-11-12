@@ -12,6 +12,11 @@ const uploadDocumentSchema = z.object({
     .string()
     .optional()
     .transform((val) => (val ? new Date(val) : undefined)),
+  renterId: z
+    .string()
+    .trim()
+    .optional()
+    .transform((val) => (val && val.length > 0 ? val : undefined)),
 });
 
 const ALLOWED_MIME_TYPES = [
@@ -26,7 +31,8 @@ class DocumentController {
   // Upload document
   async uploadDocument(req, res) {
     try {
-      const userId = req.user?.id;
+      const userRole = req.user?.role;
+      const authenticatedUserId = req.user?.id;
       const file = req.file;
 
       if (!file) {
@@ -55,11 +61,38 @@ class DocumentController {
       // Validate request body
       const validatedData = uploadDocumentSchema.parse(req.body);
 
+      const isStaffUpload =
+        userRole && ['STAFF', 'ADMIN'].includes(userRole.toUpperCase());
+
+      let targetUserId = authenticatedUserId;
+
+      if (validatedData.renterId) {
+        if (!isStaffUpload) {
+          return res.status(403).json({
+            success: false,
+            message: 'You are not authorized to upload documents for another user.',
+          });
+        }
+        targetUserId = validatedData.renterId;
+      }
+
+      if (!targetUserId) {
+        return res.status(400).json({
+          success: false,
+          message: 'Unable to determine target user for document upload.',
+        });
+      }
+
+      const {
+        renterId: _omitRenterId,
+        ...documentPayload
+      } = validatedData;
+
       // Check if document type already exists for user
       const existingDocument = await prisma.userDocument.findFirst({
         where: {
-          userId,
-          documentType: validatedData.documentType,
+          userId: targetUserId,
+          documentType: documentPayload.documentType,
         },
       });
 
@@ -73,13 +106,13 @@ class DocumentController {
       // Upload to ImageKit
       const timestamp = Date.now();
       const fileExtension = file.originalname.split('.').pop();
-      const fileName = `${userId}_${validatedData.documentType}_${timestamp}.${fileExtension}`;
+      const fileName = `${targetUserId}_${documentPayload.documentType}_${timestamp}.${fileExtension}`;
 
       const uploadResult = await ImageKitService.uploadDocument(
         file.buffer,
         fileName,
-        userId,
-        validatedData.documentType
+        targetUserId,
+        documentPayload.documentType
       );
 
       if (!uploadResult.success) {
@@ -113,8 +146,8 @@ class DocumentController {
       // Save document info to database
       const document = await prisma.userDocument.create({
         data: {
-          userId,
-          documentType: validatedData.documentType,
+          userId: targetUserId,
+          documentType: documentPayload.documentType,
           fileName: file.originalname,
           fileUrl: uploadResult.data.url,
           fileId: uploadResult.data.fileId,
@@ -122,8 +155,8 @@ class DocumentController {
           thumbnailUrl: uploadResult.data.thumbnailUrl,
           fileSize: file.size,
           mimeType: file.mimetype,
-          documentNumber: validatedData.documentNumber,
-          expiryDate: validatedData.expiryDate,
+          documentNumber: documentPayload.documentNumber,
+          expiryDate: documentPayload.expiryDate,
           status: 'PENDING',
         },
       });
