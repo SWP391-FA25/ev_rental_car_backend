@@ -26,7 +26,7 @@ class DocumentController {
   // Upload document
   async uploadDocument(req, res) {
     try {
-      const userId = req.user?.id;
+      const { id: currentUserId, role: currentUserRole } = req.user;
       const file = req.file;
 
       if (!file) {
@@ -55,10 +55,53 @@ class DocumentController {
       // Validate request body
       const validatedData = uploadDocumentSchema.parse(req.body);
 
+      // Determine target userId (similar to createBooking logic)
+      let targetUserId;
+      let uploadedByStaff = false;
+
+      if (currentUserRole !== 'RENTER') {
+        // Staff/Admin uploading for a renter
+        const { renterId } = req.body;
+
+        if (!renterId) {
+          return res.status(400).json({
+            success: false,
+            message:
+              'renterId is required when staff/admin uploads document for a renter',
+          });
+        }
+
+        // Verify renter exists
+        const renter = await prisma.user.findUnique({
+          where: { id: renterId },
+          select: { id: true, role: true, name: true },
+        });
+
+        if (!renter) {
+          return res.status(404).json({
+            success: false,
+            message: 'Renter not found',
+          });
+        }
+
+        if (renter.role !== 'RENTER') {
+          return res.status(400).json({
+            success: false,
+            message: 'Target user must have RENTER role',
+          });
+        }
+
+        targetUserId = renterId;
+        uploadedByStaff = true;
+      } else {
+        // Renter uploading for themselves
+        targetUserId = currentUserId;
+      }
+
       // Check if document type already exists for user
       const existingDocument = await prisma.userDocument.findFirst({
         where: {
-          userId,
+          userId: targetUserId,
           documentType: validatedData.documentType,
         },
       });
@@ -73,12 +116,12 @@ class DocumentController {
       // Upload to ImageKit
       const timestamp = Date.now();
       const fileExtension = file.originalname.split('.').pop();
-      const fileName = `${userId}_${validatedData.documentType}_${timestamp}.${fileExtension}`;
+      const fileName = `${targetUserId}_${validatedData.documentType}_${timestamp}.${fileExtension}`;
 
       const uploadResult = await ImageKitService.uploadDocument(
         file.buffer,
         fileName,
-        userId,
+        targetUserId,
         validatedData.documentType
       );
 
@@ -113,7 +156,7 @@ class DocumentController {
       // Save document info to database
       const document = await prisma.userDocument.create({
         data: {
-          userId,
+          userId: targetUserId,
           documentType: validatedData.documentType,
           fileName: file.originalname,
           fileUrl: uploadResult.data.url,
@@ -124,19 +167,26 @@ class DocumentController {
           mimeType: file.mimetype,
           documentNumber: validatedData.documentNumber,
           expiryDate: validatedData.expiryDate,
-          status: 'PENDING',
+          status: uploadedByStaff ? 'APPROVED' : 'PENDING', // Auto-approve if uploaded by staff
+          verifiedBy: uploadedByStaff
+            ? `${req.user.name} (${currentUserId}) [${currentUserRole}]`
+            : null,
+          verifiedAt: uploadedByStaff ? new Date() : null,
         },
       });
 
       res.status(201).json({
         success: true,
-        message: 'Document uploaded successfully',
+        message: uploadedByStaff
+          ? 'Document uploaded and approved successfully by staff'
+          : 'Document uploaded successfully',
         data: {
           id: document.id,
           documentType: document.documentType,
           fileName: document.fileName,
           status: document.status,
           uploadedAt: document.uploadedAt,
+          uploadedForUser: uploadedByStaff ? targetUserId : undefined,
         },
       });
     } catch (error) {
